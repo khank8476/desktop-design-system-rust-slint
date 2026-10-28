@@ -1,0 +1,48 @@
+import { Palette } from "../tokens/colors.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component ToggleSwitch {
+    in-out property <bool> checked: false;
+    in property <bool> enabled: true;
+    callback toggled(bool);
+
+    width: 44px;
+    height: 24px;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-full;
+        background: !root.enabled ? Palette.bg-surface-active :
+                    root.checked ? Palette.accent :
+                    Palette.bg-surface-hover;
+        border-width: 1px;
+        border-color: root.checked ? Palette.accent : Palette.border-strong;
+
+        animate background { duration: 150ms; }
+        animate border-color { duration: 150ms; }
+
+        // Sliding knob
+        knob := Rectangle {
+            x: root.checked ? parent.width - self.width - 2px : 2px;
+            y: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: Spacing.radius-full;
+            background: root.checked ? Palette.text-on-accent : Palette.text-secondary;
+
+            animate x { duration: 150ms; easing: ease-out; }
+            animate background { duration: 150ms; }
+        }
+
+        TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: root.enabled ? pointer : default;
+            clicked => {
+                root.checked = !root.checked;
+                root.toggled(root.checked);
+            }
+        }
+    }
+}
+

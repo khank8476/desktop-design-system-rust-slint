@@ -1,0 +1,86 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component AccordionItem {
+    in property <string> title: "Accordion Title";
+    in property <string> description: "";
+    in-out property <bool> expanded: false;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.bg-surface;
+
+        VerticalLayout {
+            // 1. Header (Clickable Trigger)
+            header := Rectangle {
+                height: 48px;
+                background: touch.has-hover ? Palette.bg-surface-hover : transparent;
+                border-radius: Spacing.radius-md;
+
+                animate background { duration: 100ms; }
+
+                HorizontalLayout {
+                    padding-left: Spacing.space-md;
+                    padding-right: Spacing.space-md;
+                    alignment: space-between;
+
+                    Text {
+                        text: root.title;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                    }
+
+                    // Chevron Indicator
+                    Text {
+                        text: root.expanded ? "▲" : "▼";
+                        font-size: Typography.size-xs;
+                        color: Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.expanded = !root.expanded;
+                    }
+                }
+            }
+
+            // 2. Expandable Content Body
+            content-wrapper := Rectangle {
+                clip: true;
+                height: root.expanded ? body-layout.preferred-height : 0px;
+                animate height { duration: 180ms; easing: ease-out; }
+
+                body-layout := VerticalLayout {
+                    padding-left: Spacing.space-md;
+                    padding-right: Spacing.space-md;
+                    padding-bottom: Spacing.space-md;
+                    padding-top: Spacing.space-xs;
+                    spacing: Spacing.space-xs;
+
+                    // Subtle inner divider
+                    Rectangle {
+                        height: 1px;
+                        background: Palette.border-subtle;
+                    }
+
+                    Text {
+                        text: root.description;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        color: Palette.text-secondary;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+    }
+}

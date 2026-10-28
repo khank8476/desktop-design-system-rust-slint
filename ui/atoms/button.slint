@@ -1,0 +1,64 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Button {
+    in property <string> text: "Button";
+    in property <string> variant: "primary"; // "primary" | "secondary" | "ghost" | "danger"
+    in property <bool> enabled: true;
+    callback clicked();
+
+    min-height: 38px;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+
+    rect := Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: root.variant == "secondary" ? 1px : 0px;
+        border-color: root.variant == "secondary" ? Palette.border-strong : transparent;
+
+        background: !root.enabled ? (root.variant == "ghost" ? transparent : Palette.bg-surface) :
+                    touch.pressed ? (root.variant == "primary" ? Palette.accent-pressed :
+                                     root.variant == "danger" ? Palette.danger-hover :
+                                     Palette.bg-surface-active) :
+                    touch.has-hover ? (root.variant == "primary" ? Palette.accent-hover :
+                                       root.variant == "danger" ? Palette.danger :
+                                       root.variant == "ghost" ? Palette.bg-surface-hover :
+                                       Palette.bg-surface-hover) :
+                    (root.variant == "primary" ? Palette.accent :
+                     root.variant == "danger" ? Palette.danger :
+                     root.variant == "ghost" ? transparent :
+                     Palette.bg-surface);
+
+        animate background { duration: 120ms; easing: ease-out; }
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            padding-top: Spacing.space-sm;
+            padding-bottom: Spacing.space-sm;
+            alignment: center;
+
+            Text {
+                text: root.text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-base;
+                font-weight: Typography.weight-semibold;
+                color: !root.enabled ? Palette.text-placeholder :
+                       (root.variant == "primary" || root.variant == "danger" 
+                        ? Palette.text-on-accent 
+                        : Palette.text-primary);
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+
+        touch := TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: root.enabled ? pointer : default;
+            clicked => {
+                root.clicked();
+            }
+        }
+    }
+}

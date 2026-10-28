@@ -1,0 +1,55 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component TextInputField {
+    in property <string> placeholder: "Type here...";
+    in-out property <string> text <=> input.text;
+    in property <bool> enabled: true;
+    in property <InputType> input-type: InputType.text;
+    callback edited(string);
+    callback accepted();
+
+    min-height: 40px;
+    horizontal-stretch: 1;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: input.has-focus ? 2px : 1px;
+        border-color: input.has-focus ? Palette.border-focus : Palette.border-subtle;
+        background: Palette.bg-surface;
+
+        animate border-color { duration: 100ms; }
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            padding-top: Spacing.space-xs;
+            padding-bottom: Spacing.space-xs;
+            alignment: center;
+
+            input := TextInput {
+                width: 100%;
+                enabled: root.enabled;
+                input-type: root.input-type;
+                font-family: Typography.font-family;
+                font-size: Typography.size-base;
+                color: Palette.text-primary;
+                vertical-alignment: center;
+
+                edited => { root.edited(self.text); }
+                accepted => { root.accepted(); }
+            }
+        }
+
+        // Placeholder Text (fades out when user types)
+        if input.text == "" && !input.has-focus: Text {
+            x: Spacing.space-md;
+            text: root.placeholder;
+            font-family: Typography.font-family;
+            font-size: Typography.size-base;
+            color: Palette.text-placeholder;
+            vertical-alignment: center;
+        }
+    }
+}

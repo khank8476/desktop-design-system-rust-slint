@@ -1,0 +1,33 @@
+export global Palette {
+    in-out property <bool> dark-mode: false;
+
+    // Window & Surfaces
+    out property <color> bg-canvas: dark-mode ? #0f172a : #f8fafc;
+    out property <color> bg-surface: dark-mode ? #1e293b : #ffffff;
+    out property <color> bg-surface-hover: dark-mode ? #334155 : #f1f5f9;
+    out property <color> bg-surface-active: dark-mode ? #475569 : #e2e8f0;
+
+    // Borders & Dividers
+    out property <color> border-subtle: dark-mode ? #334155 : #e2e8f0;
+    out property <color> border-strong: dark-mode ? #475569 : #cbd5e1;
+    out property <color> border-focus: #3b82f6;
+
+    // Typography
+    out property <color> text-primary: dark-mode ? #f8fafc : #0f172a;
+    out property <color> text-secondary: dark-mode ? #94a3b8 : #64748b;
+    out property <color> text-placeholder: dark-mode ? #64748b : #94a3b8;
+    out property <color> text-on-accent: #ffffff;
+
+    // Accent / Brand Colors (Blue)
+    out property <color> accent: #3b82f6;
+    out property <color> accent-hover: #2563eb;
+    out property <color> accent-pressed: #1d4ed8;
+
+    // Danger / Destructive (Red)
+    out property <color> danger: #ef4444;
+    out property <color> danger-hover: #dc2626;
+
+    // Success (Green)
+    out property <color> success: #10b981;
+}
+

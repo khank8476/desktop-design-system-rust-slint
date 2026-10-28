@@ -1,0 +1,108 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Alert {
+    in property <string> title: "Information";
+    in property <string> message: "This is an alert description providing important context.";
+    in property <string> status: "info"; // "info" | "success" | "warning" | "danger"
+    in-out property <bool> is-open: true;
+    callback dismissed();
+
+    visible: root.is-open;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: root.status == "danger" ? #ef444466 :
+                     root.status == "success" ? #10b98166 :
+                     root.status == "warning" ? #f59e0b66 :
+                     #3b82f666;
+
+        background: root.status == "danger" ? #ef444415 :
+                    root.status == "success" ? #10b98115 :
+                    root.status == "warning" ? #f59e0b15 :
+                    #3b82f615;
+
+        HorizontalLayout {
+            padding: Spacing.space-md;
+            spacing: Spacing.space-md;
+            alignment: space-between;
+
+            // Icon + Text Group
+            HorizontalLayout {
+                spacing: Spacing.space-md;
+                horizontal-stretch: 1;
+
+                // Status Icon Badge
+                Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: Spacing.radius-full;
+                    background: root.status == "danger" ? Palette.danger :
+                                root.status == "success" ? Palette.success :
+                                root.status == "warning" ? #f59e0b :
+                                Palette.accent;
+
+                    Text {
+                        text: root.status == "danger" ? "×" :
+                              root.status == "success" ? "✓" :
+                              root.status == "warning" ? "!" : "i";
+                        font-size: Typography.size-xs;
+                        font-weight: Typography.weight-bold;
+                        color: Palette.text-on-accent;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Text Stack
+                VerticalLayout {
+                    spacing: Spacing.space-xs;
+                    horizontal-stretch: 1;
+
+                    Text {
+                        text: root.title;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                    }
+
+                    Text {
+                        text: root.message;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        color: Palette.text-secondary;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // Dismiss Button (Uses universal Latin-1 cross '×' - renders cleanly on all OS fonts)
+            dismiss-area := Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: Spacing.radius-sm;
+                background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                Text {
+                    text: "×";
+                    font-size: Typography.size-xl;
+                    font-weight: Typography.weight-semibold;
+                    color: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                close-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.is-open = false;
+                        root.dismissed();
+                    }
+                }
+            }
+        }
+    }
+}

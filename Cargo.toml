@@ -1,0 +1,18 @@
+[package]
+name = "desktop-design-system"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+slint = "1.9"
+dark-light = "1.1"
+
+[build-dependencies]
+slint-build = "1.9"
+
+[profile.release]
+opt-level = "z"      # Optimize for small binary size
+lto = true           # Link Time Optimization (cross-crate inlining & dead code removal)
+codegen-units = 1    # Enables maximum LTO optimizations
+strip = true         # Strips all debug symbols from the .exe
+panic = "abort"      # Strips unnecessary panic unwinding tables

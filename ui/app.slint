@@ -1,0 +1,227 @@
+import { ScrollView } from "std-widgets.slint";
+import { Palette } from "tokens/colors.slint";
+import { Typography } from "tokens/typography.slint";
+import { Spacing } from "tokens/spacing.slint";
+import { Button } from "atoms/button.slint";
+import { TextInputField } from "atoms/input.slint";
+import { ToggleSwitch } from "atoms/toggle.slint";
+import { AccordionItem } from "molecules/accordion.slint";
+import { Alert } from "molecules/alert.slint";
+import { ModalDialog } from "organisms/modal.slint";
+import { Dropdown } from "organisms/dropdown.slint";
+
+export { Palette }
+
+export component AppWindow inherits Window {
+    title: "Native Desktop Design System";
+    icon: @image-url("../assets/app-icon.png");
+    min-width: 880px;
+    min-height: 620px;
+    preferred-width: 940px;
+    preferred-height: 720px;
+    background: Palette.bg-canvas;
+
+    in-out property <bool> show-modal: false;
+
+    // 1. Main Scrollable Desktop Surface
+    ScrollView {
+        VerticalLayout {
+            padding: Spacing.space-xl;
+            spacing: Spacing.space-lg;
+
+            // Header Navigation Bar with Custom App Icon
+            HorizontalLayout {
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    // Custom Desktop App Icon
+                    Image {
+                        source: @image-url("../assets/app-icon.png");
+                        width: 44px;
+                        height: 44px;
+                    }
+
+                    VerticalLayout {
+                        spacing: 2px;
+                        alignment: center;
+
+                        Text {
+                            text: "Native Desktop Design System";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-2xl;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                        }
+                        Text {
+                            text: "Hardware-accelerated • Dynamic Dark/Light • HiDPI Retina Ready";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                // Header Controls
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    Text {
+                        text: "Dark Mode";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        font-weight: Typography.weight-medium;
+                        color: Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    ToggleSwitch {
+                        checked <=> Palette.dark-mode;
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                background: Palette.border-subtle;
+            }
+
+            // Organisms Section: Modals & Dropdowns
+            VerticalLayout {
+                spacing: Spacing.space-sm;
+
+                Text {
+                    text: "Desktop Organisms (Modals & Dropdowns)";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.text-primary;
+                }
+
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: start;
+
+                    Button {
+                        text: "Launch Modal Dialog";
+                        variant: "primary";
+                        clicked => {
+                            root.show-modal = true;
+                        }
+                    }
+
+                    Dropdown {
+                        width: 280px;
+                        placeholder: "Select Density Profile...";
+                    }
+                }
+            }
+
+            // Molecule Section: Alerts
+            VerticalLayout {
+                spacing: Spacing.space-sm;
+                Text {
+                    text: "Alerts & Notifications (Molecules)";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.text-primary;
+                }
+
+                Alert {
+                    status: "info";
+                    title: "Native Direct GPU Pipeline";
+                    message: "All native components are dynamically rendered via GPU with zero web overhead.";
+                }
+            }
+
+            // Molecule Section: Accordions
+            VerticalLayout {
+                spacing: Spacing.space-sm;
+                Text {
+                    text: "Accordion Panels (Molecules)";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.text-primary;
+                }
+
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+
+                    AccordionItem {
+                        title: "Why is hardware-accelerated desktop rendering faster?";
+                        description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
+                        expanded: true;
+                    }
+
+                    AccordionItem {
+                        title: "How does the auto theme detection work?";
+                        description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
+                    }
+
+                    AccordionItem {
+                        title: "How does screen centering calculate monitor DPI?";
+                        description: "Windows DWM automatically positions your window using optimal OS viewport metrics, ensuring clean rendering across multi-monitor setups.";
+                    }
+                }
+            }
+
+            // Atom Section: Buttons
+            VerticalLayout {
+                spacing: Spacing.space-sm;
+                Text {
+                    text: "Buttons & Actions (Atoms)";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.text-primary;
+                }
+
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    Button { text: "Primary Action"; variant: "primary"; }
+                    Button { text: "Secondary"; variant: "secondary"; }
+                    Button { text: "Ghost Action"; variant: "ghost"; }
+                    Button { text: "Destructive"; variant: "danger"; }
+                    Button { text: "Disabled"; enabled: false; }
+                }
+            }
+
+            // Atom Section: Inputs
+            VerticalLayout {
+                spacing: Spacing.space-sm;
+                Text {
+                    text: "Inputs & Form Fields (Atoms)";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.text-primary;
+                }
+
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    TextInputField {
+                        placeholder: "Search components or documentation...";
+                    }
+                    TextInputField {
+                        placeholder: "Enter secret credentials...";
+                        input-type: InputType.password;
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Organism: Modal Dialog Overlay (100% Solid Opaque Card centered on dimmed screen)
+    ModalDialog {
+        is-open <=> root.show-modal;
+        title: "Export Native Component Library";
+        message: "Are you sure you want to package this desktop design system? All component tokens, atomic styles, and molecules will be compiled into your standalone distribution.";
+        confirm-text: "Export Standalone";
+        confirm-variant: "primary";
+    }
+}

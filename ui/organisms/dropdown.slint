@@ -1,0 +1,122 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct DropdownItemData {
+    id: string,
+    label: string,
+}
+
+export component Dropdown {
+    in property <string> placeholder: "Select an option...";
+    in property <[DropdownItemData]> items: [
+        { id: "opt1", label: "Desktop Standard View" },
+        { id: "opt2", label: "Compact Density View" },
+        { id: "opt3", label: "Expanded High-DPI View" }
+    ];
+    in-out property <string> selected-label: "";
+    in-out property <string> selected-id: "";
+    callback selected(string, string); // (id, label)
+
+    min-height: 40px;
+    horizontal-stretch: 0;
+
+    // 1. Trigger Box
+    trigger := Rectangle {
+        min-height: 40px;
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-strong;
+        background: Palette.dark-mode ? #1e293b : #ffffff;
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            alignment: space-between;
+
+            Text {
+                text: root.selected-label != "" ? root.selected-label : root.placeholder;
+                font-family: Typography.font-family;
+                font-size: Typography.size-base;
+                color: root.selected-label != "" ? Palette.text-primary : Palette.text-placeholder;
+                vertical-alignment: center;
+            }
+
+            // Universal Chevrons
+            Text {
+                text: "▼";
+                font-size: 11px;
+                font-weight: Typography.weight-bold;
+                color: Palette.text-secondary;
+                vertical-alignment: center;
+            }
+        }
+
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                popup.show();
+            }
+        }
+    }
+
+    // 2. Floating Popup (Floats ABOVE all other components with proper Z-index)
+    popup := PopupWindow {
+        x: 0;
+        y: trigger.height + 4px;
+        width: root.width;
+
+        Rectangle {
+            border-radius: Spacing.radius-md;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #1e293b : #ffffff; // 100% Solid Opaque
+            drop-shadow-blur: 24px;
+            drop-shadow-color: #00000099;
+            drop-shadow-offset-y: 6px;
+
+            VerticalLayout {
+                padding: Spacing.space-xs;
+                spacing: 2px;
+
+                for item in root.items: item-row := Rectangle {
+                    height: 38px;
+                    border-radius: Spacing.radius-sm;
+                    background: item-touch.has-hover ? Palette.bg-surface-hover :
+                                item.id == root.selected-id ? Palette.bg-surface-active : transparent;
+
+                    HorizontalLayout {
+                        padding-left: Spacing.space-md;
+                        padding-right: Spacing.space-md;
+                        alignment: space-between;
+
+                        Text {
+                            text: item.label;
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-base;
+                            color: Palette.text-primary;
+                            vertical-alignment: center;
+                        }
+
+                        if item.id == root.selected-id: Text {
+                            text: "✓";
+                            font-size: Typography.size-sm;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.accent;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    item-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.selected-id = item.id;
+                            root.selected-label = item.label;
+                            root.selected(item.id, item.label);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
