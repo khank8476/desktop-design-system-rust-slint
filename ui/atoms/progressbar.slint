@@ -9,22 +9,24 @@ export component ProgressBar {
     in property <bool> show-label: false;
     in property <length> bar-height: 8px;
 
-    height: root.show-label ? 24px : root.bar-height;
+    height: root.show-label ? 24px : 18px;
     horizontal-stretch: 1;
 
     HorizontalLayout {
         spacing: Spacing.space-sm;
-        alignment: center;
 
-        // Progress Track
+        // Progress Track spanning full available width
         track := Rectangle {
             height: root.bar-height;
             horizontal-stretch: 1;
+            y: (parent.height - self.height) / 2;
             border-radius: Spacing.radius-full;
             background: Palette.dark-mode ? #1e293b : #e2e8f0;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
             clip: true;
 
-            // Determinate / Active Fill
+            // Determinate Active Fill
             fill := Rectangle {
                 x: 0px;
                 y: 0px;
@@ -35,7 +37,7 @@ export component ProgressBar {
                             root.variant == "danger"  ? Palette.danger :
                             Palette.accent;
 
-                animate width { duration: 200ms; easing: ease-out; }
+                animate width { duration: 150ms; easing: ease-out; }
             }
         }
 

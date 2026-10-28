@@ -10,7 +10,7 @@ export component Slider {
     in property <bool> show-value: false;
     callback changed(float);
 
-    height: 28px;
+    height: 32px;
     horizontal-stretch: 1;
 
     // Ratio from 0.0 to 1.0
@@ -19,21 +19,22 @@ export component Slider {
 
     HorizontalLayout {
         spacing: Spacing.space-sm;
-        alignment: center;
 
         container := Rectangle {
-            height: 28px;
+            height: 32px;
             horizontal-stretch: 1;
 
-            // Track Background
+            // 1. Background Track
             track := Rectangle {
                 height: 6px;
                 y: (parent.height - self.height) / 2;
                 border-radius: Spacing.radius-full;
                 background: Palette.dark-mode ? #1e293b : #e2e8f0;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
                 clip: true;
 
-                // Active Filled Track
+                // 2. Active Filled Accent Track
                 fill := Rectangle {
                     x: 0px;
                     y: 0px;
@@ -44,28 +45,35 @@ export component Slider {
                 }
             }
 
-            // Draggable Thumb Circle (18x18 with shadow)
+            // 3. Draggable Thumb (20px with HiDPI drop shadow)
             thumb := Rectangle {
-                width: touch.has-hover ? 20px : 18px;
+                width: touch.pressed ? 22px : touch.has-hover ? 22px : 20px;
                 height: self.width;
                 border-radius: Spacing.radius-full;
                 background: #ffffff;
-                border-width: 2.5px;
+                border-width: 3px;
                 border-color: !root.enabled ? Palette.border-strong :
                               touch.pressed ? Palette.accent-pressed : Palette.accent;
-                drop-shadow-blur: 4px;
-                drop-shadow-color: #00000033;
-                drop-shadow-offset-y: 1px;
+                drop-shadow-blur: touch.pressed ? 8px : 4px;
+                drop-shadow-color: #00000044;
+                drop-shadow-offset-y: 2px;
 
-                // Center thumb on track according to ratio
+                // Centered horizontally based on ratio
                 x: root.ratio * (parent.width - self.width);
                 y: (parent.height - self.height) / 2;
 
                 animate width, height, border-color { duration: 100ms; easing: ease-out; }
             }
 
+            // 4. Interactive Touch Drag Area
             touch := TouchArea {
                 mouse-cursor: root.enabled ? pointer : default;
+
+                pointer-event(event) => {
+                    if (root.enabled) {
+                        root.update-from-x(self.mouse-x, parent.width);
+                    }
+                }
 
                 moved => {
                     if (root.enabled && self.pressed) {
@@ -95,8 +103,8 @@ export component Slider {
     }
 
     function update-from-x(mouse-x: length, total-width: length) {
-        if (total-width > 18px) {
-            root.value = root.minimum + Math.clamp((mouse-x - 9px) / (total-width - 18px), 0.0, 1.0) * (root.maximum - root.minimum);
+        if (total-width > 20px && root.maximum > root.minimum) {
+            root.value = root.minimum + Math.clamp((mouse-x - 10px) / (total-width - 20px), 0.0, 1.0) * (root.maximum - root.minimum);
             root.changed(root.value);
         }
     }

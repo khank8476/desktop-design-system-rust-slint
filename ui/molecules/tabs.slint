@@ -23,15 +23,13 @@ export component SegmentedTabs {
             for tab[index] in root.tabs: tab-button := Rectangle {
                 border-radius: Spacing.radius-sm;
                 background: index == root.active-tab ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                            tab-touch.has-hover ? (Palette.dark-mode ? #1e293b77 : #ffffff77) :
+                            tab-touch.has-hover ? (Palette.dark-mode ? #1e293b88 : #ffffff99) :
                             transparent;
 
                 // Subtle shadow for the active segmented tab
-                drop-shadow-blur: index == root.active-tab ? 8px : 0px;
-                drop-shadow-color: #00000033;
-                drop-shadow-offset-y: index == root.active-tab ? 2px : 0px;
-
-                animate background { duration: 150ms; }
+                drop-shadow-blur: index == root.active-tab ? 6px : 0px;
+                drop-shadow-color: #00000022;
+                drop-shadow-offset-y: index == root.active-tab ? 1px : 0px;
 
                 HorizontalLayout {
                     padding-left: Spacing.space-md;
