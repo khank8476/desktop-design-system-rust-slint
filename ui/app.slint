@@ -50,7 +50,7 @@ export component AppWindow inherits Window {
 
     // Live Feed properties & callbacks
     in-out property <[FeedItem]> live-feed-items: [];
-    in-out property <bool> is-feed-paused: false;
+    in-out property <bool> is-feed-paused: true;
     callback toggle-feed-pause();
     callback clear-feed();
 
@@ -467,6 +467,7 @@ export component AppWindow inherits Window {
                                 }
                             }
 
+                            // Row 1: Stepper & Background Spinner (Clean responsive layout)
                             HorizontalLayout {
                                 spacing: Spacing.space-xl;
                                 alignment: start;
@@ -490,7 +491,7 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
-                                // Async Spinner with text
+                                // Async Rotating Spinner with text
                                 VerticalLayout {
                                     spacing: Spacing.space-xs;
                                     Text {
@@ -516,50 +517,50 @@ export component AppWindow inherits Window {
                                         }
                                     }
                                 }
+                            }
 
-                                // Interactive Tooltip Trigger
-                                VerticalLayout {
-                                    spacing: Spacing.space-xs;
-                                    Text {
-                                        text: "Contextual Hint Popover";
-                                        font-family: Typography.font-family;
-                                        font-size: Typography.size-sm;
-                                        color: Palette.text-primary;
-                                        font-weight: Typography.weight-medium;
+                            // Row 2: Contextual Tooltip Popover (Moved below for perfect responsiveness)
+                            VerticalLayout {
+                                spacing: Spacing.space-xs;
+                                Text {
+                                    text: "Contextual Hint Popover (Desktop Tooltip)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-sm;
+                                    color: Palette.text-primary;
+                                    font-weight: Typography.weight-medium;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    tip-card := Rectangle {
+                                        width: 140px;
+                                        height: 38px;
+                                        border-radius: Spacing.radius-md;
+                                        border-width: 1.5px;
+                                        border-color: tip-touch.has-hover ? Palette.accent : Palette.border-strong;
+                                        background: tip-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                        Text {
+                                            text: "Hover For Hint";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
+                                            horizontal-alignment: center;
+                                            vertical-alignment: center;
+                                        }
+
+                                        tip-touch := TouchArea {
+                                            mouse-cursor: pointer;
+                                        }
                                     }
 
-                                    HorizontalLayout {
-                                        spacing: Spacing.space-sm;
-                                        alignment: start;
-
-                                        tip-card := Rectangle {
-                                            width: 140px;
-                                            height: 38px;
-                                            border-radius: Spacing.radius-md;
-                                            border-width: 1.5px;
-                                            border-color: tip-touch.has-hover ? Palette.accent : Palette.border-strong;
-                                            background: tip-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
-
-                                            Text {
-                                                text: "Hover For Hint";
-                                                font-family: Typography.font-family;
-                                                font-size: Typography.size-sm;
-                                                font-weight: Typography.weight-medium;
-                                                color: Palette.text-primary;
-                                                horizontal-alignment: center;
-                                                vertical-alignment: center;
-                                            }
-
-                                            tip-touch := TouchArea {
-                                                mouse-cursor: pointer;
-                                            }
-                                        }
-
-                                        Tooltip {
-                                            text: "Direct GPU vector pipeline verified!";
-                                            is-visible: tip-touch.has-hover;
-                                            y: (parent.height - self.height) / 2;
-                                        }
+                                    Tooltip {
+                                        text: "Direct GPU vector pipeline verified!";
+                                        is-visible: tip-touch.has-hover;
+                                        y: (parent.height - self.height) / 2;
                                     }
                                 }
                             }

@@ -15,7 +15,6 @@ export component RadioButton {
         mouse-cursor: root.enabled ? pointer : default;
         clicked => {
             if (root.enabled) {
-                root.checked = true;
                 root.toggled();
             }
         }

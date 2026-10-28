@@ -4,6 +4,8 @@ export component Spinner {
     in property <length> size: 24px;
     in property <color> spinner-color: Palette.accent;
 
+    property <angle> rotation: mod(animation-tick() / 0.9s * 360deg, 360deg);
+
     width: root.size;
     height: root.size;
     horizontal-stretch: 0;
@@ -14,5 +16,6 @@ export component Spinner {
         width: root.size;
         height: root.size;
         colorize: root.spinner-color;
+        transform-rotation: root.rotation;
     }
 }
