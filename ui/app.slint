@@ -9,9 +9,13 @@ import { Checkbox } from "atoms/checkbox.slint";
 import { Badge } from "atoms/badge.slint";
 import { ProgressBar } from "atoms/progressbar.slint";
 import { Slider } from "atoms/slider.slint";
+import { RadioButton } from "atoms/radio.slint";
+import { Spinner } from "atoms/spinner.slint";
+import { Stepper } from "atoms/stepper.slint";
 import { AccordionItem } from "molecules/accordion.slint";
 import { Alert } from "molecules/alert.slint";
 import { SegmentedTabs } from "molecules/tabs.slint";
+import { Tooltip } from "molecules/tooltip.slint";
 import { ModalDialog } from "organisms/modal.slint";
 import { Dropdown } from "organisms/dropdown.slint";
 import { LiveFeedView, FeedItem } from "organisms/feed.slint";
@@ -38,6 +42,11 @@ export component AppWindow inherits Window {
     in-out property <bool> demo-chk-2: false;
     in-out property <bool> demo-chk-3: false;
     in-out property <bool> demo-indeterminate: true;
+
+    // Tier 2 Interactive Demo Properties
+    in-out property <int> demo-radio-sel: 0;
+    in-out property <int> demo-stepper-val: 16;
+    in-out property <bool> demo-tooltip-hover: false;
 
     // Live Feed properties & callbacks
     in-out property <[FeedItem]> live-feed-items: [];
@@ -388,7 +397,177 @@ export component AppWindow inherits Window {
 
                         Rectangle { height: 1px; background: Palette.border-subtle; }
 
-                        // 5. Molecules: Alerts
+                        // 5. Tier 2: Radio Groups & Mutually Exclusive Choices
+                        VerticalLayout {
+                            spacing: Spacing.space-md;
+
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text {
+                                    text: "Radio Selection & Options (Tier 2 Atoms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Accessible mutually exclusive selection with primary and secondary description text.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+
+                                RadioButton {
+                                    text: "DirectX 12 / Metal Hardware Pipeline";
+                                    description: "Maximum GPU throughput at 120 FPS native refresh rate.";
+                                    checked: root.demo-radio-sel == 0;
+                                    toggled => { root.demo-radio-sel = 0; }
+                                }
+
+                                RadioButton {
+                                    text: "Vulkan Cross-Platform Graphics";
+                                    description: "Unified shading engine optimized for multi-vendor desktop GPUs.";
+                                    checked: root.demo-radio-sel == 1;
+                                    toggled => { root.demo-radio-sel = 1; }
+                                }
+
+                                RadioButton {
+                                    text: "Low-Power Headless Software Rasterizer";
+                                    description: "Fallback CPU execution for background automation environments.";
+                                    checked: root.demo-radio-sel == 2;
+                                    toggled => { root.demo-radio-sel = 2; }
+                                }
+                            }
+                        }
+
+                        Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                        // 6. Tier 2: Steppers, Spinners & Tooltip Hints
+                        VerticalLayout {
+                            spacing: Spacing.space-md;
+
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text {
+                                    text: "Numeric Steppers, Spinners & Tooltips (Tier 2)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Precision value inputs, async activity spinners, and floating contextual hints.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-xl;
+                                alignment: start;
+
+                                // Stepper Control with unit
+                                VerticalLayout {
+                                    spacing: Spacing.space-xs;
+                                    Text {
+                                        text: "Typography Base Scale";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-sm;
+                                        color: Palette.text-primary;
+                                        font-weight: Typography.weight-medium;
+                                    }
+                                    Stepper {
+                                        value <=> root.demo-stepper-val;
+                                        minimum: 8;
+                                        maximum: 48;
+                                        step: 2;
+                                        unit: "px";
+                                    }
+                                }
+
+                                // Async Spinner with text
+                                VerticalLayout {
+                                    spacing: Spacing.space-xs;
+                                    Text {
+                                        text: "Background Compiler Status";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-sm;
+                                        color: Palette.text-primary;
+                                        font-weight: Typography.weight-medium;
+                                    }
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: start;
+                                        Spinner {
+                                            size: 22px;
+                                            spinner-color: Palette.accent;
+                                        }
+                                        Text {
+                                            text: "JIT Shaders compiling in background...";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+
+                                // Interactive Tooltip Trigger
+                                VerticalLayout {
+                                    spacing: Spacing.space-xs;
+                                    Text {
+                                        text: "Contextual Hint Popover";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-sm;
+                                        color: Palette.text-primary;
+                                        font-weight: Typography.weight-medium;
+                                    }
+
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: start;
+
+                                        tip-card := Rectangle {
+                                            width: 140px;
+                                            height: 38px;
+                                            border-radius: Spacing.radius-md;
+                                            border-width: 1.5px;
+                                            border-color: tip-touch.has-hover ? Palette.accent : Palette.border-strong;
+                                            background: tip-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                            Text {
+                                                text: "Hover For Hint";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-sm;
+                                                font-weight: Typography.weight-medium;
+                                                color: Palette.text-primary;
+                                                horizontal-alignment: center;
+                                                vertical-alignment: center;
+                                            }
+
+                                            tip-touch := TouchArea {
+                                                mouse-cursor: pointer;
+                                            }
+                                        }
+
+                                        Tooltip {
+                                            text: "Direct GPU vector pipeline verified!";
+                                            is-visible: tip-touch.has-hover;
+                                            y: (parent.height - self.height) / 2;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                        // 7. Molecules: Alerts
                         VerticalLayout {
                             spacing: Spacing.space-sm;
                             Text {

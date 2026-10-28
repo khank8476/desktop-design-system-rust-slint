@@ -1,0 +1,105 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Stepper {
+    in-out property <int> value: 1;
+    in property <int> minimum: 0;
+    in property <int> maximum: 100;
+    in property <int> step: 1;
+    in property <string> unit: "";
+    in property <bool> enabled: true;
+    callback changed(int);
+
+    height: 38px;
+    width: 140px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1.5px;
+        border-color: Palette.border-strong;
+        background: Palette.bg-surface;
+        clip: true;
+
+        HorizontalLayout {
+            // 1. Decrement Button (−)
+            dec-btn := Rectangle {
+                width: 36px;
+                background: !root.enabled || root.value <= root.minimum ? transparent :
+                            dec-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                Image {
+                    source: @image-url("../../assets/icons/minus.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: !root.enabled || root.value <= root.minimum ? Palette.text-placeholder : Palette.text-primary;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                dec-touch := TouchArea {
+                    mouse-cursor: !root.enabled || root.value <= root.minimum ? default : pointer;
+                    clicked => {
+                        if (root.enabled && root.value > root.minimum) {
+                            root.value = Math.max(root.minimum, root.value - root.step);
+                            root.changed(root.value);
+                        }
+                    }
+                }
+            }
+
+            // Divider
+            Rectangle {
+                width: 1px;
+                background: Palette.border-subtle;
+            }
+
+            // 2. Value Display
+            Rectangle {
+                horizontal-stretch: 1;
+                Text {
+                    text: root.unit != "" ? (root.value + " " + root.unit) : (root.value + "");
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    font-weight: Typography.weight-semibold;
+                    color: !root.enabled ? Palette.text-placeholder : Palette.text-primary;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Divider
+            Rectangle {
+                width: 1px;
+                background: Palette.border-subtle;
+            }
+
+            // 3. Increment Button (+)
+            inc-btn := Rectangle {
+                width: 36px;
+                background: !root.enabled || root.value >= root.maximum ? transparent :
+                            inc-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                Image {
+                    source: @image-url("../../assets/icons/plus.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: !root.enabled || root.value >= root.maximum ? Palette.text-placeholder : Palette.text-primary;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                inc-touch := TouchArea {
+                    mouse-cursor: !root.enabled || root.value >= root.maximum ? default : pointer;
+                    clicked => {
+                        if (root.enabled && root.value < root.maximum) {
+                            root.value = Math.min(root.maximum, root.value + root.step);
+                            root.changed(root.value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

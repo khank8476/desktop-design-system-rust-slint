@@ -65,24 +65,18 @@ export component Slider {
                 animate width, height, border-color { duration: 100ms; easing: ease-out; }
             }
 
-            // 4. Interactive Touch Drag Area
+            // 4. Interactive Touch Drag Area (Click & Drag only, no accidental hover moves)
             touch := TouchArea {
                 mouse-cursor: root.enabled ? pointer : default;
 
                 pointer-event(event) => {
-                    if (root.enabled) {
+                    if (root.enabled && event.kind == PointerEventKind.down) {
                         root.update-from-x(self.mouse-x, parent.width);
                     }
                 }
 
                 moved => {
                     if (root.enabled && self.pressed) {
-                        root.update-from-x(self.mouse-x, parent.width);
-                    }
-                }
-
-                clicked => {
-                    if (root.enabled) {
                         root.update-from-x(self.mouse-x, parent.width);
                     }
                 }

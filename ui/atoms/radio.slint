@@ -1,0 +1,70 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component RadioButton {
+    in-out property <bool> checked: false;
+    in property <string> text: "";
+    in property <string> description: "";
+    in property <bool> enabled: true;
+    callback toggled();
+
+    horizontal-stretch: 0;
+
+    touch := TouchArea {
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            if (root.enabled) {
+                root.checked = true;
+                root.toggled();
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Spacing.space-sm;
+            alignment: start;
+
+            // Outer Radio Ring (20x20 HiDPI)
+            ring := Rectangle {
+                width: 20px;
+                height: 20px;
+                y: root.description != "" ? 2px : (parent.height - self.height) / 2;
+                border-radius: Spacing.radius-full;
+                border-width: root.checked ? 2px : 1.5px;
+                border-color: !root.enabled ? Palette.border-subtle :
+                              root.checked ? Palette.accent :
+                              touch.has-hover ? Palette.accent : Palette.border-strong;
+                background: !root.enabled ? (Palette.dark-mode ? #1e293b55 : #f1f5f9) : Palette.bg-surface;
+
+                // Inner Accent Dot (10x10)
+                if root.checked: dot := Rectangle {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: Spacing.radius-full;
+                    background: !root.enabled ? Palette.border-strong : Palette.accent;
+                }
+            }
+
+            // Label & Secondary Hint
+            if root.text != "": VerticalLayout {
+                spacing: 1px;
+                alignment: center;
+
+                Text {
+                    text: root.text;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    font-weight: root.checked ? Typography.weight-semibold : Typography.weight-normal;
+                    color: !root.enabled ? Palette.text-placeholder : Palette.text-primary;
+                }
+
+                if root.description != "": Text {
+                    text: root.description;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    color: Palette.text-secondary;
+                }
+            }
+        }
+    }
+}

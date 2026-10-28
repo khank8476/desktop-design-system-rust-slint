@@ -34,11 +34,15 @@ ui/
 │   ├── checkbox.slint     # Checked, Unchecked, Indeterminate, Disabled
 │   ├── badge.slint        # Status pills with live indicator dots
 │   ├── progressbar.slint  # Determinate % fill bar with variants
-│   └── slider.slint       # Interactive draggable thumb value track
+│   ├── slider.slint       # Interactive draggable thumb value track
+│   ├── radio.slint        # Mutually exclusive selection with descriptions
+│   ├── spinner.slint      # Vector activity indicator loader
+│   └── stepper.slint      # Precision numeric input with +/- buttons
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
 │   ├── alert.slint        # Status banners with vector icons and dismiss
-│   └── tabs.slint         # Fluid segmented tabs control
+│   ├── tabs.slint         # Fluid segmented tabs control
+│   └── tooltip.slint      # Floating contextual hint popover
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── dropdown.slint     # Top-level PopupWindow with auto-dismiss
@@ -75,6 +79,10 @@ import {
     Badge,
     ProgressBar,
     Slider,
+    RadioButton,
+    Spinner,
+    Stepper,
+    Tooltip,
     ModalDialog, 
     Dropdown, 
     AccordionItem, 

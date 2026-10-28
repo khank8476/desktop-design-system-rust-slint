@@ -1,0 +1,39 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Tooltip {
+    in property <string> text: "Hint tooltip";
+    in property <bool> is-visible: false;
+
+    visible: root.is-visible;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-sm;
+        background: Palette.dark-mode ? #1e293b : #0f172a; // High-contrast desktop tooltip surface
+        border-width: 1px;
+        border-color: Palette.dark-mode ? #334155 : #1e293b;
+        drop-shadow-blur: 8px;
+        drop-shadow-color: #00000044;
+        drop-shadow-offset-y: 2px;
+
+        HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            alignment: center;
+
+            Text {
+                text: root.text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                font-weight: Typography.weight-medium;
+                color: #ffffff;
+                vertical-alignment: center;
+            }
+        }
+    }
+}

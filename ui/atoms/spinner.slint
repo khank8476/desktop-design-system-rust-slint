@@ -1,0 +1,18 @@
+import { Palette } from "../tokens/colors.slint";
+
+export component Spinner {
+    in property <length> size: 24px;
+    in property <color> spinner-color: Palette.accent;
+
+    width: root.size;
+    height: root.size;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+
+    Image {
+        source: @image-url("../../assets/icons/spinner.svg");
+        width: root.size;
+        height: root.size;
+        colorize: root.spinner-color;
+    }
+}
