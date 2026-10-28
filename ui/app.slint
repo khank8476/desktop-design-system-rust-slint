@@ -11,16 +11,18 @@ import { SegmentedTabs } from "molecules/tabs.slint";
 import { ModalDialog } from "organisms/modal.slint";
 import { Dropdown } from "organisms/dropdown.slint";
 import { LiveFeedView, FeedItem } from "organisms/feed.slint";
+import { DesktopSidebar } from "organisms/sidebar.slint";
+import { ToastNotification } from "organisms/toast.slint";
 
 export { Palette, FeedItem }
 
 export component AppWindow inherits Window {
     title: "Native Desktop Design System";
     icon: @image-url("../assets/app-icon.png");
-    min-width: 880px;
-    min-height: 640px;
-    preferred-width: 960px;
-    preferred-height: 740px;
+    min-width: 960px;
+    min-height: 680px;
+    preferred-width: 1080px;
+    preferred-height: 760px;
     background: Palette.bg-canvas;
 
     in-out property <bool> show-modal: false;
@@ -32,349 +34,356 @@ export component AppWindow inherits Window {
     callback toggle-feed-pause();
     callback clear-feed();
 
-    // 1. Main Scrollable Desktop Surface
-    ScrollView {
-        VerticalLayout {
-            padding: Spacing.space-xl;
-            spacing: Spacing.space-lg;
+    // Toast Notification properties & callbacks
+    in-out property <bool> toast-open: false;
+    in-out property <string> toast-title: "Settings Saved";
+    in-out property <string> toast-message: "Native preferences updated successfully.";
+    in-out property <string> toast-status: "success";
+    callback trigger-sample-toast(string, string, string); // (status, title, message)
 
-            // Header Navigation Bar with App Icon
-            HorizontalLayout {
-                alignment: space-between;
+    // Master Desktop Layout: Sidebar on Left + Content on Right
+    HorizontalLayout {
+        // 1. Collapsible Desktop Sidebar
+        sidebar := DesktopSidebar {
+            active-index <=> root.selected-tab;
+        }
+
+        // 2. Main Application Workspace
+        VerticalLayout {
+            horizontal-stretch: 1;
+
+            // Top Header Bar
+            Rectangle {
+                height: 64px;
+                background: Palette.bg-surface;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
 
                 HorizontalLayout {
-                    spacing: Spacing.space-md;
-                    alignment: center;
+                    padding-left: Spacing.space-xl;
+                    padding-right: Spacing.space-xl;
+                    alignment: space-between;
 
-                    Image {
-                        source: @image-url("../assets/app-icon.png");
-                        width: 44px;
-                        height: 44px;
-                    }
-
+                    // Active Section Title
                     VerticalLayout {
-                        spacing: 2px;
                         alignment: center;
+                        spacing: 2px;
 
                         Text {
-                            text: "Native Desktop Design System";
+                            text: root.selected-tab == 0 ? "Component Library Showcase" :
+                                  root.selected-tab == 1 ? "Live Telemetry & Activity Feed" :
+                                  root.selected-tab == 2 ? "Design Tokens & System Palette" :
+                                  "System Configuration";
                             font-family: Typography.font-family;
-                            font-size: Typography.size-2xl;
+                            font-size: Typography.size-xl;
                             font-weight: Typography.weight-bold;
                             color: Palette.text-primary;
                         }
                         Text {
-                            text: "Hardware-accelerated • Dynamic Dark/Light • HiDPI Retina Ready";
+                            text: "Pure Native Rust • 120 FPS GPU Engine • Multi-platform";
                             font-family: Typography.font-family;
-                            font-size: Typography.size-sm;
+                            font-size: Typography.size-xs;
                             color: Palette.text-secondary;
                         }
                     }
-                }
 
-                // Header Controls
-                HorizontalLayout {
-                    spacing: Spacing.space-md;
-                    alignment: center;
-
-                    Text {
-                        text: "Dark Mode";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-sm;
-                        font-weight: Typography.weight-medium;
-                        color: Palette.text-secondary;
-                        vertical-alignment: center;
-                    }
-
-                    ToggleSwitch {
-                        checked <=> Palette.dark-mode;
-                    }
-                }
-            }
-
-            // Phase 5: Segmented Navigation Tabs
-            SegmentedTabs {
-                tabs: ["Components Showcase", "Live Feed Stream", "Design Tokens Explorer"];
-                active-tab <=> root.selected-tab;
-            }
-
-            Rectangle {
-                height: 1px;
-                background: Palette.border-subtle;
-            }
-
-            // ==========================================
-            // TAB 0: COMPONENTS SHOWCASE
-            // ==========================================
-            if root.selected-tab == 0: VerticalLayout {
-                spacing: Spacing.space-lg;
-
-                // Desktop Organisms
-                VerticalLayout {
-                    spacing: Spacing.space-sm;
-
-                    Text {
-                        text: "Desktop Organisms (Modals & Dropdowns)";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                    }
-
+                    // Header Controls (Dark Mode Toggle + Quick Actions)
                     HorizontalLayout {
                         spacing: Spacing.space-md;
-                        alignment: start;
+                        alignment: center;
+
+                        Text {
+                            text: "Dark Mode";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            font-weight: Typography.weight-medium;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+
+                        ToggleSwitch {
+                            checked <=> Palette.dark-mode;
+                        }
+                    }
+                }
+            }
+
+            // Scrollable Active View Surface
+            ScrollView {
+                VerticalLayout {
+                    padding: Spacing.space-xl;
+                    spacing: Spacing.space-lg;
+
+                    // Segmented Tabs Bar
+                    SegmentedTabs {
+                        tabs: ["Components", "Live Feed", "Design Tokens", "System"];
+                        active-tab <=> root.selected-tab;
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Palette.border-subtle;
+                    }
+
+                    // ==========================================
+                    // TAB 0: COMPONENTS SHOWCASE
+                    // ==========================================
+                    if root.selected-tab == 0: VerticalLayout {
+                        spacing: Spacing.space-lg;
+
+                        // Desktop Organisms: Modals & Dropdowns & Toasts
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+
+                            Text {
+                                text: "Desktop Organisms (Modals, Dropdowns & Toasts)";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-md;
+                                alignment: start;
+
+                                Button {
+                                    text: "Launch Modal Dialog";
+                                    variant: "primary";
+                                    clicked => {
+                                        root.show-modal = true;
+                                    }
+                                }
+
+                                Dropdown {
+                                    width: 260px;
+                                    placeholder: "Select Density Profile...";
+                                }
+
+                                Button {
+                                    text: "Trigger Success Toast";
+                                    variant: "secondary";
+                                    clicked => {
+                                        root.trigger-sample-toast("success", "Build Succeeded", "Native Rust binary optimized and signed.");
+                                    }
+                                }
+
+                                Button {
+                                    text: "Trigger Warning Toast";
+                                    variant: "danger";
+                                    clicked => {
+                                        root.trigger-sample-toast("danger", "Process Warning", "Hardware GPU buffer spike detected.");
+                                    }
+                                }
+                            }
+                        }
+
+                        // Molecules: Alerts
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+                            Text {
+                                text: "Alerts & Notifications (Molecules)";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            Alert {
+                                status: "info";
+                                title: "Native Direct GPU Pipeline";
+                                message: "All native components are dynamically rendered via GPU with zero web overhead.";
+                            }
+                        }
+
+                        // Molecules: Accordions
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+                            Text {
+                                text: "Accordion Panels (Molecules)";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+
+                                AccordionItem {
+                                    title: "Why is hardware-accelerated desktop rendering faster?";
+                                    description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
+                                    expanded: true;
+                                }
+
+                                AccordionItem {
+                                    title: "How does the auto theme detection work?";
+                                    description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
+                                }
+                            }
+                        }
+
+                        // Atoms: Buttons
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+                            Text {
+                                text: "Buttons & Actions (Atoms)";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-md;
+                                Button { text: "Primary Action"; variant: "primary"; }
+                                Button { text: "Secondary"; variant: "secondary"; }
+                                Button { text: "Ghost Action"; variant: "ghost"; }
+                                Button { text: "Destructive"; variant: "danger"; }
+                                Button { text: "Disabled"; enabled: false; }
+                            }
+                        }
+
+                        // Atoms: Inputs
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+                            Text {
+                                text: "Inputs & Form Fields (Atoms)";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-md;
+                                TextInputField {
+                                    placeholder: "Search components or documentation...";
+                                }
+                                TextInputField {
+                                    placeholder: "Enter secret credentials...";
+                                    input-type: InputType.password;
+                                }
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // TAB 1: LIVE FEED SYSTEM
+                    // ==========================================
+                    if root.selected-tab == 1: VerticalLayout {
+                        spacing: Spacing.space-md;
+
+                        LiveFeedView {
+                            items: root.live-feed-items;
+                            is-paused: root.is-feed-paused;
+                            toggle-pause => { root.toggle-feed-pause(); }
+                            clear-feed => { root.clear-feed(); }
+                        }
+                    }
+
+                    // ==========================================
+                    // TAB 2: DESIGN TOKENS EXPLORER
+                    // ==========================================
+                    if root.selected-tab == 2: VerticalLayout {
+                        spacing: Spacing.space-lg;
+
+                        Text {
+                            text: "Design Tokens & System Palette";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-lg;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-primary;
+                        }
+
+                        // Color Swatches Grid
+                        HorizontalLayout {
+                            spacing: Spacing.space-md;
+
+                            Rectangle {
+                                height: 90px;
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-strong;
+                                background: Palette.bg-canvas;
+                                VerticalLayout {
+                                    padding: Spacing.space-sm;
+                                    alignment: space-between;
+                                    Text { text: "bg-canvas"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
+                                    Text { text: Palette.dark-mode ? "#0F172A" : "#F8FAFC"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 90px;
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-strong;
+                                background: Palette.bg-surface;
+                                VerticalLayout {
+                                    padding: Spacing.space-sm;
+                                    alignment: space-between;
+                                    Text { text: "bg-surface"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
+                                    Text { text: Palette.dark-mode ? "#1E293B" : "#FFFFFF"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 90px;
+                                border-radius: Spacing.radius-md;
+                                background: Palette.accent;
+                                VerticalLayout {
+                                    padding: Spacing.space-sm;
+                                    alignment: space-between;
+                                    Text { text: "accent"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                                    Text { text: "#3B82F6"; font-size: Typography.size-xs; color: #ffffffcc; }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 90px;
+                                border-radius: Spacing.radius-md;
+                                background: Palette.danger;
+                                VerticalLayout {
+                                    padding: Spacing.space-sm;
+                                    alignment: space-between;
+                                    Text { text: "danger"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                                    Text { text: "#EF4444"; font-size: Typography.size-xs; color: #ffffffcc; }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 90px;
+                                border-radius: Spacing.radius-md;
+                                background: Palette.success;
+                                VerticalLayout {
+                                    padding: Spacing.space-sm;
+                                    alignment: space-between;
+                                    Text { text: "success"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                                    Text { text: "#10B981"; font-size: Typography.size-xs; color: #ffffffcc; }
+                                }
+                            }
+                        }
+                    }
+
+                    // ==========================================
+                    // TAB 3: SYSTEM CONFIG
+                    // ==========================================
+                    if root.selected-tab == 3: VerticalLayout {
+                        spacing: Spacing.space-md;
+
+                        Alert {
+                            status: "success";
+                            title: "Hardware Environment Certified";
+                            message: "Operating System: Native 64-bit Desktop. Active Graphics API: Direct3D/Vulkan.";
+                        }
 
                         Button {
-                            text: "Launch Modal Dialog";
+                            text: "Export Standalone Distribution (.exe)";
                             variant: "primary";
                             clicked => {
                                 root.show-modal = true;
                             }
-                        }
-
-                        Dropdown {
-                            width: 280px;
-                            placeholder: "Select Density Profile...";
-                        }
-                    }
-                }
-
-                // Molecules: Alerts
-                VerticalLayout {
-                    spacing: Spacing.space-sm;
-                    Text {
-                        text: "Alerts & Notifications (Molecules)";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                    }
-
-                    Alert {
-                        status: "info";
-                        title: "Native Direct GPU Pipeline";
-                        message: "All native components are dynamically rendered via GPU with zero web overhead.";
-                    }
-                }
-
-                // Molecules: Accordions
-                VerticalLayout {
-                    spacing: Spacing.space-sm;
-                    Text {
-                        text: "Accordion Panels (Molecules)";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                    }
-
-                    VerticalLayout {
-                        spacing: Spacing.space-sm;
-
-                        AccordionItem {
-                            title: "Why is hardware-accelerated desktop rendering faster?";
-                            description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
-                            expanded: true;
-                        }
-
-                        AccordionItem {
-                            title: "How does the auto theme detection work?";
-                            description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
-                        }
-                    }
-                }
-
-                // Atoms: Buttons
-                VerticalLayout {
-                    spacing: Spacing.space-sm;
-                    Text {
-                        text: "Buttons & Actions (Atoms)";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                    }
-
-                    HorizontalLayout {
-                        spacing: Spacing.space-md;
-                        Button { text: "Primary Action"; variant: "primary"; }
-                        Button { text: "Secondary"; variant: "secondary"; }
-                        Button { text: "Ghost Action"; variant: "ghost"; }
-                        Button { text: "Destructive"; variant: "danger"; }
-                        Button { text: "Disabled"; enabled: false; }
-                    }
-                }
-
-                // Atoms: Inputs
-                VerticalLayout {
-                    spacing: Spacing.space-sm;
-                    Text {
-                        text: "Inputs & Form Fields (Atoms)";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                    }
-
-                    HorizontalLayout {
-                        spacing: Spacing.space-md;
-                        TextInputField {
-                            placeholder: "Search components or documentation...";
-                        }
-                        TextInputField {
-                            placeholder: "Enter secret credentials...";
-                            input-type: InputType.password;
-                        }
-                    }
-                }
-            }
-
-            // ==========================================
-            // TAB 1: LIVE FEED SYSTEM
-            // ==========================================
-            if root.selected-tab == 1: VerticalLayout {
-                spacing: Spacing.space-md;
-
-                LiveFeedView {
-                    items: root.live-feed-items;
-                    is-paused: root.is-feed-paused;
-                    toggle-pause => { root.toggle-feed-pause(); }
-                    clear-feed => { root.clear-feed(); }
-                }
-            }
-
-            // ==========================================
-            // TAB 2: DESIGN TOKENS EXPLORER
-            // ==========================================
-            if root.selected-tab == 2: VerticalLayout {
-                spacing: Spacing.space-lg;
-
-                Text {
-                    text: "Design Tokens & System Palette";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: Palette.text-primary;
-                }
-
-                // Color Swatches Grid
-                HorizontalLayout {
-                    spacing: Spacing.space-md;
-
-                    // Swatch 1: Canvas
-                    Rectangle {
-                        height: 90px;
-                        border-radius: Spacing.radius-md;
-                        border-width: 1px;
-                        border-color: Palette.border-strong;
-                        background: Palette.bg-canvas;
-
-                        VerticalLayout {
-                            padding: Spacing.space-sm;
-                            alignment: space-between;
-                            Text { text: "bg-canvas"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
-                            Text { text: Palette.dark-mode ? "#0F172A" : "#F8FAFC"; font-size: Typography.size-xs; color: Palette.text-secondary; }
-                        }
-                    }
-
-                    // Swatch 2: Surface
-                    Rectangle {
-                        height: 90px;
-                        border-radius: Spacing.radius-md;
-                        border-width: 1px;
-                        border-color: Palette.border-strong;
-                        background: Palette.bg-surface;
-
-                        VerticalLayout {
-                            padding: Spacing.space-sm;
-                            alignment: space-between;
-                            Text { text: "bg-surface"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
-                            Text { text: Palette.dark-mode ? "#1E293B" : "#FFFFFF"; font-size: Typography.size-xs; color: Palette.text-secondary; }
-                        }
-                    }
-
-                    // Swatch 3: Accent
-                    Rectangle {
-                        height: 90px;
-                        border-radius: Spacing.radius-md;
-                        background: Palette.accent;
-
-                        VerticalLayout {
-                            padding: Spacing.space-sm;
-                            alignment: space-between;
-                            Text { text: "accent"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
-                            Text { text: "#3B82F6"; font-size: Typography.size-xs; color: #ffffffcc; }
-                        }
-                    }
-
-                    // Swatch 4: Danger
-                    Rectangle {
-                        height: 90px;
-                        border-radius: Spacing.radius-md;
-                        background: Palette.danger;
-
-                        VerticalLayout {
-                            padding: Spacing.space-sm;
-                            alignment: space-between;
-                            Text { text: "danger"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
-                            Text { text: "#EF4444"; font-size: Typography.size-xs; color: #ffffffcc; }
-                        }
-                    }
-
-                    // Swatch 5: Success
-                    Rectangle {
-                        height: 90px;
-                        border-radius: Spacing.radius-md;
-                        background: Palette.success;
-
-                        VerticalLayout {
-                            padding: Spacing.space-sm;
-                            alignment: space-between;
-                            Text { text: "success"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
-                            Text { text: "#10B981"; font-size: Typography.size-xs; color: #ffffffcc; }
-                        }
-                    }
-                }
-
-                // Typography Scales Preview
-                Rectangle {
-                    border-radius: Spacing.radius-md;
-                    border-width: 1px;
-                    border-color: Palette.border-subtle;
-                    background: Palette.bg-surface;
-
-                    VerticalLayout {
-                        padding: Spacing.space-md;
-                        spacing: Spacing.space-sm;
-
-                        Text { text: "Typography Scale (Calibrated for High-DPI)"; font-size: Typography.size-base; font-weight: Typography.weight-bold; color: Palette.text-primary; }
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        HorizontalLayout {
-                            alignment: space-between;
-                            Text { text: "Headline 2XL (28px)"; font-size: Typography.size-2xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
-                            Text { text: "Typography.size-2xl"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
-                        }
-                        HorizontalLayout {
-                            alignment: space-between;
-                            Text { text: "Title XL (23px)"; font-size: Typography.size-xl; font-weight: Typography.weight-semibold; color: Palette.text-primary; }
-                            Text { text: "Typography.size-xl"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
-                        }
-                        HorizontalLayout {
-                            alignment: space-between;
-                            Text { text: "Section LG (19px)"; font-size: Typography.size-lg; font-weight: Typography.weight-medium; color: Palette.text-primary; }
-                            Text { text: "Typography.size-lg"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
-                        }
-                        HorizontalLayout {
-                            alignment: space-between;
-                            Text { text: "Body Base (16px)"; font-size: Typography.size-base; color: Palette.text-primary; }
-                            Text { text: "Typography.size-base"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
-                        }
-                        HorizontalLayout {
-                            alignment: space-between;
-                            Text { text: "Caption SM (15px)"; font-size: Typography.size-sm; color: Palette.text-secondary; }
-                            Text { text: "Typography.size-sm"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
                         }
                     }
                 }
@@ -389,5 +398,18 @@ export component AppWindow inherits Window {
         message: "Are you sure you want to package this desktop design system? All component tokens, atomic styles, and molecules will be compiled into your standalone distribution.";
         confirm-text: "Export Standalone";
         confirm-variant: "primary";
+        confirmed => {
+            root.trigger-sample-toast("success", "Export Completed", "Distribution binary verified and packaged in target/release/.");
+        }
+    }
+
+    // Floating Toast Notification (Anchored to bottom-right corner)
+    toast := ToastNotification {
+        x: root.width - self.width - 24px;
+        y: root.height - self.height - 24px;
+        is-open <=> root.toast-open;
+        title: root.toast-title;
+        message: root.toast-message;
+        status: root.toast-status;
     }
 }

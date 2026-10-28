@@ -36,7 +36,9 @@ ui/
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── dropdown.slint     # Top-level PopupWindow with auto-dismiss
-│   └── feed.slint         # Live streaming telemetry event feed
+│   ├── feed.slint         # Live streaming telemetry event feed
+│   ├── sidebar.slint      # Collapsible desktop master-detail navigation sidebar
+│   └── toast.slint        # Floating auto-dismissing toast notification
 └── app.slint              # Interactive component showcase window
 ```
 
@@ -83,6 +85,8 @@ Install the official **Slint** extension in VS Code. Open any `.slint` file and 
 | **Organism** | `ModalDialog` | High-elevation dialog window with dimmed backdrop and click-outside dismiss. |
 | **Organism** | `Dropdown` | Native `PopupWindow` selector that floats above all layout stacks. |
 | **Organism** | `LiveFeedView` | Real-time streaming desktop event cards with live counter & pause controls. |
+| **Organism** | `DesktopSidebar` | Collapsible desktop navigation bar (230px full view / 68px icon rail). |
+| **Organism** | `ToastNotification` | Elevated floating notification with 3.5s auto-dismiss countdown & animations. |
 
 ---
 

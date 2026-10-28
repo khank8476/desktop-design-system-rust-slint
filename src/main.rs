@@ -2,6 +2,8 @@
 #![windows_subsystem = "windows"]
 
 use slint::Model;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 slint::include_modules!();
 
@@ -18,7 +20,7 @@ fn main() -> Result<(), slint::PlatformError> {
     app.global::<Palette>().set_dark_mode(is_dark_os);
 
     // 3. Setup Live Feed Telemetry System
-    let feed_items = std::rc::Rc::new(slint::VecModel::<FeedItem>::default());
+    let feed_items = Rc::new(slint::VecModel::<FeedItem>::default());
 
     // Push initial startup events
     feed_items.push(FeedItem {
@@ -51,7 +53,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // 4. Live Feed Background Event Generator (Streams events in real-time)
     let feed_timer_handle = feed_items.clone();
-    let app_weak = app.as_weak();
+    let app_weak_timer = app.as_weak();
     let timer = slint::Timer::default();
     let mut event_count = 4;
 
@@ -59,7 +61,7 @@ fn main() -> Result<(), slint::PlatformError> {
         slint::TimerMode::Repeated,
         std::time::Duration::from_millis(1800),
         move || {
-            if let Some(app) = app_weak.upgrade() {
+            if let Some(app) = app_weak_timer.upgrade() {
                 if app.get_is_feed_paused() {
                     return;
                 }
@@ -118,7 +120,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     },
                 );
 
-                // Keep feed bounded to latest 40 items to conserve memory
+                // Keep feed bounded to latest 40 items
                 if feed_timer_handle.row_count() > 40 {
                     feed_timer_handle.remove(40);
                 }
@@ -128,7 +130,7 @@ fn main() -> Result<(), slint::PlatformError> {
         },
     );
 
-    // 5. Connect UI Callbacks
+    // 5. Connect Feed Callbacks
     let app_weak_pause = app.as_weak();
     app.on_toggle_feed_pause(move || {
         if let Some(app) = app_weak_pause.upgrade() {
@@ -142,9 +144,35 @@ fn main() -> Result<(), slint::PlatformError> {
         feed_clear_handle.set_vec(vec![]);
     });
 
-    // Keep the timer alive for the entire lifespan of the application
-    let _timer_ref = &timer;
+    // 6. Connect Toast Notification Trigger with Auto-Dismiss Timer
+    let toast_timer = Rc::new(RefCell::new(slint::Timer::default()));
+    let toast_timer_clone = toast_timer.clone();
+    let app_weak_toast = app.as_weak();
 
-    // 6. Start the native desktop event loop
+    app.on_trigger_sample_toast(move |status, title, message| {
+        if let Some(app) = app_weak_toast.upgrade() {
+            app.set_toast_status(status);
+            app.set_toast_title(title);
+            app.set_toast_message(message);
+            app.set_toast_open(true);
+
+            // Auto-dismiss toast after 3.5 seconds
+            let app_weak_dismiss = app.as_weak();
+            toast_timer_clone.borrow_mut().start(
+                slint::TimerMode::SingleShot,
+                std::time::Duration::from_millis(3500),
+                move || {
+                    if let Some(app) = app_weak_dismiss.upgrade() {
+                        app.set_toast_open(false);
+                    }
+                },
+            );
+        }
+    });
+
+    // Keep active timers alive for application lifespan
+    let _timer_ref = (&timer, &toast_timer);
+
+    // 7. Start the native desktop event loop
     app.run()
 }

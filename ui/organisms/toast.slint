@@ -1,0 +1,116 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component ToastNotification {
+    in property <string> title: "Action Succeeded";
+    in property <string> message: "Native component library was exported to disk.";
+    in property <string> status: "success"; // "success" | "info" | "warning" | "danger"
+    in-out property <bool> is-open: false;
+    callback closed();
+
+    width: 360px;
+    height: toast-card.preferred-height;
+
+    // Smooth Slide & Fade transitions
+    opacity: root.is-open ? 1.0 : 0.0;
+    visible: root.opacity > 0.01;
+    animate opacity { duration: 180ms; easing: ease-out; }
+
+    toast-card := Rectangle {
+        border-radius: Spacing.radius-lg;
+        border-width: 1px;
+        border-color: root.status == "danger" ? #ef444488 :
+                     root.status == "success" ? #10b98188 :
+                     root.status == "warning" ? #f59e0b88 :
+                     #3b82f688;
+
+        background: Palette.dark-mode ? #1e293b : #ffffff; // 100% Solid Opaque
+        drop-shadow-blur: 24px;
+        drop-shadow-color: #00000066;
+        drop-shadow-offset-y: 6px;
+
+        HorizontalLayout {
+            padding: Spacing.space-md;
+            spacing: Spacing.space-md;
+            alignment: space-between;
+
+            // Icon + Content
+            HorizontalLayout {
+                spacing: Spacing.space-md;
+                horizontal-stretch: 1;
+
+                // Status Icon Badge
+                Rectangle {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: Spacing.radius-full;
+                    background: root.status == "danger" ? Palette.danger :
+                                root.status == "success" ? Palette.success :
+                                root.status == "warning" ? #f59e0b :
+                                Palette.accent;
+
+                    Text {
+                        text: root.status == "danger" ? "×" :
+                              root.status == "success" ? "✓" :
+                              root.status == "warning" ? "!" : "i";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        font-weight: Typography.weight-bold;
+                        color: #ffffff;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Text Stack
+                VerticalLayout {
+                    spacing: 2px;
+                    horizontal-stretch: 1;
+
+                    Text {
+                        text: root.title;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                    }
+
+                    Text {
+                        text: root.message;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        color: Palette.text-secondary;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // Close button (×)
+            close-area := Rectangle {
+                width: 24px;
+                height: 24px;
+                border-radius: Spacing.radius-sm;
+                background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                Text {
+                    text: "×";
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-semibold;
+                    color: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                close-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.is-open = false;
+                        root.closed();
+                    }
+                }
+            }
+        }
+    }
+}
+
