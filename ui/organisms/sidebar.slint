@@ -22,8 +22,10 @@ export component DesktopSidebar {
             padding: Spacing.space-md;
             spacing: Spacing.space-md;
 
-            // 1. Sidebar Brand Header (Perfect vertical alignment)
+            // 1. Sidebar Brand Header (Fixed height, strictly pinned to top)
             HorizontalLayout {
+                height: 42px;
+                vertical-stretch: 0;
                 spacing: Spacing.space-sm;
                 alignment: start;
 
@@ -59,13 +61,15 @@ export component DesktopSidebar {
 
             Rectangle {
                 height: 1px;
+                vertical-stretch: 0;
                 background: Palette.border-subtle;
             }
 
-            // 2. Navigation Items List (Icons and Text in a single aligned horizontal line)
+            // 2. Navigation Items List (Anchored to top, icons and text in single line)
             VerticalLayout {
                 spacing: 6px;
                 vertical-stretch: 1;
+                alignment: start;
 
                 // Item 0: Components
                 nav-0 := Rectangle {
@@ -264,14 +268,16 @@ export component DesktopSidebar {
                 }
             }
 
-            // 3. Bottom Collapse Toggle Button (Perfect vertical alignment)
+            // 3. Bottom Collapse Toggle Button (Anchored to bottom)
             Rectangle {
                 height: 1px;
+                vertical-stretch: 0;
                 background: Palette.border-subtle;
             }
 
             collapse-btn := Rectangle {
                 height: 40px;
+                vertical-stretch: 0;
                 border-radius: Spacing.radius-md;
                 background: collapse-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
