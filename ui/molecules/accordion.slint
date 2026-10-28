@@ -36,12 +36,16 @@ export component AccordionItem {
                         vertical-alignment: center;
                     }
 
-                    // Chevron Indicator
-                    Text {
-                        text: root.expanded ? "▲" : "▼";
-                        font-size: Typography.size-xs;
-                        color: Palette.text-secondary;
-                        vertical-alignment: center;
+                    // Vector Chevron Indicator (Perfect vertical centering)
+                    VerticalLayout {
+                        alignment: center;
+                        width: 14px;
+                        Image {
+                            source: root.expanded ? @image-url("../../assets/icons/chevron-up.svg") : @image-url("../../assets/icons/chevron-down.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: Palette.text-secondary;
+                        }
                     }
                 }
 

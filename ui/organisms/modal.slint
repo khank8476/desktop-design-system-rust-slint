@@ -72,18 +72,18 @@ export component ModalDialog {
                         }
                     }
 
-                    // Native Close Button
+                    // Native Vector Close Button
                     close-btn := Rectangle {
                         width: 28px;
                         height: 28px;
                         border-radius: Spacing.radius-sm;
                         background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
-                        Text {
-                            text: "×";
-                            font-size: Typography.size-xl;
-                            font-weight: Typography.weight-semibold;
-                            color: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                        Image {
+                            source: @image-url("../../assets/icons/close.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
                             horizontal-alignment: center;
                             vertical-alignment: center;
                         }

@@ -42,13 +42,16 @@ export component Dropdown {
                 vertical-alignment: center;
             }
 
-            // Universal Chevrons
-            Text {
-                text: "▼";
-                font-size: 11px;
-                font-weight: Typography.weight-bold;
-                color: Palette.text-secondary;
-                vertical-alignment: center;
+            // Vector Chevron Icon (Perfect vertical centering)
+            VerticalLayout {
+                alignment: center;
+                width: 14px;
+                Image {
+                    source: @image-url("../../assets/icons/chevron-down.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: Palette.text-secondary;
+                }
             }
         }
 
@@ -98,11 +101,11 @@ export component Dropdown {
                             vertical-alignment: center;
                         }
 
-                        if item.id == root.selected-id: Text {
-                            text: "✓";
-                            font-size: Typography.size-sm;
-                            font-weight: Typography.weight-bold;
-                            color: Palette.accent;
+                        if item.id == root.selected-id: Image {
+                            source: @image-url("../../assets/icons/check.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: Palette.accent;
                             vertical-alignment: center;
                         }
                     }

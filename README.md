@@ -12,8 +12,9 @@ A hardware-accelerated, pure native desktop design system built with **Rust** an
 - **🎨 Reactive Design Tokens**: Unified design tokens for colors, typography, and spacing.
 - **🌓 Automatic OS Dark/Light Detection**: Real-time operating system theme detection (queries Windows Registry, macOS Appearance, and Linux FreeDesktop portals).
 - **🖥️ HiDPI & Retina-Ready**: Calibrated typography scaling and subpixel antialiasing using direct GPU vector rendering (DirectX / Metal / Vulkan).
-- **🪟 Smart Desktop Window Management**: Dynamic multi-monitor work-area awareness respecting system taskbars.
-- **🧩 Atomic Design Architecture**: Modular and reusable component hierarchy (Atoms, Molecules, Organisms).
+- **🪟 Collapsible Master-Detail Navigation**: Responsive 250px full sidebar to 68px compact icon rail with GPU-smooth animations.
+- **🧩 Reusable Library Architecture (Phase 6)**: Dual-target crate (both an interactive executable app and a reusable library for other desktop software).
+- **🔔 Floating Toasts & Live Stream**: Real-time background telemetry feed and non-intrusive corner toast notifications.
 
 ---
 
@@ -21,6 +22,7 @@ A hardware-accelerated, pure native desktop design system built with **Rust** an
 
 ```
 ui/
+├── index.slint            # Centralized library entrypoint (Phase 6 export barrel)
 ├── tokens/
 │   ├── colors.slint       # Reactive Light & Dark mode palette
 │   ├── typography.slint   # Desktop-density font scales & weights
@@ -31,7 +33,7 @@ ui/
 │   └── toggle.slint       # Smooth animated slider switch
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
-│   ├── alert.slint        # Status banners (info, success, warning, danger)
+│   ├── alert.slint        # Status banners with vector icons and dismiss
 │   └── tabs.slint         # Fluid segmented tabs control
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
@@ -44,19 +46,67 @@ ui/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Phase 6: How to Use in Another Desktop Project
 
-### Prerequisites
-- Install **Rust** (Cargo & Rustc 1.80+) from [https://rustup.rs/](https://rustup.rs/)
+Because this repository is structured as a dual **library and binary crate**, you can import this entire design system into any other native Rust desktop project with **a single line**!
 
-### Development
-To launch the application in development mode:
+### 1. Add to your project's `Cargo.toml`:
+```toml
+[dependencies]
+# Import from local path or GitHub:
+desktop-design-system = { path = "../path/to/desktop-design-system" }
+# Or via Git:
+# desktop-design-system = { git = "https://github.com/your-username/desktop-design-system" }
+
+slint = "1.9"
+```
+
+### 2. Import into your own `.slint` file:
+```slint
+import { 
+    Button, 
+    TextInputField, 
+    ToggleSwitch, 
+    ModalDialog, 
+    Dropdown, 
+    AccordionItem, 
+    ToastNotification, 
+    Palette 
+} from "desktop-design-system/ui/index.slint";
+
+export component MyAppWindow inherits Window {
+    title: "My Custom Desktop Software";
+    background: Palette.bg-canvas;
+
+    Button {
+        text: "Click Me";
+        variant: "primary";
+    }
+}
+```
+
+### 3. Initialize in your `main.rs`:
+```rust
+use desktop_design_system::is_system_dark_mode;
+
+fn main() -> Result<(), slint::PlatformError> {
+    let app = MyAppWindow::new()?;
+    // Auto-detect OS dark mode and apply tokens:
+    app.global::<Palette>().set_dark_mode(is_system_dark_mode());
+    app.run()
+}
+```
+
+---
+
+## 🛠️ Development & Building
+
+### Run the Interactive Component Showcase
 ```powershell
 cargo run
 ```
 
-### Production Release Build
-To generate an optimized, standalone distribution executable:
+### Production Release Build (Sub-8 MB)
 ```powershell
 cargo build --release
 ```
@@ -64,33 +114,9 @@ The resulting single `.exe` file is located at:
 ```
 target/release/desktop-design-system.exe
 ```
-This binary can be shared and run directly on any Windows machine without requiring Rust, Node, Python, or external installers.
-
-### Live Preview in VS Code
-Install the official **Slint** extension in VS Code. Open any `.slint` file and click the **Slint Preview icon** in the top-right corner for instant, sub-millisecond Hot Reloading without recompiling.
-
----
-
-## 📐 Atomic Hierarchy Overview
-
-| Level | Component | Description |
-| :--- | :--- | :--- |
-| **Tokens** | `Palette`, `Typography`, `Spacing` | Centralized styles that cascade automatically on theme change. |
-| **Atom** | `Button` | 4 variants (`primary`, `secondary`, `ghost`, `danger`) with animated hover/press transitions. |
-| **Atom** | `TextInputField` | Single-line text & password input with animated focus ring. |
-| **Atom** | `ToggleSwitch` | Fluid toggle switch wired to application states. |
-| **Molecule** | `AccordionItem` | Collapsible panels with rotating chevrons and smooth GPU clipping. |
-| **Molecule** | `Alert` | Contextual alert banners with dismiss button and status badges. |
-| **Molecule** | `SegmentedTabs` | Smooth segmented tab pill controller with animated selection. |
-| **Organism** | `ModalDialog` | High-elevation dialog window with dimmed backdrop and click-outside dismiss. |
-| **Organism** | `Dropdown` | Native `PopupWindow` selector that floats above all layout stacks. |
-| **Organism** | `LiveFeedView` | Real-time streaming desktop event cards with live counter & pause controls. |
-| **Organism** | `DesktopSidebar` | Collapsible desktop navigation bar (230px full view / 68px icon rail). |
-| **Organism** | `ToastNotification` | Elevated floating notification with 3.5s auto-dismiss countdown & animations. |
 
 ---
 
 ## 📄 License
 
 MIT License. Free for personal and commercial use.
-

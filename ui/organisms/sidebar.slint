@@ -2,31 +2,19 @@ import { Palette } from "../tokens/colors.slint";
 import { Typography } from "../tokens/typography.slint";
 import { Spacing } from "../tokens/spacing.slint";
 
-export struct NavItemData {
-    id: string,
-    label: string,
-    icon: string,
-}
-
 export component DesktopSidebar {
     in-out property <bool> collapsed: false;
     in-out property <int> active-index: 0;
-    in property <[NavItemData]> nav-items: [
-        { id: "showcase", label: "Component Library", icon: "❖" },
-        { id: "feed", label: "Live Telemetry Feed", icon: "⚡" },
-        { id: "tokens", label: "Design Tokens", icon: "🎨" },
-        { id: "settings", label: "System Config", icon: "⚙" }
-    ];
 
     callback nav-changed(int);
     callback toggle-collapse();
 
-    width: root.collapsed ? 68px : 230px;
+    width: root.collapsed ? 68px : 250px;
     animate width { duration: 180ms; easing: ease-out; }
 
     Rectangle {
-        clip: true; // Keeps elements inside during width animation
-        background: Palette.dark-mode ? #090d16 : #f1f5f9; // Distinct desktop sidebar surface
+        clip: true; // Keeps elements neatly inside during width animation
+        background: Palette.dark-mode ? #090d16 : #f1f5f9;
         border-width: 1px;
         border-color: Palette.border-subtle;
 
@@ -34,15 +22,19 @@ export component DesktopSidebar {
             padding: Spacing.space-md;
             spacing: Spacing.space-md;
 
-            // 1. Sidebar Brand Header
+            // 1. Sidebar Brand Header (Perfect vertical alignment)
             HorizontalLayout {
                 spacing: Spacing.space-sm;
                 alignment: start;
 
-                Image {
-                    source: @image-url("../../assets/app-icon.png");
+                VerticalLayout {
+                    alignment: center;
                     width: 32px;
-                    height: 32px;
+                    Image {
+                        source: @image-url("../../assets/app-icon.png");
+                        width: 32px;
+                        height: 32px;
+                    }
                 }
 
                 if !root.collapsed: VerticalLayout {
@@ -70,23 +62,20 @@ export component DesktopSidebar {
                 background: Palette.border-subtle;
             }
 
-            // 2. Navigation Items List
+            // 2. Navigation Items List (Icons and Text in a single aligned horizontal line)
             VerticalLayout {
-                spacing: 4px;
+                spacing: 6px;
                 vertical-stretch: 1;
 
-                for item[idx] in root.nav-items: nav-btn := Rectangle {
-                    height: 42px;
+                // Item 0: Components
+                nav-0 := Rectangle {
+                    height: 44px;
                     border-radius: Spacing.radius-md;
-                    background: idx == root.active-index ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                                item-touch.has-hover ? (Palette.dark-mode ? #1e293b66 : #ffffff88) :
-                                transparent;
-
-                    // Subtle active indicator shadow
-                    drop-shadow-blur: idx == root.active-index ? 6px : 0px;
+                    background: root.active-index == 0 ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                                touch-0.has-hover ? (Palette.dark-mode ? #1e293b66 : #ffffff88) : transparent;
+                    drop-shadow-blur: root.active-index == 0 ? 6px : 0px;
                     drop-shadow-color: #00000022;
                     drop-shadow-offset-y: 1px;
-
                     animate background { duration: 120ms; }
 
                     HorizontalLayout {
@@ -95,44 +84,194 @@ export component DesktopSidebar {
                         spacing: Spacing.space-md;
                         alignment: root.collapsed ? center : start;
 
-                        // Icon Glyph
-                        Text {
-                            text: item.icon;
-                            font-size: Typography.size-base;
-                            color: idx == root.active-index ? Palette.accent : Palette.text-secondary;
-                            vertical-alignment: center;
-                            horizontal-alignment: center;
+                        VerticalLayout {
+                            alignment: center;
+                            width: 20px;
+                            Image {
+                                source: @image-url("../../assets/icons/components.svg");
+                                width: 18px;
+                                height: 18px;
+                                colorize: root.active-index == 0 ? Palette.accent : Palette.text-secondary;
+                            }
                         }
 
-                        // Label (hidden smoothly when collapsed)
-                        if !root.collapsed: Text {
-                            text: item.label;
-                            font-family: Typography.font-family;
-                            font-size: Typography.size-base;
-                            font-weight: idx == root.active-index ? Typography.weight-semibold : Typography.weight-normal;
-                            color: idx == root.active-index ? Palette.text-primary : Palette.text-secondary;
-                            vertical-alignment: center;
+                        if !root.collapsed: VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "Component Library";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: root.active-index == 0 ? Typography.weight-semibold : Typography.weight-normal;
+                                color: root.active-index == 0 ? Palette.text-primary : Palette.text-secondary;
+                            }
                         }
                     }
 
-                    item-touch := TouchArea {
+                    touch-0 := TouchArea {
                         mouse-cursor: pointer;
                         clicked => {
-                            root.active-index = idx;
-                            root.nav-changed(idx);
+                            root.active-index = 0;
+                            root.nav-changed(0);
+                        }
+                    }
+                }
+
+                // Item 1: Telemetry Live Feed
+                nav-1 := Rectangle {
+                    height: 44px;
+                    border-radius: Spacing.radius-md;
+                    background: root.active-index == 1 ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                                touch-1.has-hover ? (Palette.dark-mode ? #1e293b66 : #ffffff88) : transparent;
+                    drop-shadow-blur: root.active-index == 1 ? 6px : 0px;
+                    drop-shadow-color: #00000022;
+                    drop-shadow-offset-y: 1px;
+                    animate background { duration: 120ms; }
+
+                    HorizontalLayout {
+                        padding-left: root.collapsed ? 0px : Spacing.space-md;
+                        padding-right: root.collapsed ? 0px : Spacing.space-md;
+                        spacing: Spacing.space-md;
+                        alignment: root.collapsed ? center : start;
+
+                        VerticalLayout {
+                            alignment: center;
+                            width: 20px;
+                            Image {
+                                source: @image-url("../../assets/icons/telemetry.svg");
+                                width: 18px;
+                                height: 18px;
+                                colorize: root.active-index == 1 ? Palette.accent : Palette.text-secondary;
+                            }
+                        }
+
+                        if !root.collapsed: VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "Live Telemetry";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: root.active-index == 1 ? Typography.weight-semibold : Typography.weight-normal;
+                                color: root.active-index == 1 ? Palette.text-primary : Palette.text-secondary;
+                            }
+                        }
+                    }
+
+                    touch-1 := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.active-index = 1;
+                            root.nav-changed(1);
+                        }
+                    }
+                }
+
+                // Item 2: Design Tokens
+                nav-2 := Rectangle {
+                    height: 44px;
+                    border-radius: Spacing.radius-md;
+                    background: root.active-index == 2 ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                                touch-2.has-hover ? (Palette.dark-mode ? #1e293b66 : #ffffff88) : transparent;
+                    drop-shadow-blur: root.active-index == 2 ? 6px : 0px;
+                    drop-shadow-color: #00000022;
+                    drop-shadow-offset-y: 1px;
+                    animate background { duration: 120ms; }
+
+                    HorizontalLayout {
+                        padding-left: root.collapsed ? 0px : Spacing.space-md;
+                        padding-right: root.collapsed ? 0px : Spacing.space-md;
+                        spacing: Spacing.space-md;
+                        alignment: root.collapsed ? center : start;
+
+                        VerticalLayout {
+                            alignment: center;
+                            width: 20px;
+                            Image {
+                                source: @image-url("../../assets/icons/tokens.svg");
+                                width: 18px;
+                                height: 18px;
+                                colorize: root.active-index == 2 ? Palette.accent : Palette.text-secondary;
+                            }
+                        }
+
+                        if !root.collapsed: VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "Design Tokens";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: root.active-index == 2 ? Typography.weight-semibold : Typography.weight-normal;
+                                color: root.active-index == 2 ? Palette.text-primary : Palette.text-secondary;
+                            }
+                        }
+                    }
+
+                    touch-2 := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.active-index = 2;
+                            root.nav-changed(2);
+                        }
+                    }
+                }
+
+                // Item 3: System Config
+                nav-3 := Rectangle {
+                    height: 44px;
+                    border-radius: Spacing.radius-md;
+                    background: root.active-index == 3 ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                                touch-3.has-hover ? (Palette.dark-mode ? #1e293b66 : #ffffff88) : transparent;
+                    drop-shadow-blur: root.active-index == 3 ? 6px : 0px;
+                    drop-shadow-color: #00000022;
+                    drop-shadow-offset-y: 1px;
+                    animate background { duration: 120ms; }
+
+                    HorizontalLayout {
+                        padding-left: root.collapsed ? 0px : Spacing.space-md;
+                        padding-right: root.collapsed ? 0px : Spacing.space-md;
+                        spacing: Spacing.space-md;
+                        alignment: root.collapsed ? center : start;
+
+                        VerticalLayout {
+                            alignment: center;
+                            width: 20px;
+                            Image {
+                                source: @image-url("../../assets/icons/settings.svg");
+                                width: 18px;
+                                height: 18px;
+                                colorize: root.active-index == 3 ? Palette.accent : Palette.text-secondary;
+                            }
+                        }
+
+                        if !root.collapsed: VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: "System Config";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: root.active-index == 3 ? Typography.weight-semibold : Typography.weight-normal;
+                                color: root.active-index == 3 ? Palette.text-primary : Palette.text-secondary;
+                            }
+                        }
+                    }
+
+                    touch-3 := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.active-index = 3;
+                            root.nav-changed(3);
                         }
                     }
                 }
             }
 
-            // 3. Bottom Collapse Toggle Button
+            // 3. Bottom Collapse Toggle Button (Perfect vertical alignment)
             Rectangle {
                 height: 1px;
                 background: Palette.border-subtle;
             }
 
             collapse-btn := Rectangle {
-                height: 38px;
+                height: 40px;
                 border-radius: Spacing.radius-md;
                 background: collapse-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
@@ -142,20 +281,25 @@ export component DesktopSidebar {
                     spacing: Spacing.space-md;
                     alignment: root.collapsed ? center : start;
 
-                    Text {
-                        text: root.collapsed ? "▶" : "◀";
-                        font-size: Typography.size-sm;
-                        color: Palette.text-secondary;
-                        vertical-alignment: center;
-                        horizontal-alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        width: 16px;
+                        Image {
+                            source: root.collapsed ? @image-url("../../assets/icons/chevron-right.svg") : @image-url("../../assets/icons/chevron-left.svg");
+                            width: 16px;
+                            height: 16px;
+                            colorize: Palette.text-secondary;
+                        }
                     }
 
-                    if !root.collapsed: Text {
-                        text: "Collapse Sidebar";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-sm;
-                        color: Palette.text-secondary;
-                        vertical-alignment: center;
+                    if !root.collapsed: VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: "Collapse Sidebar";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            color: Palette.text-secondary;
+                        }
                     }
                 }
 
@@ -170,4 +314,3 @@ export component DesktopSidebar {
         }
     }
 }
-

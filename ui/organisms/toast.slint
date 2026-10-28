@@ -40,24 +40,24 @@ export component ToastNotification {
                 spacing: Spacing.space-md;
                 horizontal-stretch: 1;
 
-                // Status Icon Badge
+                // Status Icon Badge (Vector SVG)
                 Rectangle {
-                    width: 28px;
-                    height: 28px;
+                    width: 30px;
+                    height: 30px;
                     border-radius: Spacing.radius-full;
                     background: root.status == "danger" ? Palette.danger :
                                 root.status == "success" ? Palette.success :
                                 root.status == "warning" ? #f59e0b :
                                 Palette.accent;
 
-                    Text {
-                        text: root.status == "danger" ? "×" :
-                              root.status == "success" ? "✓" :
-                              root.status == "warning" ? "!" : "i";
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-sm;
-                        font-weight: Typography.weight-bold;
-                        color: #ffffff;
+                    Image {
+                        source: root.status == "danger" ? @image-url("../../assets/icons/close.svg") :
+                                root.status == "success" ? @image-url("../../assets/icons/check.svg") :
+                                root.status == "warning" ? @image-url("../../assets/icons/alert.svg") :
+                                @image-url("../../assets/icons/info.svg");
+                        width: 16px;
+                        height: 16px;
+                        colorize: #ffffff;
                         horizontal-alignment: center;
                         vertical-alignment: center;
                     }
@@ -86,18 +86,18 @@ export component ToastNotification {
                 }
             }
 
-            // Close button (×)
+            // Vector Close Button
             close-area := Rectangle {
-                width: 24px;
-                height: 24px;
+                width: 26px;
+                height: 26px;
                 border-radius: Spacing.radius-sm;
                 background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
-                Text {
-                    text: "×";
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                Image {
+                    source: @image-url("../../assets/icons/close.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
                     horizontal-alignment: center;
                     vertical-alignment: center;
                 }
@@ -113,4 +113,3 @@ export component ToastNotification {
         }
     }
 }
-
