@@ -1,0 +1,62 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component SegmentedTabs {
+    in property <[string]> tabs: ["Showcase", "Live Feed", "Tokens"];
+    in-out property <int> active-tab: 0;
+    callback tab-selected(int);
+
+    height: 42px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.dark-mode ? #0f172a : #e2e8f0; // Subtle track background
+
+        HorizontalLayout {
+            padding: 3px;
+            spacing: 4px;
+
+            for tab[index] in root.tabs: tab-button := Rectangle {
+                border-radius: Spacing.radius-sm;
+                background: index == root.active-tab ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                            tab-touch.has-hover ? (Palette.dark-mode ? #1e293b77 : #ffffff77) :
+                            transparent;
+
+                // Subtle shadow for the active segmented tab
+                drop-shadow-blur: index == root.active-tab ? 8px : 0px;
+                drop-shadow-color: #00000033;
+                drop-shadow-offset-y: index == root.active-tab ? 2px : 0px;
+
+                animate background { duration: 150ms; }
+
+                HorizontalLayout {
+                    padding-left: Spacing.space-md;
+                    padding-right: Spacing.space-md;
+                    alignment: center;
+
+                    Text {
+                        text: tab;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: index == root.active-tab ? Typography.weight-semibold : Typography.weight-medium;
+                        color: index == root.active-tab ? Palette.text-primary : Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                tab-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.active-tab = index;
+                        root.tab-selected(index);
+                    }
+                }
+            }
+        }
+    }
+}
+

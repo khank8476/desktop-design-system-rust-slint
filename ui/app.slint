@@ -7,21 +7,30 @@ import { TextInputField } from "atoms/input.slint";
 import { ToggleSwitch } from "atoms/toggle.slint";
 import { AccordionItem } from "molecules/accordion.slint";
 import { Alert } from "molecules/alert.slint";
+import { SegmentedTabs } from "molecules/tabs.slint";
 import { ModalDialog } from "organisms/modal.slint";
 import { Dropdown } from "organisms/dropdown.slint";
+import { LiveFeedView, FeedItem } from "organisms/feed.slint";
 
-export { Palette }
+export { Palette, FeedItem }
 
 export component AppWindow inherits Window {
     title: "Native Desktop Design System";
     icon: @image-url("../assets/app-icon.png");
     min-width: 880px;
-    min-height: 620px;
-    preferred-width: 940px;
-    preferred-height: 720px;
+    min-height: 640px;
+    preferred-width: 960px;
+    preferred-height: 740px;
     background: Palette.bg-canvas;
 
     in-out property <bool> show-modal: false;
+    in-out property <int> selected-tab: 0;
+
+    // Live Feed properties & callbacks
+    in-out property <[FeedItem]> live-feed-items: [];
+    in-out property <bool> is-feed-paused: false;
+    callback toggle-feed-pause();
+    callback clear-feed();
 
     // 1. Main Scrollable Desktop Surface
     ScrollView {
@@ -29,7 +38,7 @@ export component AppWindow inherits Window {
             padding: Spacing.space-xl;
             spacing: Spacing.space-lg;
 
-            // Header Navigation Bar with Custom App Icon
+            // Header Navigation Bar with App Icon
             HorizontalLayout {
                 alignment: space-between;
 
@@ -37,7 +46,6 @@ export component AppWindow inherits Window {
                     spacing: Spacing.space-md;
                     alignment: center;
 
-                    // Custom Desktop App Icon
                     Image {
                         source: @image-url("../assets/app-icon.png");
                         width: 44px;
@@ -84,139 +92,297 @@ export component AppWindow inherits Window {
                 }
             }
 
+            // Phase 5: Segmented Navigation Tabs
+            SegmentedTabs {
+                tabs: ["Components Showcase", "Live Feed Stream", "Design Tokens Explorer"];
+                active-tab <=> root.selected-tab;
+            }
+
             Rectangle {
                 height: 1px;
                 background: Palette.border-subtle;
             }
 
-            // Organisms Section: Modals & Dropdowns
-            VerticalLayout {
-                spacing: Spacing.space-sm;
+            // ==========================================
+            // TAB 0: COMPONENTS SHOWCASE
+            // ==========================================
+            if root.selected-tab == 0: VerticalLayout {
+                spacing: Spacing.space-lg;
 
-                Text {
-                    text: "Desktop Organisms (Modals & Dropdowns)";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: Palette.text-primary;
-                }
-
-                HorizontalLayout {
-                    spacing: Spacing.space-md;
-                    alignment: start;
-
-                    Button {
-                        text: "Launch Modal Dialog";
-                        variant: "primary";
-                        clicked => {
-                            root.show-modal = true;
-                        }
-                    }
-
-                    Dropdown {
-                        width: 280px;
-                        placeholder: "Select Density Profile...";
-                    }
-                }
-            }
-
-            // Molecule Section: Alerts
-            VerticalLayout {
-                spacing: Spacing.space-sm;
-                Text {
-                    text: "Alerts & Notifications (Molecules)";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: Palette.text-primary;
-                }
-
-                Alert {
-                    status: "info";
-                    title: "Native Direct GPU Pipeline";
-                    message: "All native components are dynamically rendered via GPU with zero web overhead.";
-                }
-            }
-
-            // Molecule Section: Accordions
-            VerticalLayout {
-                spacing: Spacing.space-sm;
-                Text {
-                    text: "Accordion Panels (Molecules)";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: Palette.text-primary;
-                }
-
+                // Desktop Organisms
                 VerticalLayout {
                     spacing: Spacing.space-sm;
 
-                    AccordionItem {
-                        title: "Why is hardware-accelerated desktop rendering faster?";
-                        description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
-                        expanded: true;
+                    Text {
+                        text: "Desktop Organisms (Modals & Dropdowns)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
                     }
 
-                    AccordionItem {
-                        title: "How does the auto theme detection work?";
-                        description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        alignment: start;
+
+                        Button {
+                            text: "Launch Modal Dialog";
+                            variant: "primary";
+                            clicked => {
+                                root.show-modal = true;
+                            }
+                        }
+
+                        Dropdown {
+                            width: 280px;
+                            placeholder: "Select Density Profile...";
+                        }
+                    }
+                }
+
+                // Molecules: Alerts
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+                    Text {
+                        text: "Alerts & Notifications (Molecules)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
                     }
 
-                    AccordionItem {
-                        title: "How does screen centering calculate monitor DPI?";
-                        description: "Windows DWM automatically positions your window using optimal OS viewport metrics, ensuring clean rendering across multi-monitor setups.";
+                    Alert {
+                        status: "info";
+                        title: "Native Direct GPU Pipeline";
+                        message: "All native components are dynamically rendered via GPU with zero web overhead.";
+                    }
+                }
+
+                // Molecules: Accordions
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+                    Text {
+                        text: "Accordion Panels (Molecules)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                    }
+
+                    VerticalLayout {
+                        spacing: Spacing.space-sm;
+
+                        AccordionItem {
+                            title: "Why is hardware-accelerated desktop rendering faster?";
+                            description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
+                            expanded: true;
+                        }
+
+                        AccordionItem {
+                            title: "How does the auto theme detection work?";
+                            description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
+                        }
+                    }
+                }
+
+                // Atoms: Buttons
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+                    Text {
+                        text: "Buttons & Actions (Atoms)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        Button { text: "Primary Action"; variant: "primary"; }
+                        Button { text: "Secondary"; variant: "secondary"; }
+                        Button { text: "Ghost Action"; variant: "ghost"; }
+                        Button { text: "Destructive"; variant: "danger"; }
+                        Button { text: "Disabled"; enabled: false; }
+                    }
+                }
+
+                // Atoms: Inputs
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+                    Text {
+                        text: "Inputs & Form Fields (Atoms)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        TextInputField {
+                            placeholder: "Search components or documentation...";
+                        }
+                        TextInputField {
+                            placeholder: "Enter secret credentials...";
+                            input-type: InputType.password;
+                        }
                     }
                 }
             }
 
-            // Atom Section: Buttons
-            VerticalLayout {
-                spacing: Spacing.space-sm;
+            // ==========================================
+            // TAB 1: LIVE FEED SYSTEM
+            // ==========================================
+            if root.selected-tab == 1: VerticalLayout {
+                spacing: Spacing.space-md;
+
+                LiveFeedView {
+                    items: root.live-feed-items;
+                    is-paused: root.is-feed-paused;
+                    toggle-pause => { root.toggle-feed-pause(); }
+                    clear-feed => { root.clear-feed(); }
+                }
+            }
+
+            // ==========================================
+            // TAB 2: DESIGN TOKENS EXPLORER
+            // ==========================================
+            if root.selected-tab == 2: VerticalLayout {
+                spacing: Spacing.space-lg;
+
                 Text {
-                    text: "Buttons & Actions (Atoms)";
+                    text: "Design Tokens & System Palette";
                     font-family: Typography.font-family;
                     font-size: Typography.size-lg;
                     font-weight: Typography.weight-semibold;
                     color: Palette.text-primary;
                 }
 
+                // Color Swatches Grid
                 HorizontalLayout {
                     spacing: Spacing.space-md;
-                    Button { text: "Primary Action"; variant: "primary"; }
-                    Button { text: "Secondary"; variant: "secondary"; }
-                    Button { text: "Ghost Action"; variant: "ghost"; }
-                    Button { text: "Destructive"; variant: "danger"; }
-                    Button { text: "Disabled"; enabled: false; }
-                }
-            }
 
-            // Atom Section: Inputs
-            VerticalLayout {
-                spacing: Spacing.space-sm;
-                Text {
-                    text: "Inputs & Form Fields (Atoms)";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-lg;
-                    font-weight: Typography.weight-semibold;
-                    color: Palette.text-primary;
-                }
+                    // Swatch 1: Canvas
+                    Rectangle {
+                        height: 90px;
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-strong;
+                        background: Palette.bg-canvas;
 
-                HorizontalLayout {
-                    spacing: Spacing.space-md;
-                    TextInputField {
-                        placeholder: "Search components or documentation...";
+                        VerticalLayout {
+                            padding: Spacing.space-sm;
+                            alignment: space-between;
+                            Text { text: "bg-canvas"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
+                            Text { text: Palette.dark-mode ? "#0F172A" : "#F8FAFC"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                        }
                     }
-                    TextInputField {
-                        placeholder: "Enter secret credentials...";
-                        input-type: InputType.password;
+
+                    // Swatch 2: Surface
+                    Rectangle {
+                        height: 90px;
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-strong;
+                        background: Palette.bg-surface;
+
+                        VerticalLayout {
+                            padding: Spacing.space-sm;
+                            alignment: space-between;
+                            Text { text: "bg-surface"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
+                            Text { text: Palette.dark-mode ? "#1E293B" : "#FFFFFF"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                        }
+                    }
+
+                    // Swatch 3: Accent
+                    Rectangle {
+                        height: 90px;
+                        border-radius: Spacing.radius-md;
+                        background: Palette.accent;
+
+                        VerticalLayout {
+                            padding: Spacing.space-sm;
+                            alignment: space-between;
+                            Text { text: "accent"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                            Text { text: "#3B82F6"; font-size: Typography.size-xs; color: #ffffffcc; }
+                        }
+                    }
+
+                    // Swatch 4: Danger
+                    Rectangle {
+                        height: 90px;
+                        border-radius: Spacing.radius-md;
+                        background: Palette.danger;
+
+                        VerticalLayout {
+                            padding: Spacing.space-sm;
+                            alignment: space-between;
+                            Text { text: "danger"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                            Text { text: "#EF4444"; font-size: Typography.size-xs; color: #ffffffcc; }
+                        }
+                    }
+
+                    // Swatch 5: Success
+                    Rectangle {
+                        height: 90px;
+                        border-radius: Spacing.radius-md;
+                        background: Palette.success;
+
+                        VerticalLayout {
+                            padding: Spacing.space-sm;
+                            alignment: space-between;
+                            Text { text: "success"; font-size: Typography.size-sm; color: #ffffff; font-weight: Typography.weight-bold; }
+                            Text { text: "#10B981"; font-size: Typography.size-xs; color: #ffffffcc; }
+                        }
+                    }
+                }
+
+                // Typography Scales Preview
+                Rectangle {
+                    border-radius: Spacing.radius-md;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+                    background: Palette.bg-surface;
+
+                    VerticalLayout {
+                        padding: Spacing.space-md;
+                        spacing: Spacing.space-sm;
+
+                        Text { text: "Typography Scale (Calibrated for High-DPI)"; font-size: Typography.size-base; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                        Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Headline 2XL (28px)"; font-size: Typography.size-2xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                            Text { text: "Typography.size-2xl"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Title XL (23px)"; font-size: Typography.size-xl; font-weight: Typography.weight-semibold; color: Palette.text-primary; }
+                            Text { text: "Typography.size-xl"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Section LG (19px)"; font-size: Typography.size-lg; font-weight: Typography.weight-medium; color: Palette.text-primary; }
+                            Text { text: "Typography.size-lg"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Body Base (16px)"; font-size: Typography.size-base; color: Palette.text-primary; }
+                            Text { text: "Typography.size-base"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
+                        }
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Caption SM (15px)"; font-size: Typography.size-sm; color: Palette.text-secondary; }
+                            Text { text: "Typography.size-sm"; font-size: Typography.size-sm; color: Palette.text-secondary; vertical-alignment: center; }
+                        }
                     }
                 }
             }
         }
     }
 
-    // 2. Organism: Modal Dialog Overlay (100% Solid Opaque Card centered on dimmed screen)
+    // Modal Dialog Overlay
     ModalDialog {
         is-open <=> root.show-modal;
         title: "Export Native Component Library";

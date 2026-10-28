@@ -1,0 +1,193 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+
+export struct FeedItem {
+    id: string,
+    timestamp: string,
+    level: string, // "info" | "success" | "warning" | "error"
+    title: string,
+    message: string,
+}
+
+export component LiveFeedView {
+    in property <[FeedItem]> items: [];
+    in-out property <bool> is-paused: false;
+    callback toggle-pause();
+    callback clear-feed();
+
+    VerticalLayout {
+        spacing: Spacing.space-md;
+
+        // 1. Live Feed Header & Control Bar
+        HorizontalLayout {
+            alignment: space-between;
+
+            HorizontalLayout {
+                spacing: Spacing.space-sm;
+                alignment: center;
+
+                // Pulsing Green "LIVE" indicator
+                Rectangle {
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 5px;
+                    background: root.is-paused ? #f59e0b : #10b981;
+                }
+
+                Text {
+                    text: root.is-paused ? "PAUSED" : "LIVE STREAM";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    font-weight: Typography.weight-bold;
+                    color: root.is-paused ? #f59e0b : #10b981;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: "• " + root.items.length + " Events Recorded";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    color: Palette.text-secondary;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Feed Actions (Pause / Clear)
+            HorizontalLayout {
+                spacing: Spacing.space-sm;
+
+                Button {
+                    text: root.is-paused ? "▶ Resume Stream" : "⏸ Pause Stream";
+                    variant: "secondary";
+                    clicked => {
+                        root.toggle-pause();
+                    }
+                }
+
+                Button {
+                    text: "Clear Feed";
+                    variant: "ghost";
+                    clicked => {
+                        root.clear-feed();
+                    }
+                }
+            }
+        }
+
+        // 2. Feed Cards List
+        if root.items.length == 0: Rectangle {
+            height: 180px;
+            border-radius: Spacing.radius-md;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
+            background: Palette.dark-mode ? #1e293b55 : #ffffff55;
+
+            VerticalLayout {
+                alignment: center;
+                spacing: Spacing.space-xs;
+
+                Text {
+                    text: "No events recorded yet";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    font-weight: Typography.weight-medium;
+                    color: Palette.text-secondary;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Incoming native system events will stream live into this view";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    color: Palette.text-placeholder;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+
+        if root.items.length > 0: VerticalLayout {
+            spacing: Spacing.space-sm;
+
+            for item in root.items: item-card := Rectangle {
+                border-radius: Spacing.radius-md;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.dark-mode ? #1e293b : #ffffff;
+                drop-shadow-blur: 4px;
+                drop-shadow-color: #00000015;
+                drop-shadow-offset-y: 1px;
+
+                HorizontalLayout {
+                    padding: Spacing.space-md;
+                    spacing: Spacing.space-md;
+                    alignment: space-between;
+
+                    // Left Indicator Stripe + Content
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        horizontal-stretch: 1;
+
+                        // Level pill
+                        Rectangle {
+                            width: 60px;
+                            height: 24px;
+                            border-radius: Spacing.radius-sm;
+                            background: item.level == "error" ? #ef444422 :
+                                        item.level == "warning" ? #f59e0b22 :
+                                        item.level == "success" ? #10b98122 :
+                                        #3b82f622;
+
+                            Text {
+                                text: item.level == "error" ? "ERROR" :
+                                      item.level == "warning" ? "WARN" :
+                                      item.level == "success" ? "OK" : "INFO";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-bold;
+                                color: item.level == "error" ? Palette.danger :
+                                       item.level == "warning" ? #f59e0b :
+                                       item.level == "success" ? Palette.success :
+                                       Palette.accent;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Title & Message Stack
+                        VerticalLayout {
+                            spacing: 2px;
+                            horizontal-stretch: 1;
+
+                            Text {
+                                text: item.title;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-primary;
+                            }
+
+                            Text {
+                                text: item.message;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                color: Palette.text-secondary;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+
+                    // Timestamp on right
+                    Text {
+                        text: item.timestamp;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        color: Palette.text-placeholder;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}
+

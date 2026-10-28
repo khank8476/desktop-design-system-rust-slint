@@ -31,10 +31,12 @@ ui/
 │   └── toggle.slint       # Smooth animated slider switch
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
-│   └── alert.slint        # Status banners (info, success, warning, danger)
+│   ├── alert.slint        # Status banners (info, success, warning, danger)
+│   └── tabs.slint         # Fluid segmented tabs control
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
-│   └── dropdown.slint     # Top-level PopupWindow with auto-dismiss
+│   ├── dropdown.slint     # Top-level PopupWindow with auto-dismiss
+│   └── feed.slint         # Live streaming telemetry event feed
 └── app.slint              # Interactive component showcase window
 ```
 
@@ -77,8 +79,10 @@ Install the official **Slint** extension in VS Code. Open any `.slint` file and 
 | **Atom** | `ToggleSwitch` | Fluid toggle switch wired to application states. |
 | **Molecule** | `AccordionItem` | Collapsible panels with rotating chevrons and smooth GPU clipping. |
 | **Molecule** | `Alert` | Contextual alert banners with dismiss button and status badges. |
+| **Molecule** | `SegmentedTabs` | Smooth segmented tab pill controller with animated selection. |
 | **Organism** | `ModalDialog` | High-elevation dialog window with dimmed backdrop and click-outside dismiss. |
 | **Organism** | `Dropdown` | Native `PopupWindow` selector that floats above all layout stacks. |
+| **Organism** | `LiveFeedView` | Real-time streaming desktop event cards with live counter & pause controls. |
 
 ---
 
