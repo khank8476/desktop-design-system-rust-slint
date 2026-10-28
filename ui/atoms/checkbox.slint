@@ -1,0 +1,77 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Checkbox {
+    in-out property <bool> checked: false;
+    in-out property <bool> indeterminate: false;
+    in property <string> text: "";
+    in property <bool> enabled: true;
+    callback toggled(bool);
+
+    height: 24px;
+    horizontal-stretch: 0;
+
+    touch := TouchArea {
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            if (root.enabled) {
+                if (root.indeterminate) {
+                    root.indeterminate = false;
+                    root.checked = true;
+                } else {
+                    root.checked = !root.checked;
+                }
+                root.toggled(root.checked);
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Spacing.space-sm;
+            alignment: start;
+
+            // Checkbox Box (20x20 HiDPI)
+            box := Rectangle {
+                width: 20px;
+                height: 20px;
+                y: (parent.height - self.height) / 2;
+                border-radius: Spacing.radius-sm;
+                border-width: 1.5px;
+                border-color: !root.enabled ? Palette.border-subtle :
+                              (root.checked || root.indeterminate) ? Palette.accent :
+                              touch.has-hover ? Palette.accent : Palette.border-strong;
+                background: !root.enabled ? (Palette.dark-mode ? #1e293b55 : #f1f5f9) :
+                            (root.checked || root.indeterminate) ? Palette.accent :
+                            touch.has-hover ? (Palette.dark-mode ? #33415544 : #f1f5f9) : Palette.bg-surface;
+
+                animate background, border-color { duration: 120ms; easing: ease-out; }
+
+                // 1. Checked State: Vector SVG Checkmark
+                if root.checked && !root.indeterminate: Image {
+                    source: @image-url("../../assets/icons/check.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: #ffffff;
+                }
+
+                // 2. Indeterminate State: Clean White Centered Dash
+                if root.indeterminate: Rectangle {
+                    width: 10px;
+                    height: 2.5px;
+                    border-radius: 1px;
+                    background: #ffffff;
+                }
+            }
+
+            // Optional Label Text
+            if root.text != "": Text {
+                text: root.text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-base;
+                font-weight: Typography.weight-normal;
+                color: !root.enabled ? Palette.text-placeholder : Palette.text-primary;
+                vertical-alignment: center;
+            }
+        }
+    }
+}

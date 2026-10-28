@@ -1,0 +1,103 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Slider {
+    in-out property <float> value: 50.0;
+    in property <float> minimum: 0.0;
+    in property <float> maximum: 100.0;
+    in property <bool> enabled: true;
+    in property <bool> show-value: false;
+    callback changed(float);
+
+    height: 28px;
+    horizontal-stretch: 1;
+
+    // Ratio from 0.0 to 1.0
+    property <float> ratio: root.maximum > root.minimum ?
+        Math.clamp((root.value - root.minimum) / (root.maximum - root.minimum), 0.0, 1.0) : 0.0;
+
+    HorizontalLayout {
+        spacing: Spacing.space-sm;
+        alignment: center;
+
+        container := Rectangle {
+            height: 28px;
+            horizontal-stretch: 1;
+
+            // Track Background
+            track := Rectangle {
+                height: 6px;
+                y: (parent.height - self.height) / 2;
+                border-radius: Spacing.radius-full;
+                background: Palette.dark-mode ? #1e293b : #e2e8f0;
+                clip: true;
+
+                // Active Filled Track
+                fill := Rectangle {
+                    x: 0px;
+                    y: 0px;
+                    height: parent.height;
+                    width: root.ratio * parent.width;
+                    border-radius: Spacing.radius-full;
+                    background: !root.enabled ? Palette.border-strong : Palette.accent;
+                }
+            }
+
+            // Draggable Thumb Circle (18x18 with shadow)
+            thumb := Rectangle {
+                width: touch.has-hover ? 20px : 18px;
+                height: self.width;
+                border-radius: Spacing.radius-full;
+                background: #ffffff;
+                border-width: 2.5px;
+                border-color: !root.enabled ? Palette.border-strong :
+                              touch.pressed ? Palette.accent-pressed : Palette.accent;
+                drop-shadow-blur: 4px;
+                drop-shadow-color: #00000033;
+                drop-shadow-offset-y: 1px;
+
+                // Center thumb on track according to ratio
+                x: root.ratio * (parent.width - self.width);
+                y: (parent.height - self.height) / 2;
+
+                animate width, height, border-color { duration: 100ms; easing: ease-out; }
+            }
+
+            touch := TouchArea {
+                mouse-cursor: root.enabled ? pointer : default;
+
+                moved => {
+                    if (root.enabled && self.pressed) {
+                        root.update-from-x(self.mouse-x, parent.width);
+                    }
+                }
+
+                clicked => {
+                    if (root.enabled) {
+                        root.update-from-x(self.mouse-x, parent.width);
+                    }
+                }
+            }
+        }
+
+        // Optional Live Value Readout
+        if root.show-value: Text {
+            text: Math.round(root.value) + "";
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            font-weight: Typography.weight-semibold;
+            color: Palette.text-secondary;
+            min-width: 32px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+
+    function update-from-x(mouse-x: length, total-width: length) {
+        if (total-width > 18px) {
+            root.value = root.minimum + Math.clamp((mouse-x - 9px) / (total-width - 18px), 0.0, 1.0) * (root.maximum - root.minimum);
+            root.changed(root.value);
+        }
+    }
+}

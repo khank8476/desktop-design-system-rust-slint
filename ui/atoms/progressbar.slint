@@ -1,0 +1,54 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component ProgressBar {
+    in property <float> progress: 0.0; // Range: 0.0 to 1.0
+    in property <bool> indeterminate: false;
+    in property <string> variant: "primary"; // "primary", "success", "danger"
+    in property <bool> show-label: false;
+    in property <length> bar-height: 8px;
+
+    height: root.show-label ? 24px : root.bar-height;
+    horizontal-stretch: 1;
+
+    HorizontalLayout {
+        spacing: Spacing.space-sm;
+        alignment: center;
+
+        // Progress Track
+        track := Rectangle {
+            height: root.bar-height;
+            horizontal-stretch: 1;
+            border-radius: Spacing.radius-full;
+            background: Palette.dark-mode ? #1e293b : #e2e8f0;
+            clip: true;
+
+            // Determinate / Active Fill
+            fill := Rectangle {
+                x: 0px;
+                y: 0px;
+                height: parent.height;
+                width: Math.clamp(root.progress, 0.0, 1.0) * parent.width;
+                border-radius: Spacing.radius-full;
+                background: root.variant == "success" ? Palette.success :
+                            root.variant == "danger"  ? Palette.danger :
+                            Palette.accent;
+
+                animate width { duration: 200ms; easing: ease-out; }
+            }
+        }
+
+        // Optional Percentage Text Label
+        if root.show-label: Text {
+            text: Math.round(Math.clamp(root.progress, 0.0, 1.0) * 100) + "%";
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            font-weight: Typography.weight-semibold;
+            color: Palette.text-secondary;
+            min-width: 36px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+}

@@ -30,7 +30,11 @@ ui/
 ├── atoms/
 │   ├── button.slint       # Primary, Secondary, Ghost, Danger states
 │   ├── input.slint        # Focus rings, placeholder, password masking
-│   └── toggle.slint       # Smooth animated slider switch
+│   ├── toggle.slint       # Smooth animated slider switch
+│   ├── checkbox.slint     # Checked, Unchecked, Indeterminate, Disabled
+│   ├── badge.slint        # Status pills with live indicator dots
+│   ├── progressbar.slint  # Determinate % fill bar with variants
+│   └── slider.slint       # Interactive draggable thumb value track
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
 │   ├── alert.slint        # Status banners with vector icons and dismiss
@@ -67,6 +71,10 @@ import {
     Button, 
     TextInputField, 
     ToggleSwitch, 
+    Checkbox,
+    Badge,
+    ProgressBar,
+    Slider,
     ModalDialog, 
     Dropdown, 
     AccordionItem, 

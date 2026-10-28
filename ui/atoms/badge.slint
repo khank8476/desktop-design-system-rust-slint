@@ -1,0 +1,61 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Badge {
+    in property <string> text: "Active";
+    in property <string> variant: "primary"; // "primary", "success", "warning", "danger", "neutral"
+    in property <bool> has-dot: false;
+
+    height: 24px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-full;
+        border-width: 1px;
+        border-color: root.variant == "success" ? (Palette.dark-mode ? #05966966 : #a7f3d0) :
+                      root.variant == "warning" ? (Palette.dark-mode ? #d9770666 : #fde68a) :
+                      root.variant == "danger"  ? (Palette.dark-mode ? #dc262666 : #fecaca) :
+                      root.variant == "neutral" ? (Palette.dark-mode ? #47556966 : #e2e8f0) :
+                      (Palette.dark-mode ? #2563eb66 : #bfdbfe); // Primary / Accent
+
+        background: root.variant == "success" ? (Palette.dark-mode ? #05966928 : #ecfdf5) :
+                    root.variant == "warning" ? (Palette.dark-mode ? #d9770628 : #fffbeb) :
+                    root.variant == "danger"  ? (Palette.dark-mode ? #dc262628 : #fef2f2) :
+                    root.variant == "neutral" ? (Palette.dark-mode ? #33415544 : #f1f5f9) :
+                    (Palette.dark-mode ? #2563eb28 : #eff6ff);
+
+        HorizontalLayout {
+            padding-left: root.has-dot ? 8px : 10px;
+            padding-right: 10px;
+            spacing: 6px;
+            alignment: center;
+
+            // Optional Status Dot Indicator
+            if root.has-dot: Rectangle {
+                width: 6px;
+                height: 6px;
+                border-radius: Spacing.radius-full;
+                background: root.variant == "success" ? Palette.success :
+                            root.variant == "warning" ? #f59e0b :
+                            root.variant == "danger"  ? Palette.danger :
+                            root.variant == "neutral" ? Palette.text-secondary :
+                            Palette.accent;
+                y: (parent.height - self.height) / 2;
+            }
+
+            Text {
+                text: root.text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                font-weight: Typography.weight-semibold;
+                color: root.variant == "success" ? (Palette.dark-mode ? #34d399 : #047857) :
+                       root.variant == "warning" ? (Palette.dark-mode ? #fbbf24 : #b45309) :
+                       root.variant == "danger"  ? (Palette.dark-mode ? #f87171 : #b91c1c) :
+                       root.variant == "neutral" ? Palette.text-secondary :
+                       (Palette.dark-mode ? #60a5fa : #1d4ed8);
+                vertical-alignment: center;
+            }
+        }
+    }
+}
