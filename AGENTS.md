@@ -128,6 +128,15 @@ cargo build --release
 # Executable located at: target/release/desktop-design-system.exe
 ```
 
+### Reclaiming Disk Space (Purge bloated incremental cache)
+```powershell
+# Clears intermediate debug build cache while preserving the release binary:
+Remove-Item -Recurse -Force target\debug
+
+# Or wipe the entire build cache to 0 MB:
+cargo clean
+```
+
 ### Publishing a New Release to Crates.io
 ```powershell
 # Using the local automated release pipeline (untracked):
