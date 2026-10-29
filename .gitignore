@@ -22,6 +22,15 @@ Cargo.lock
 *.crt
 credentials.json
 token.txt
+*cargo-token*
+
+# Local Release & Deployment Automation (Untracked)
+publish.ps1
+release.ps1
+publish.bat
+release.bat
+release/
+
 
 # OS-Specific & Logs
 .DS_Store

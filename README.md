@@ -215,7 +215,7 @@ cargo login <YOUR_CRATES_IO_TOKEN>
 # 2. Publish crate
 cargo publish
 ```
-Once published, anyone can install via `cargo install desktop-design-system` or add `desktop-design-system = "0.1.0"`.
+Once published, anyone can install via `cargo install desktop-design-system` or add `desktop-design-system = "0.1.1"`.
 
 ---
 
