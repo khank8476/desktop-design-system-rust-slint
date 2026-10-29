@@ -1,11 +1,26 @@
 // Prevent console window from popping up on Windows in release mode
 #![windows_subsystem = "windows"]
 
+use desktop_design_system::db::DatabaseManager;
 use slint::Model;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::mpsc;
 
 slint::include_modules!();
+
+enum DbCmd {
+    LoadAll,
+    Insert {
+        service: String,
+        runtime: String,
+        status: String,
+        latency: String,
+    },
+    Delete {
+        id: i64,
+    },
+}
 
 fn main() -> Result<(), slint::PlatformError> {
     // 1. Create the native App Window
@@ -170,9 +185,176 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    // 7. Setup Background SQLite Worker (Fearless Concurrency & Zero UI Latency)
+    let (db_tx, db_rx) = mpsc::channel::<DbCmd>();
+    let app_weak_db = app.as_weak();
+
+    std::thread::spawn(move || {
+        let db = match DatabaseManager::new("desktop_crud.db") {
+            Ok(db) => db,
+            Err(e) => {
+                eprintln!("Failed to open SQLite database: {e}");
+                return;
+            }
+        };
+
+        while let Ok(cmd) = db_rx.recv() {
+            match cmd {
+                DbCmd::LoadAll => {
+                    if let Ok(records) = db.get_all() {
+                        let items: Vec<TableRowData> = records
+                            .into_iter()
+                            .map(|r| TableRowData {
+                                id: r.id.to_string().into(),
+                                service: r.service.into(),
+                                runtime: r.runtime.into(),
+                                status: r.status.into(),
+                                latency: r.latency.into(),
+                            })
+                            .collect();
+
+                        let app_weak = app_weak_db.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = app_weak.upgrade() {
+                                let model = Rc::new(slint::VecModel::from(items));
+                                app.set_db_records(model.into());
+                            }
+                        });
+                    }
+                }
+                DbCmd::Insert {
+                    service,
+                    runtime,
+                    status,
+                    latency,
+                } => {
+                    let insert_res = db.insert(&service, &runtime, &status, &latency);
+                    let app_weak = app_weak_db.clone();
+                    let is_ok = insert_res.is_ok();
+                    let msg = match insert_res {
+                        Ok(rec) => format!("Service '{}' (#{}) committed to SQLite.", rec.service, rec.id),
+                        Err(e) => format!("Failed to insert record: {e}"),
+                    };
+
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = app_weak.upgrade() {
+                            let toast_status = if is_ok { "success" } else { "danger" };
+                            let toast_title = if is_ok { "Record Inserted" } else { "Database Error" };
+                            app.set_toast_status(toast_status.into());
+                            app.set_toast_title(toast_title.into());
+                            app.set_toast_message(msg.into());
+                            app.set_toast_open(true);
+                        }
+                    });
+
+                    // Reload table automatically after write
+                    if let Ok(records) = db.get_all() {
+                        let items: Vec<TableRowData> = records
+                            .into_iter()
+                            .map(|r| TableRowData {
+                                id: r.id.to_string().into(),
+                                service: r.service.into(),
+                                runtime: r.runtime.into(),
+                                status: r.status.into(),
+                                latency: r.latency.into(),
+                            })
+                            .collect();
+
+                        let app_weak = app_weak_db.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = app_weak.upgrade() {
+                                let model = Rc::new(slint::VecModel::from(items));
+                                app.set_db_records(model.into());
+                            }
+                        });
+                    }
+                }
+                DbCmd::Delete { id } => {
+                    let delete_res = db.delete(id);
+                    let app_weak = app_weak_db.clone();
+                    let is_ok = delete_res.is_ok();
+                    let msg = match delete_res {
+                        Ok(true) => format!("Service record #{} deleted permanently.", id),
+                        Ok(false) => format!("Record #{} not found in SQLite.", id),
+                        Err(e) => format!("Failed to delete record: {e}"),
+                    };
+
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = app_weak.upgrade() {
+                            let toast_status = if is_ok { "success" } else { "danger" };
+                            let toast_title = if is_ok { "Record Deleted" } else { "Database Error" };
+                            app.set_toast_status(toast_status.into());
+                            app.set_toast_title(toast_title.into());
+                            app.set_toast_message(msg.into());
+                            app.set_toast_open(true);
+                        }
+                    });
+
+                    // Reload table automatically after delete
+                    if let Ok(records) = db.get_all() {
+                        let items: Vec<TableRowData> = records
+                            .into_iter()
+                            .map(|r| TableRowData {
+                                id: r.id.to_string().into(),
+                                service: r.service.into(),
+                                runtime: r.runtime.into(),
+                                status: r.status.into(),
+                                latency: r.latency.into(),
+                            })
+                            .collect();
+
+                        let app_weak = app_weak_db.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = app_weak.upgrade() {
+                                let len = items.len() as i32;
+                                let model = Rc::new(slint::VecModel::from(items));
+                                app.set_db_records(model.into());
+                                if app.get_selected_record_idx() >= len {
+                                    app.set_selected_record_idx(std::cmp::max(0, len - 1));
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    });
+
+    // 8. Connect CRUD UI Callbacks to Background SQLite Worker
+    let db_tx_add = db_tx.clone();
+    app.on_db_add_record(move |srv, run, st, lat| {
+        let _ = db_tx_add.send(DbCmd::Insert {
+            service: srv.to_string(),
+            runtime: run.to_string(),
+            status: st.to_string(),
+            latency: lat.to_string(),
+        });
+    });
+
+    let db_tx_del = db_tx.clone();
+    let app_weak_del = app.as_weak();
+    app.on_db_delete_selected(move |idx| {
+        if let Some(app) = app_weak_del.upgrade() {
+            let records = app.get_db_records();
+            if let Some(row) = records.row_data(idx as usize) {
+                if let Ok(id) = row.id.parse::<i64>() {
+                    let _ = db_tx_del.send(DbCmd::Delete { id });
+                }
+            }
+        }
+    });
+
+    let db_tx_refresh = db_tx.clone();
+    app.on_db_refresh(move || {
+        let _ = db_tx_refresh.send(DbCmd::LoadAll);
+    });
+
+    // 9. Initial Load from SQLite on Startup
+    let _ = db_tx.send(DbCmd::LoadAll);
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 
-    // 7. Start the native desktop event loop
+    // 10. Start the native desktop event loop
     app.run()
 }

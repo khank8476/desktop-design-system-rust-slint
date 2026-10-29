@@ -1,0 +1,203 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+import { TextInputField } from "../atoms/input.slint";
+
+export component CrudModal {
+    in property <string> title: "Add Service Record";
+    in-out property <string> service-val: "";
+    in-out property <string> runtime-val: "";
+    in-out property <string> status-val: "Active";
+    in-out property <string> latency-val: "1.0 ms";
+    in-out property <bool> is-open: false;
+
+    callback saved(string, string, string, string); // (service, runtime, status, latency)
+    callback cancelled();
+
+    if root.is-open: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #00000077; // Scrim backdrop
+
+        TouchArea {
+            clicked => {
+                root.is-open = false;
+                root.cancelled();
+            }
+        }
+
+        // 480px Solid Modal Card
+        card := Rectangle {
+            width: 480px;
+            height: card-layout.preferred-height;
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #1e293b : #ffffff;
+            drop-shadow-blur: 32px;
+            drop-shadow-color: #00000099;
+            drop-shadow-offset-y: 8px;
+
+            TouchArea {} // Prevent dismissal on clicking card
+
+            card-layout := VerticalLayout {
+                padding: Spacing.space-lg;
+                spacing: Spacing.space-md;
+
+                // 1. Header
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: Spacing.space-sm;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: Palette.accent;
+                        }
+
+                        Text {
+                            text: root.title;
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-lg;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Vector Close Button
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: Spacing.radius-sm;
+                        background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Image {
+                            source: @image-url("../../assets/icons/close.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        close-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.is-open = false;
+                                root.cancelled();
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                // 2. Form Fields
+                VerticalLayout {
+                    spacing: Spacing.space-sm;
+
+                    // Field 1: Service Name
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Service / Pipeline Name";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                        }
+                        name-input := TextInputField {
+                            text <=> root.service-val;
+                            placeholder: "e.g. Raytracing Denoise Pipeline";
+                        }
+                    }
+
+                    // Field 2: Runtime Architecture
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Runtime Architecture / Protocol";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                        }
+                        runtime-input := TextInputField {
+                            text <=> root.runtime-val;
+                            placeholder: "e.g. DirectX 12 Compute / SPIR-V";
+                        }
+                    }
+
+                    // Field 3: Status & Latency Row
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            Text {
+                                text: "Cluster Status";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-secondary;
+                            }
+                            status-input := TextInputField {
+                                text <=> root.status-val;
+                                placeholder: "Active / Standby / Warning";
+                            }
+                        }
+
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 2px;
+                            Text {
+                                text: "Benchmark Latency";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.text-secondary;
+                            }
+                            latency-input := TextInputField {
+                                text <=> root.latency-val;
+                                placeholder: "e.g. 1.2 ms";
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                // 3. Footer Action Buttons
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: Spacing.space-sm;
+
+                    Button {
+                        text: "Cancel";
+                        variant: "ghost";
+                        clicked => {
+                            root.is-open = false;
+                            root.cancelled();
+                        }
+                    }
+
+                    Button {
+                        text: "Save to SQLite";
+                        variant: "primary";
+                        clicked => {
+                            root.is-open = false;
+                            root.saved(root.service-val, root.runtime-val, root.status-val, root.latency-val);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

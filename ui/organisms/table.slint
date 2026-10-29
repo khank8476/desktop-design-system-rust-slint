@@ -13,7 +13,7 @@ export struct TableRowData {
 
 export component DataTable {
     in property <[string]> headers: ["Service / Pipeline", "Runtime Architecture", "Cluster Status", "Latency"];
-    in property <[TableRowData]> rows: [
+    in-out property <[TableRowData]> rows: [
         { id: "row-1", service: "Direct3D Render Pipeline", runtime: "DirectX 12 / HLSL", status: "Active", latency: "1.1 ms" },
         { id: "row-2", service: "Metal Swapchain Engine", runtime: "Apple Metal 3.0", status: "Active", latency: "0.8 ms" },
         { id: "row-3", service: "Vulkan Surface Compositor", runtime: "SPIR-V Cross-Platform", status: "Standby", latency: "2.4 ms" },

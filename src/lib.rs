@@ -1,5 +1,7 @@
 slint::include_modules!();
 
+pub mod db;
+
 /// Queries the operating system for its active color scheme (Dark / Light).
 /// Fully compatible across Windows, macOS, and Linux.
 pub fn is_system_dark_mode() -> bool {
