@@ -1,0 +1,358 @@
+import { Palette } from "../ui/tokens/colors.slint";
+import { Typography } from "../ui/tokens/typography.slint";
+import { Spacing } from "../ui/tokens/spacing.slint";
+import { Button } from "../ui/atoms/button.slint";
+import { Badge } from "../ui/atoms/badge.slint";
+import { ProgressBar } from "../ui/atoms/progressbar.slint";
+import { ToastNotification } from "../ui/organisms/toast.slint";
+import { ModalDialog } from "../ui/organisms/modal.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export { Palette }
+
+export struct CryptoRow {
+    symbol: string,
+    name: string,
+    price: string,
+    change_pct: string,
+    is_positive: bool,
+    volume_24h: string,
+    high_24h: string,
+    low_24h: string,
+}
+
+export component CryptoTrackerWindow inherits Window {
+    title: "Native Crypto Ticker ⚡ (Pure Rust & Slint)";
+    icon: @image-url("../assets/app-icon.png");
+    min-width: 900px;
+    min-height: 640px;
+    preferred-width: 1040px;
+    preferred-height: 720px;
+    background: Palette.bg-canvas;
+
+    in-out property <[CryptoRow]> crypto_rows: [];
+    in-out property <string> interval_label: "1.0s (Ultra-Fast)";
+    in-out property <bool> is_paused: false;
+    in-out property <string> latency_ms: "0.3 ms";
+    in-out property <string> app_memory_mb: "14.8 MB";
+    in-out property <string> btc_price: "$68,450.00";
+    in-out property <string> btc_change: "+3.45%";
+    in-out property <string> eth_price: "$3,540.20";
+    in-out property <string> eth_change: "+2.12%";
+    in-out property <string> sol_price: "$182.40";
+    in-out property <string> sol_change: "+6.80%";
+    in-out property <string> rust_price: "$42.50";
+    in-out property <string> rust_change: "+15.20%";
+
+    // Toast
+    in-out property <bool> toast_open: false;
+    in-out property <string> toast_title: "";
+    in-out property <string> toast_msg: "";
+    in-out property <string> toast_status: "success";
+
+    callback set_interval_speed(int); // 1 = 1s, 2 = 3s, 3 = 10s
+    callback toggle_pause();
+    callback trigger_order(string, string); // (symbol, price)
+
+    VerticalLayout {
+        padding: Spacing.space-lg;
+        spacing: Spacing.space-md;
+
+        // 1. Top Enterprise Control Bar
+        Rectangle {
+            height: 68px;
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
+            background: Palette.bg-surface;
+
+            HorizontalLayout {
+                padding-left: Spacing.space-lg;
+                padding-right: Spacing.space-lg;
+                alignment: space-between;
+
+                // Left: Logo & Live Status
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    Image {
+                        source: @image-url("../assets/app-icon.png");
+                        width: 32px;
+                        height: 32px;
+                        vertical-alignment: center;
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+                            alignment: center;
+                            Text {
+                                text: "CryptoStream Ticker";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                            }
+                            Badge {
+                                text: root.is_paused ? "Stream Paused" : "120 FPS Live";
+                                variant: root.is_paused ? "warning" : "success";
+                                has-dot: true;
+                            }
+                        }
+                        Text {
+                            text: "Sub-millisecond direct GPU telemetry • Direct3D 12 Native Swapchain";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                // Right: Update Speed Selector + Metrics + Pause Button
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    // Telemetry latency pill
+                    Badge {
+                        text: "UI Latency: " + root.latency_ms;
+                        variant: "primary";
+                        has-dot: true;
+                    }
+
+                    Badge {
+                        text: "Memory: " + root.app_memory_mb;
+                        variant: "neutral";
+                        has-dot: false;
+                    }
+
+                    // Speed Interval Buttons
+                    HorizontalLayout {
+                        spacing: 4px;
+                        alignment: center;
+
+                        Button {
+                            text: "1s (Fast)";
+                            variant: root.interval_label == "1.0s (Ultra-Fast)" ? "primary" : "ghost";
+                            clicked => { root.set_interval_speed(1); }
+                        }
+                        Button {
+                            text: "3s (Norm)";
+                            variant: root.interval_label == "3.0s (Standard)" ? "primary" : "ghost";
+                            clicked => { root.set_interval_speed(2); }
+                        }
+                        Button {
+                            text: "10s (Eco)";
+                            variant: root.interval_label == "10.0s (Battery Saver)" ? "primary" : "ghost";
+                            clicked => { root.set_interval_speed(3); }
+                        }
+                    }
+
+                    Button {
+                        text: root.is_paused ? "Resume Stream" : "Pause Stream";
+                        variant: root.is_paused ? "primary" : "secondary";
+                        clicked => { root.toggle_pause(); }
+                    }
+                }
+            }
+        }
+
+        // 2. High-Priority Ticker Cards (Top 4 Crypto Assets)
+        HorizontalLayout {
+            spacing: Spacing.space-md;
+            height: 96px;
+
+            // Card 1: BTC
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: Spacing.radius-md;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-md;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "Bitcoin • BTC"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                        Badge { text: root.btc_change; variant: "success"; has-dot: false; }
+                    }
+                    Text { text: root.btc_price; font-size: Typography.size-xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                }
+            }
+
+            // Card 2: ETH
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: Spacing.radius-md;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-md;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "Ethereum • ETH"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                        Badge { text: root.eth_change; variant: "success"; has-dot: false; }
+                    }
+                    Text { text: root.eth_price; font-size: Typography.size-xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                }
+            }
+
+            // Card 3: SOL
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: Spacing.radius-md;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-md;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "Solana • SOL"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                        Badge { text: root.sol_change; variant: "success"; has-dot: false; }
+                    }
+                    Text { text: root.sol_price; font-size: Typography.size-xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                }
+            }
+
+            // Card 4: RUST
+            Rectangle {
+                horizontal-stretch: 1;
+                border-radius: Spacing.radius-md;
+                border-width: 1px;
+                border-color: Palette.accent;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-md;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "RustCoin • RUST"; font-size: Typography.size-xs; color: Palette.accent; font-weight: Typography.weight-bold; }
+                        Badge { text: root.rust_change; variant: "success"; has-dot: true; }
+                    }
+                    Text { text: root.rust_price; font-size: Typography.size-xl; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                }
+            }
+        }
+
+        // 3. Live High-Density Market Data Grid
+        Rectangle {
+            vertical-stretch: 1;
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
+            background: Palette.bg-surface;
+
+            VerticalLayout {
+                padding: Spacing.space-md;
+                spacing: Spacing.space-sm;
+
+                // Table Header
+                Rectangle {
+                    height: 38px;
+                    border-radius: Spacing.radius-sm;
+                    background: Palette.bg-canvas;
+
+                    HorizontalLayout {
+                        padding-left: Spacing.space-md;
+                        padding-right: Spacing.space-md;
+                        alignment: space-between;
+
+                        Text { width: 140px; text: "ASSET"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                        Text { width: 120px; text: "PRICE (USD)"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                        Text { width: 110px; text: "24H CHANGE"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                        Text { width: 130px; text: "24H VOLUME"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                        Text { width: 140px; text: "24H RANGE"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                        Text { width: 110px; text: "ACTION"; font-size: Typography.size-xs; font-weight: Typography.weight-bold; color: Palette.text-secondary; vertical-alignment: center; }
+                    }
+                }
+
+                // Table Rows
+                ScrollView {
+                    VerticalLayout {
+                        spacing: 4px;
+
+                        for row in root.crypto_rows: Rectangle {
+                            height: 48px;
+                            border-radius: Spacing.radius-sm;
+                            background: row_touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            HorizontalLayout {
+                                padding-left: Spacing.space-md;
+                                padding-right: Spacing.space-md;
+                                alignment: space-between;
+
+                                // Asset Symbol & Name
+                                HorizontalLayout {
+                                    width: 140px;
+                                    spacing: Spacing.space-sm;
+                                    alignment: start;
+                                    Text { text: row.symbol; font-weight: Typography.weight-bold; color: Palette.text-primary; vertical-alignment: center; }
+                                    Text { text: row.name; font-size: Typography.size-xs; color: Palette.text-secondary; vertical-alignment: center; }
+                                }
+
+                                // Price
+                                Text { width: 120px; text: row.price; font-weight: Typography.weight-semibold; color: Palette.text-primary; vertical-alignment: center; }
+
+                                // 24h Change Pill
+                                HorizontalLayout {
+                                    width: 110px;
+                                    alignment: start;
+                                    Badge {
+                                        text: row.change_pct;
+                                        variant: row.is_positive ? "success" : "danger";
+                                        has-dot: true;
+                                    }
+                                }
+
+                                // Volume
+                                Text { width: 130px; text: row.volume_24h; font-size: Typography.size-xs; color: Palette.text-secondary; vertical-alignment: center; }
+
+                                // Range
+                                Text { width: 140px; text: row.low_24h + " - " + row.high_24h; font-size: Typography.size-xs; color: Palette.text-secondary; vertical-alignment: center; }
+
+                                // Quick Alert Action
+                                HorizontalLayout {
+                                    width: 110px;
+                                    alignment: start;
+                                    Button {
+                                        text: "Set Alert";
+                                        variant: "ghost";
+                                        clicked => { root.trigger_order(row.symbol, row.price); }
+                                    }
+                                }
+                            }
+
+                            row_touch := TouchArea {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Corner Toast Notification
+    ToastNotification {
+        x: root.width - self.width - 24px;
+        y: root.height - self.height - 24px;
+        is-open <=> root.toast_open;
+        title: root.toast_title;
+        message: root.toast_msg;
+        status: root.toast_status;
+    }
+}

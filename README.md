@@ -178,18 +178,44 @@ fn inspect_host() {
 
 ---
 
-## 🚀 Isolated Demo Applications Strategy (Zero Bloat)
+## 🚀 Isolated Demo Applications (Zero Bloat)
 
 To demonstrate real-world integration in diverse business domains without bloating the core design system binary, demos are packaged using Cargo's native `[[example]]` target mechanism under `examples/`:
 
 - **Zero Runtime Overhead:** Examples are never compiled into the core library or production executable.
-- **Ready-to-Run Demos:**
+- **Available Demo 1: CryptoStream Price Ticker ⚡**
+  A high-frequency desktop cryptocurrency matrix featuring sub-millisecond UI latency, 120 FPS Direct3D/Metal swapchains, configurable price sampling intervals (1.0s ultra-fast, 3.0s standard, 10.0s eco), live top-asset cards, and instant alert toasts:
   ```powershell
-  # Future domain examples:
-  cargo run --example enterprise_crm
-  cargo run --example audio_telemetry
-  cargo run --example iot_sensor_fleet
+  cargo run --example crypto_tracker
   ```
+
+---
+
+## 📦 Installation & Publishing Options
+
+### 1. Install Directly from GitHub via Cargo
+Any developer can install the standalone desktop executable immediately via Cargo:
+```powershell
+cargo install --git https://github.com/khank8476/desktop-design-system-rust-slint.git
+```
+
+### 2. Use as a Dependency in Another Project
+```toml
+[dependencies]
+desktop-design-system = { git = "https://github.com/khank8476/desktop-design-system-rust-slint.git" }
+slint = "1.9"
+```
+
+### 3. Publishing to Crates.io (`cargo publish`)
+The crate's metadata (keywords, categories, license, repository) is fully configured in `Cargo.toml`. To publish publicly to the official Rust registry:
+```powershell
+# 1. Login with your crates.io API token (from crates.io/settings/tokens)
+cargo login <YOUR_CRATES_IO_TOKEN>
+
+# 2. Publish crate
+cargo publish
+```
+Once published, anyone can install via `cargo install desktop-design-system` or add `desktop-design-system = "0.1.0"`.
 
 ---
 

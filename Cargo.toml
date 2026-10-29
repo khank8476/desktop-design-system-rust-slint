@@ -2,6 +2,13 @@
 name = "desktop-design-system"
 version = "0.1.0"
 edition = "2021"
+description = "High-performance native desktop design system, component library, and turnkey CRUD template built with Rust and Slint."
+license = "MIT"
+repository = "https://github.com/khank8476/desktop-design-system-rust-slint"
+homepage = "https://github.com/khank8476/desktop-design-system-rust-slint"
+readme = "README.md"
+keywords = ["design-system", "slint", "gui", "desktop", "crud"]
+categories = ["gui", "development-tools"]
 
 [lib]
 path = "src/lib.rs"

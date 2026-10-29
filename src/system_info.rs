@@ -188,7 +188,45 @@ fn detect_gpu_adapters() -> (String, String) {
         ("Direct3D 12 Dedicated GPU".to_string(), "Integrated Graphics".to_string())
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
+    {
+        let cpu_brand = System::new_all().ok().and_then(|sys| {
+            sys.cpus().first().map(|c| c.brand().trim().to_string())
+        }).unwrap_or_default();
+
+        let primary = if cpu_brand.contains("Apple") || cpu_brand.starts_with("M1") || cpu_brand.starts_with("M2") || cpu_brand.starts_with("M3") || cpu_brand.starts_with("M4") {
+            format!("Apple Silicon GPU ({})", cpu_brand)
+        } else {
+            "Apple Metal Graphics Surface".to_string()
+        };
+
+        (primary, "Apple Metal 3.0 Compositor".to_string())
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let mut gpu_name = "Vulkan 1.3 Native Graphics Device".to_string();
+        if let Ok(entries) = std::fs::read_dir("/sys/class/drm") {
+            for entry in entries.flatten() {
+                let path = entry.path().join("device/uevent");
+                if let Ok(content) = std::fs::read_to_string(path) {
+                    if content.contains("DRIVER=nvidia") {
+                        gpu_name = "NVIDIA Discrete GPU (Linux DRM Driver)".to_string();
+                        break;
+                    } else if content.contains("DRIVER=amdgpu") || content.contains("DRIVER=radeon") {
+                        gpu_name = "AMD Radeon GPU (Mesa / Linux DRM)".to_string();
+                        break;
+                    } else if content.contains("DRIVER=i915") || content.contains("DRIVER=xe") {
+                        gpu_name = "Intel Graphics (Mesa DRM)".to_string();
+                        break;
+                    }
+                }
+            }
+        }
+        (gpu_name, "Vulkan 1.3 / SPIR-V Compositor".to_string())
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     {
         ("Hardware GPU Compositor".to_string(), "Core Rendering Pipeline".to_string())
     }
