@@ -62,9 +62,12 @@ export component DatePicker {
     in-out property <int> selected-day: 29;
     in-out property <string> formatted-date: selected-year + "-" + (selected-month < 10 ? "0" : "") + selected-month + "-" + (selected-day < 10 ? "0" : "") + selected-day;
     
-    // View state when browsing months inside the calendar
+    // View state when browsing calendar
     property <int> view-year: selected-year;
     property <int> view-month: selected-month;
+    // 0 = Calendar Day Grid, 1 = Android-style Month & Year Picker
+    property <int> picker-mode: 0;
+
     property <int> first-day-offset: DateUtils.day-of-week(root.view-year, root.view-month, 1);
     property <int> total-days: DateUtils.days-in-month(root.view-year, root.view-month);
     
@@ -123,6 +126,7 @@ export component DatePicker {
                 clicked => {
                     root.view-year = root.selected-year;
                     root.view-month = root.selected-month;
+                    root.picker-mode = 0;
                     popup.show();
                 }
             }
@@ -133,7 +137,8 @@ export component DatePicker {
     popup := PopupWindow {
         x: 0;
         y: trigger.height + 6px;
-        width: 310px;
+        width: 320px;
+        close-policy: close-on-click-outside;
 
         Rectangle {
             border-radius: Spacing.radius-lg;
@@ -148,15 +153,15 @@ export component DatePicker {
                 padding: Spacing.space-md;
                 spacing: Spacing.space-sm;
 
-                // Month / Year Navigation Header
+                // Month / Year Header (Clickable like modern Android calendars)
                 HorizontalLayout {
                     alignment: space-between;
-                    height: 32px;
+                    height: 34px;
 
-                    // Prev Month Button
+                    // Prev Month / Year Button
                     Rectangle {
-                        width: 28px;
-                        height: 28px;
+                        width: 30px;
+                        height: 30px;
                         border-radius: Spacing.radius-sm;
                         background: prev-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
@@ -172,31 +177,68 @@ export component DatePicker {
                         prev-touch := TouchArea {
                             mouse-cursor: pointer;
                             clicked => {
-                                if (root.view-month == 1) {
-                                    root.view-month = 12;
+                                if (root.picker-mode == 1) {
                                     root.view-year -= 1;
                                 } else {
-                                    root.view-month -= 1;
+                                    if (root.view-month == 1) {
+                                        root.view-month = 12;
+                                        root.view-year -= 1;
+                                    } else {
+                                        root.view-month -= 1;
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Month & Year Label
-                    Text {
-                        text: DateUtils.month-name(root.view-month) + " " + root.view-year;
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-base;
-                        font-weight: 700;
-                        color: Palette.text-primary;
-                        vertical-alignment: center;
-                        horizontal-alignment: center;
+                    // Clickable Title: Click to switch between Day view and Month/Year Picker view!
+                    header-btn := Rectangle {
+                        height: 30px;
+                        border-radius: Spacing.radius-md;
+                        background: header-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            spacing: 6px;
+                            alignment: center;
+
+                            Text {
+                                text: root.picker-mode == 1 ? 
+                                    ("Select Month • " + root.view-year) : 
+                                    (DateUtils.month-name(root.view-month) + " " + root.view-year);
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: 700;
+                                color: Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: root.picker-mode == 1 ? 
+                                        @image-url("../../assets/icons/chevron-up.svg") : 
+                                        @image-url("../../assets/icons/chevron-down.svg");
+                                    width: 12px;
+                                    height: 12px;
+                                    colorize: Palette.accent;
+                                }
+                            }
+                        }
+
+                        header-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.picker-mode = (root.picker-mode == 0) ? 1 : 0;
+                            }
+                        }
                     }
 
-                    // Next Month Button
+                    // Next Month / Year Button
                     Rectangle {
-                        width: 28px;
-                        height: 28px;
+                        width: 30px;
+                        height: 30px;
                         border-radius: Spacing.radius-sm;
                         background: next-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
@@ -212,31 +254,18 @@ export component DatePicker {
                         next-touch := TouchArea {
                             mouse-cursor: pointer;
                             clicked => {
-                                if (root.view-month == 12) {
-                                    root.view-month = 1;
+                                if (root.picker-mode == 1) {
                                     root.view-year += 1;
                                 } else {
-                                    root.view-month += 1;
+                                    if (root.view-month == 12) {
+                                        root.view-month = 1;
+                                        root.view-year += 1;
+                                    } else {
+                                        root.view-month += 1;
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-
-                // Days of Week Header
-                HorizontalLayout {
-                    spacing: 4px;
-                    height: 20px;
-
-                    for day-name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]: Text {
-                        text: day-name;
-                        font-family: Typography.font-family;
-                        font-size: Typography.size-xs;
-                        font-weight: 600;
-                        color: Palette.text-placeholder;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
-                        width: 36px;
                     }
                 }
 
@@ -246,16 +275,81 @@ export component DatePicker {
                     background: Palette.border-subtle;
                 }
 
-                // Calendar Grid (6 rows x 7 columns)
-                VerticalLayout {
-                    spacing: 2px;
+                // ==========================================
+                // VIEW 1: Modern Android-Style Month & Year Picker
+                // ==========================================
+                if root.picker-mode == 1: VerticalLayout {
+                    spacing: 8px;
+                    padding-top: 4px;
+                    padding-bottom: 4px;
 
+                    // 12 Months in a 3x4 Grid
+                    for row in [
+                        [{ m: 1, name: "Jan" }, { m: 2, name: "Feb" }, { m: 3, name: "Mar" }, { m: 4, name: "Apr" }],
+                        [{ m: 5, name: "May" }, { m: 6, name: "Jun" }, { m: 7, name: "Jul" }, { m: 8, name: "Aug" }],
+                        [{ m: 9, name: "Sep" }, { m: 10, name: "Oct" }, { m: 11, name: "Nov" }, { m: 12, name: "Dec" }]
+                    ]: HorizontalLayout {
+                        spacing: 6px;
+                        height: 44px;
+
+                        for item in row: m-cell := Rectangle {
+                            border-radius: Spacing.radius-md;
+                            background: (item.m == root.view-month) ? Palette.accent :
+                                        m-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+                            border-width: 1px;
+                            border-color: (item.m == root.view-month) ? Palette.accent : Palette.border-subtle;
+
+                            Text {
+                                text: item.name;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: (item.m == root.view-month) ? 700 : 500;
+                                color: (item.m == root.view-month) ? #ffffff : Palette.text-primary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            m-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.view-month = item.m;
+                                    root.picker-mode = 0; // return to calendar day grid
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ==========================================
+                // VIEW 0: Standard Calendar Days Grid
+                // ==========================================
+                if root.picker-mode == 0: VerticalLayout {
+                    spacing: 4px;
+
+                    // Days of Week Header
+                    HorizontalLayout {
+                        spacing: 4px;
+                        height: 20px;
+
+                        for day-name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]: Text {
+                            text: day-name;
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: 600;
+                            color: Palette.text-placeholder;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                            width: 38px;
+                        }
+                    }
+
+                    // Calendar Grid (6 rows x 7 columns)
                     for row in 6: HorizontalLayout {
                         spacing: 4px;
                         height: 32px;
 
                         for col in 7: cell := Rectangle {
-                            width: 36px;
+                            width: 38px;
                             height: 32px;
                             border-radius: Spacing.radius-md;
 
@@ -273,8 +367,7 @@ export component DatePicker {
                                 font-family: Typography.font-family;
                                 font-size: Typography.size-sm;
                                 font-weight: is-selected ? 700 : 500;
-                                color: is-selected ? #ffffff :
-                                       Palette.text-primary;
+                                color: is-selected ? #ffffff : Palette.text-primary;
                                 horizontal-alignment: center;
                                 vertical-alignment: center;
                                 x: (parent.width - self.width) / 2;
@@ -290,6 +383,7 @@ export component DatePicker {
                                         root.selected-year = root.view-year;
                                         root.formatted-date = root.selected-year + "-" + (root.selected-month < 10 ? "0" : "") + root.selected-month + "-" + (root.selected-day < 10 ? "0" : "") + root.selected-day;
                                         root.date-selected(root.formatted-date);
+                                        popup.close();
                                     }
                                 }
                             }
@@ -332,8 +426,10 @@ export component DatePicker {
                                 root.selected-day = 29;
                                 root.view-year = 2026;
                                 root.view-month = 10;
+                                root.picker-mode = 0;
                                 root.formatted-date = "2026-10-29";
                                 root.date-selected(root.formatted-date);
+                                popup.close();
                             }
                         }
                     }
