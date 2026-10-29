@@ -6,6 +6,7 @@ import { TextInputField } from "../atoms/input.slint";
 
 export component CrudModal {
     in property <string> title: "Add Service Record";
+    in property <string> submit-text: "Save to SQLite";
     in-out property <string> service-val: "";
     in-out property <string> runtime-val: "";
     in-out property <string> status-val: "Active";
@@ -189,7 +190,7 @@ export component CrudModal {
                     }
 
                     Button {
-                        text: "Save to SQLite";
+                        text: root.submit-text;
                         variant: "primary";
                         clicked => {
                             root.is-open = false;

@@ -17,6 +17,13 @@ enum DbCmd {
         status: String,
         latency: String,
     },
+    Update {
+        id: i64,
+        service: String,
+        runtime: String,
+        status: String,
+        latency: String,
+    },
     Delete {
         id: i64,
     },
@@ -240,14 +247,57 @@ fn main() -> Result<(), slint::PlatformError> {
                         if let Some(app) = app_weak.upgrade() {
                             let toast_status = if is_ok { "success" } else { "danger" };
                             let toast_title = if is_ok { "Record Inserted" } else { "Database Error" };
-                            app.set_toast_status(toast_status.into());
-                            app.set_toast_title(toast_title.into());
-                            app.set_toast_message(msg.into());
-                            app.set_toast_open(true);
+                            app.invoke_trigger_sample_toast(toast_status.into(), toast_title.into(), msg.into());
                         }
                     });
 
                     // Reload table automatically after write
+                    if let Ok(records) = db.get_all() {
+                        let items: Vec<TableRowData> = records
+                            .into_iter()
+                            .map(|r| TableRowData {
+                                id: r.id.to_string().into(),
+                                service: r.service.into(),
+                                runtime: r.runtime.into(),
+                                status: r.status.into(),
+                                latency: r.latency.into(),
+                            })
+                            .collect();
+
+                        let app_weak = app_weak_db.clone();
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(app) = app_weak.upgrade() {
+                                let model = Rc::new(slint::VecModel::from(items));
+                                app.set_db_records(model.into());
+                            }
+                        });
+                    }
+                }
+                DbCmd::Update {
+                    id,
+                    service,
+                    runtime,
+                    status,
+                    latency,
+                } => {
+                    let update_res = db.update(id, &service, &runtime, &status, &latency);
+                    let app_weak = app_weak_db.clone();
+                    let is_ok = update_res.is_ok();
+                    let msg = match update_res {
+                        Ok(true) => format!("Service record #{} successfully updated in SQLite.", id),
+                        Ok(false) => format!("Record #{} not found in SQLite.", id),
+                        Err(e) => format!("Failed to update record: {e}"),
+                    };
+
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = app_weak.upgrade() {
+                            let toast_status = if is_ok { "success" } else { "danger" };
+                            let toast_title = if is_ok { "Record Updated" } else { "Database Error" };
+                            app.invoke_trigger_sample_toast(toast_status.into(), toast_title.into(), msg.into());
+                        }
+                    });
+
+                    // Reload table automatically after update
                     if let Ok(records) = db.get_all() {
                         let items: Vec<TableRowData> = records
                             .into_iter()
@@ -283,10 +333,7 @@ fn main() -> Result<(), slint::PlatformError> {
                         if let Some(app) = app_weak.upgrade() {
                             let toast_status = if is_ok { "success" } else { "danger" };
                             let toast_title = if is_ok { "Record Deleted" } else { "Database Error" };
-                            app.set_toast_status(toast_status.into());
-                            app.set_toast_title(toast_title.into());
-                            app.set_toast_message(msg.into());
-                            app.set_toast_open(true);
+                            app.invoke_trigger_sample_toast(toast_status.into(), toast_title.into(), msg.into());
                         }
                     });
 
@@ -329,6 +376,19 @@ fn main() -> Result<(), slint::PlatformError> {
             status: st.to_string(),
             latency: lat.to_string(),
         });
+    });
+
+    let db_tx_upd = db_tx.clone();
+    app.on_db_update_record(move |id_str, srv, run, st, lat| {
+        if let Ok(id) = id_str.parse::<i64>() {
+            let _ = db_tx_upd.send(DbCmd::Update {
+                id,
+                service: srv.to_string(),
+                runtime: run.to_string(),
+                status: st.to_string(),
+                latency: lat.to_string(),
+            });
+        }
     });
 
     let db_tx_del = db_tx.clone();

@@ -63,11 +63,14 @@ export component AppWindow inherits Window {
     in-out property <int> selected-record-idx: 0;
     in-out property <bool> show-crud-modal: false;
     in-out property <bool> show-delete-confirm: false;
+    in-out property <bool> is-editing-record: false;
+    in-out property <string> edit-record-id: "";
     in-out property <string> form-service: "";
     in-out property <string> form-runtime: "";
     in-out property <string> form-status: "Active";
     in-out property <string> form-latency: "1.0 ms";
     callback db-add-record(string, string, string, string);
+    callback db-update-record(string, string, string, string, string);
     callback db-delete-selected(int);
     callback db-refresh();
 
@@ -655,7 +658,25 @@ export component AppWindow inherits Window {
                                             root.form-runtime = "";
                                             root.form-status = "Active";
                                             root.form-latency = "1.0 ms";
+                                            root.is-editing-record = false;
                                             root.show-crud-modal = true;
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Edit Selected";
+                                        variant: "secondary";
+                                        enabled: root.db-records.length > 0;
+                                        clicked => {
+                                            if root.selected-record-idx >= 0 && root.selected-record-idx < root.db-records.length {
+                                                root.form-service = root.db-records[root.selected-record-idx].service;
+                                                root.form-runtime = root.db-records[root.selected-record-idx].runtime;
+                                                root.form-status = root.db-records[root.selected-record-idx].status;
+                                                root.form-latency = root.db-records[root.selected-record-idx].latency;
+                                                root.edit-record-id = root.db-records[root.selected-record-idx].id;
+                                                root.is-editing-record = true;
+                                                root.show-crud-modal = true;
+                                            }
                                         }
                                     }
 
@@ -1171,13 +1192,18 @@ export component AppWindow inherits Window {
     // CRUD Add/Edit Record Modal
     CrudModal {
         is-open <=> root.show-crud-modal;
-        title: "Add Service to SQLite Database";
+        title: root.is-editing-record ? ("Edit Record #" + root.edit-record-id) : "Add Service to SQLite Database";
+        submit-text: root.is-editing-record ? "Update Record" : "Save to SQLite";
         service-val <=> root.form-service;
         runtime-val <=> root.form-runtime;
         status-val <=> root.form-status;
         latency-val <=> root.form-latency;
         saved(srv, run, st, lat) => {
-            root.db-add-record(srv, run, st, lat);
+            if root.is-editing-record {
+                root.db-update-record(root.edit-record-id, srv, run, st, lat);
+            } else {
+                root.db-add-record(srv, run, st, lat);
+            }
         }
     }
 

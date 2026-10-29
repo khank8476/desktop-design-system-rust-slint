@@ -168,3 +168,42 @@ fn chrono_now_str() -> String {
     let secs = now % 60;
     format!("{:02}:{:02}:{:02}", hours, mins, secs)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_crud_lifecycle() {
+        let db = DatabaseManager::new_in_memory().expect("In-memory DB init failed");
+        
+        // 1. Verify initial seed
+        let initial = db.get_all().expect("Query failed");
+        assert_eq!(initial.len(), 5);
+
+        // 2. Insert (Create)
+        let inserted = db.insert("Test Pipeline", "Rust Tokio", "Active", "0.2 ms").expect("Insert failed");
+        assert!(inserted.id > 0);
+        assert_eq!(inserted.service, "Test Pipeline");
+
+        let after_insert = db.get_all().expect("Query failed");
+        assert_eq!(after_insert.len(), 6);
+
+        // 3. Update (Update)
+        let updated = db.update(inserted.id, "Test Pipeline V2", "Rust Rayon", "Standby", "0.5 ms").expect("Update failed");
+        assert!(updated);
+
+        let records = db.get_all().expect("Query failed");
+        let rec = records.iter().find(|r| r.id == inserted.id).expect("Record not found");
+        assert_eq!(rec.service, "Test Pipeline V2");
+        assert_eq!(rec.status, "Standby");
+
+        // 4. Delete (Delete)
+        let deleted = db.delete(inserted.id).expect("Delete failed");
+        assert!(deleted);
+
+        let after_delete = db.get_all().expect("Query failed");
+        assert_eq!(after_delete.len(), 5);
+        assert!(after_delete.iter().all(|r| r.id != inserted.id));
+    }
+}

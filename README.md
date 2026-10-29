@@ -145,8 +145,14 @@ This repository includes a full-stack, local-first database template engineered 
 ```
 
 - **Zero External DLLs:** SQLite C source code is compiled directly into the Rust binary.
-- **Fearless Concurrency:** The render loop is completely isolated from disk I/O.
-- **Persistent Storage:** Stored in `desktop_crud.db` with ACID transaction safety.
+- **Full CRUD Capabilities:**
+  - **Create:** "Add Record" modal with validation and auto-timestamping.
+  - **Read:** High-density `DataTable` with zebra striping, status badges, and selection.
+  - **Update:** "Edit Selected" pre-populated modal for in-place record modification.
+  - **Delete:** "Delete Selected" protected by a modal confirmation dialog.
+- **Fearless Concurrency:** The render loop is completely isolated from disk I/O using an actor `mpsc::channel`.
+- **Persistent Storage:** Stored in `desktop_crud.db` with WAL mode and ACID transaction safety.
+- **Automated Verification:** Fully covered by Rust unit tests (`cargo test`).
 
 ---
 
