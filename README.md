@@ -156,6 +156,43 @@ This repository includes a full-stack, local-first database template engineered 
 
 ---
 
+## ⚡ 360° Hardware Diagnostics & GPU Telemetry API
+
+Any external application consuming this crate can inspect real-time system hardware, CPU load, physical RAM, GPU adapter capability, and graphics drivers using our built-in diagnostics module:
+
+```rust
+use desktop_design_system::system_info::SystemDiagnostics;
+
+fn inspect_host() {
+    let diag = SystemDiagnostics::query();
+    
+    println!("Operating System : {} (Kernel {})", diag.os_name, diag.kernel_version);
+    println!("Host Name        : {}", diag.host_name);
+    println!("CPU Brand        : {} ({} Cores @ {} MHz)", diag.cpu_brand, diag.cpu_cores, diag.cpu_frequency_mhz);
+    println!("CPU Load         : {:.1}%", diag.cpu_usage_pct);
+    println!("Physical RAM     : {:.1} GB / {:.1} GB ({:.1}%)", diag.ram_used_gb, diag.ram_total_gb, diag.ram_usage_pct);
+    println!("GPU Adapter      : {}", diag.gpu_name);
+    println!("Graphics Backend : {}", diag.graphics_backend);
+}
+```
+
+---
+
+## 🚀 Isolated Demo Applications Strategy (Zero Bloat)
+
+To demonstrate real-world integration in diverse business domains without bloating the core design system binary, demos are packaged using Cargo's native `[[example]]` target mechanism under `examples/`:
+
+- **Zero Runtime Overhead:** Examples are never compiled into the core library or production executable.
+- **Ready-to-Run Demos:**
+  ```powershell
+  # Future domain examples:
+  cargo run --example enterprise_crm
+  cargo run --example audio_telemetry
+  cargo run --example iot_sensor_fleet
+  ```
+
+---
+
 ## 🏰 Our Novel MOAT
 
 1. **Hardware-Compiled Direct-GPU (Anti-Electron):** While modern desktop tools bundle 300MB+ Chromium runtimes that eat 500MB of RAM, this application compiles directly to DirectX 12 / Metal / Vulkan surfaces with sub-25MB memory consumption and cold-starts in under 60 milliseconds.

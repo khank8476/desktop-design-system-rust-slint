@@ -2,6 +2,7 @@
 #![windows_subsystem = "windows"]
 
 use desktop_design_system::db::DatabaseManager;
+use desktop_design_system::system_info::SystemDiagnostics;
 use slint::Model;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -412,9 +413,40 @@ fn main() -> Result<(), slint::PlatformError> {
     // 9. Initial Load from SQLite on Startup
     let _ = db_tx.send(DbCmd::LoadAll);
 
+    // 10. Sample 360° Hardware Diagnostics & GPU Telemetry
+    let initial_diag = SystemDiagnostics::query();
+    apply_hardware_diagnostics(&app, &initial_diag);
+
+    let app_weak_hw = app.as_weak();
+    app.on_refresh_hardware_diagnostics(move || {
+        let diag = SystemDiagnostics::query();
+        if let Some(app) = app_weak_hw.upgrade() {
+            apply_hardware_diagnostics(&app, &diag);
+            app.invoke_trigger_sample_toast(
+                "success".into(),
+                "Hardware Resampled".into(),
+                "Hardware telemetry and GPU status refreshed from system registry.".into(),
+            );
+        }
+    });
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 
-    // 10. Start the native desktop event loop
+    // 11. Start the native desktop event loop
     app.run()
+}
+
+fn apply_hardware_diagnostics(app: &AppWindow, diag: &SystemDiagnostics) {
+    app.set_hw_os_name(format!("{} (Kernel {})", diag.os_name, diag.kernel_version).into());
+    app.set_hw_host_name(diag.host_name.clone().into());
+    app.set_hw_cpu_brand(diag.cpu_brand.clone().into());
+    app.set_hw_cpu_cores(diag.cpu_cores as i32);
+    app.set_hw_cpu_usage(diag.cpu_usage_pct);
+    app.set_hw_cpu_freq(format!("{:.1} GHz", (diag.cpu_frequency_mhz as f64) / 1000.0).into());
+    app.set_hw_ram_total(format!("{:.1} GB", diag.ram_total_gb).into());
+    app.set_hw_ram_used(format!("{:.1} GB", diag.ram_used_gb).into());
+    app.set_hw_ram_usage(diag.ram_usage_pct);
+    app.set_hw_gpu_name(diag.gpu_name.clone().into());
+    app.set_hw_graphics_backend(diag.graphics_backend.clone().into());
 }

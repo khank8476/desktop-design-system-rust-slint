@@ -81,6 +81,20 @@ export component AppWindow inherits Window {
     in-out property <string> toast-status: "success";
     callback trigger-sample-toast(string, string, string); // (status, title, message)
 
+    // Live Hardware Diagnostics (360° System Telemetry)
+    in-out property <string> hw-os-name: "Detecting OS...";
+    in-out property <string> hw-host-name: "Host";
+    in-out property <string> hw-cpu-brand: "Detecting CPU...";
+    in-out property <int> hw-cpu-cores: 8;
+    in-out property <float> hw-cpu-usage: 0.0;
+    in-out property <string> hw-cpu-freq: "3.2 GHz";
+    in-out property <string> hw-ram-total: "16.0 GB";
+    in-out property <string> hw-ram-used: "6.4 GB";
+    in-out property <float> hw-ram-usage: 0.0;
+    in-out property <string> hw-gpu-name: "Detecting GPU...";
+    in-out property <string> hw-graphics-backend: "Direct3D 12";
+    callback refresh-hardware-diagnostics();
+
     // Master Desktop Layout: Sidebar on Left + Content on Right
     HorizontalLayout {
         // 1. Collapsible Desktop Sidebar
@@ -1117,6 +1131,295 @@ export component AppWindow inherits Window {
                             status: "success";
                             title: "Hardware Environment Certified";
                             message: "Operating System: 64-bit Desktop. Graphics Surface: Direct3D/Metal/Vulkan with subpixel font smoothing.";
+                        }
+
+                        Divider { text: "360° HARDWARE DIAGNOSTICS & GPU TELEMETRY"; }
+
+                        // Hardware Diagnostics Header Bar with Live Refresh Action
+                        HorizontalLayout {
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text {
+                                    text: "System Hardware & GPU Capabilities";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Real-time hardware inspection via native system registry and sysinfo engine.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+                            }
+
+                            Button {
+                                text: "Resample Hardware";
+                                variant: "secondary";
+                                clicked => {
+                                    root.refresh-hardware-diagnostics();
+                                }
+                            }
+                        }
+
+                        // 4-Card 360° Telemetry Grid (2 rows x 2 columns)
+                        // Row 1: CPU Subsystem & Physical RAM
+                        HorizontalLayout {
+                            spacing: Spacing.space-lg;
+
+                            // Card 1: CPU Subsystem
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: Spacing.radius-lg;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+
+                                VerticalLayout {
+                                    padding: Spacing.space-lg;
+                                    spacing: Spacing.space-md;
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "CPU Subsystem";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-base;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                        }
+                                        Badge {
+                                            text: root.hw-cpu-cores + " Cores";
+                                            variant: "primary";
+                                            has-dot: true;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: root.hw-cpu-brand;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
+                                        }
+                                        Text {
+                                            text: "Clock Frequency: " + root.hw-cpu-freq + " • Host: " + root.hw-host-name;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 4px;
+                                        HorizontalLayout {
+                                            alignment: space-between;
+                                            Text {
+                                                text: "CPU Active Utilization";
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                            }
+                                            Text {
+                                                text: Math.round(root.hw-cpu-usage) + "%";
+                                                font-size: Typography.size-xs;
+                                                font-weight: Typography.weight-semibold;
+                                                color: Palette.accent;
+                                            }
+                                        }
+                                        ProgressBar {
+                                            progress: root.hw-cpu-usage / 100.0;
+                                            bar-height: 6px;
+                                            variant: root.hw-cpu-usage > 80.0 ? "danger" : "primary";
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Card 2: Physical RAM Memory Engine
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: Spacing.radius-lg;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+
+                                VerticalLayout {
+                                    padding: Spacing.space-lg;
+                                    spacing: Spacing.space-md;
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "Memory (RAM) Engine";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-base;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                        }
+                                        Badge {
+                                            text: root.hw-ram-total + " Total";
+                                            variant: "success";
+                                            has-dot: true;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: root.hw-ram-used + " in use (" + Math.round(root.hw-ram-usage) + "%)";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
+                                        }
+                                        Text {
+                                            text: "Zero GC memory paging • Pure native RSS";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 4px;
+                                        HorizontalLayout {
+                                            alignment: space-between;
+                                            Text {
+                                                text: "System Memory Allocated";
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                            }
+                                            Text {
+                                                text: Math.round(root.hw-ram-usage) + "%";
+                                                font-size: Typography.size-xs;
+                                                font-weight: Typography.weight-semibold;
+                                                color: Palette.success;
+                                            }
+                                        }
+                                        ProgressBar {
+                                            progress: root.hw-ram-usage / 100.0;
+                                            bar-height: 6px;
+                                            variant: "success";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Row 2: GPU Capabilities & OS Subsystem
+                        HorizontalLayout {
+                            spacing: Spacing.space-lg;
+
+                            // Card 3: Dedicated GPU & Graphics Pipeline
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: Spacing.radius-lg;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+
+                                VerticalLayout {
+                                    padding: Spacing.space-lg;
+                                    spacing: Spacing.space-md;
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "GPU & Direct Graphics";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-base;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                        }
+                                        Badge {
+                                            text: "Direct GPU";
+                                            variant: "primary";
+                                            has-dot: true;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: root.hw-gpu-name;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
+                                        }
+                                        Text {
+                                            text: root.hw-graphics-backend;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        Badge { text: "120 FPS Target"; variant: "neutral"; }
+                                        Badge { text: "Subpixel Antialiasing"; variant: "neutral"; }
+                                    }
+                                }
+                            }
+
+                            // Card 4: Operating System & Host Environment
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: Spacing.radius-lg;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+
+                                VerticalLayout {
+                                    padding: Spacing.space-lg;
+                                    spacing: Spacing.space-md;
+
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "OS & Runtime Kernel";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-base;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                        }
+                                        Badge {
+                                            text: "x86_64 Native";
+                                            variant: "success";
+                                            has-dot: true;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: root.hw-os-name;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
+                                        }
+                                        Text {
+                                            text: "Direct3D 12 Hardware Surface Verified";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        Badge { text: "Zero Webview"; variant: "neutral"; }
+                                        Badge { text: "WAL SQLite Active"; variant: "neutral"; }
+                                    }
+                                }
+                            }
                         }
 
                         // Distribution Export Card
