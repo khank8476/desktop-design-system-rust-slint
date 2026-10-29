@@ -37,18 +37,21 @@ ui/
 │   ├── slider.slint       # Interactive draggable thumb value track
 │   ├── radio.slint        # Mutually exclusive selection with descriptions
 │   ├── spinner.slint      # Vector activity indicator loader
-│   └── stepper.slint      # Precision numeric input with +/- buttons
+│   ├── stepper.slint      # Precision numeric input with +/- buttons
+│   └── divider.slint      # Reusable layout separator with optional text
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
 │   ├── alert.slint        # Status banners with vector icons and dismiss
 │   ├── tabs.slint         # Fluid segmented tabs control
-│   └── tooltip.slint      # Floating contextual hint popover
+│   ├── tooltip.slint      # Floating contextual hint popover
+│   └── breadcrumbs.slint  # Hierarchical navigation trail with vector chevrons
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── dropdown.slint     # Top-level PopupWindow with auto-dismiss
 │   ├── feed.slint         # Live streaming telemetry event feed
 │   ├── sidebar.slint      # Collapsible desktop master-detail navigation sidebar
-│   └── toast.slint        # Floating auto-dismissing toast notification
+│   ├── toast.slint        # Floating auto-dismissing toast notification
+│   └── table.slint        # High-density desktop data grid with badges & selection
 └── app.slint              # Interactive component showcase window
 ```
 
@@ -82,11 +85,14 @@ import {
     RadioButton,
     Spinner,
     Stepper,
+    Divider,
     Tooltip,
+    Breadcrumbs,
     ModalDialog, 
     Dropdown, 
     AccordionItem, 
     ToastNotification, 
+    DataTable,
     Palette 
 } from "desktop-design-system/ui/index.slint";
 

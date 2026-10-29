@@ -1,0 +1,214 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Badge } from "../atoms/badge.slint";
+
+export struct TableRowData {
+    id: string,
+    service: string,
+    runtime: string,
+    status: string,     // "Active" | "Warning" | "Standby" | "Offline"
+    latency: string,
+}
+
+export component DataTable {
+    in property <[string]> headers: ["Service / Pipeline", "Runtime Architecture", "Cluster Status", "Latency"];
+    in property <[TableRowData]> rows: [
+        { id: "row-1", service: "Direct3D Render Pipeline", runtime: "DirectX 12 / HLSL", status: "Active", latency: "1.1 ms" },
+        { id: "row-2", service: "Metal Swapchain Engine", runtime: "Apple Metal 3.0", status: "Active", latency: "0.8 ms" },
+        { id: "row-3", service: "Vulkan Surface Compositor", runtime: "SPIR-V Cross-Platform", status: "Standby", latency: "2.4 ms" },
+        { id: "row-4", service: "Audio Subsystem Streamer", runtime: "WASAPI / CoreAudio", status: "Warning", latency: "12.8 ms" },
+        { id: "row-5", service: "Telemetry Event Ingestion", runtime: "Async Native Rust Channel", status: "Active", latency: "0.4 ms" }
+    ];
+    in-out property <int> selected-row: 0;
+    callback row-selected(int, string);
+
+    horizontal-stretch: 1;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.bg-surface;
+        clip: true;
+
+        VerticalLayout {
+            // 1. Table Header Row (Fixed 38px, pinned)
+            Rectangle {
+                height: 38px;
+                vertical-stretch: 0;
+                background: Palette.dark-mode ? #090d16 : #f1f5f9;
+
+                HorizontalLayout {
+                    padding-left: Spacing.space-md;
+                    padding-right: Spacing.space-md;
+                    spacing: Spacing.space-sm;
+
+                    // Col 1: Service (35% width)
+                    HorizontalLayout {
+                        horizontal-stretch: 35;
+                        alignment: start;
+                        Text {
+                            text: root.headers[0];
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Col 2: Runtime (30% width)
+                    HorizontalLayout {
+                        horizontal-stretch: 30;
+                        alignment: start;
+                        Text {
+                            text: root.headers[1];
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Col 3: Status (20% width)
+                    HorizontalLayout {
+                        horizontal-stretch: 20;
+                        alignment: start;
+                        Text {
+                            text: root.headers[2];
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    // Col 4: Latency (15% width)
+                    HorizontalLayout {
+                        horizontal-stretch: 15;
+                        alignment: end;
+                        Text {
+                            text: root.headers[3];
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                vertical-stretch: 0;
+                background: Palette.border-subtle;
+            }
+
+            // 2. Table Data Rows
+            VerticalLayout {
+                spacing: 0px;
+
+                for row[idx] in root.rows: row-box := Rectangle {
+                    height: 44px;
+                    vertical-stretch: 0;
+
+                    // Row background with zebra striping and instant hover/select states
+                    background: root.selected-row == idx ? (Palette.dark-mode ? #1e293b : #eff6ff) :
+                                row-touch.has-hover ? (Palette.dark-mode ? #1e293b88 : #f8fafc) :
+                                (Math.mod(idx, 2) == 1) ? (Palette.dark-mode ? #121927 : #fbfcfe) :
+                                Palette.bg-surface;
+
+                    // Left accent indicator for selected row
+                    if root.selected-row == idx: Rectangle {
+                        width: 3px;
+                        height: 100%;
+                        x: 0px;
+                        background: Palette.accent;
+                    }
+
+                    HorizontalLayout {
+                        padding-left: Spacing.space-md;
+                        padding-right: Spacing.space-md;
+                        spacing: Spacing.space-sm;
+
+                        // Col 1: Service Name
+                        HorizontalLayout {
+                            horizontal-stretch: 35;
+                            alignment: start;
+                            Text {
+                                text: row.service;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: Typography.weight-medium;
+                                color: root.selected-row == idx ? Palette.accent : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Col 2: Runtime
+                        HorizontalLayout {
+                            horizontal-stretch: 30;
+                            alignment: start;
+                            Text {
+                                text: row.runtime;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        // Col 3: Status Badge
+                        HorizontalLayout {
+                            horizontal-stretch: 20;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: center;
+                                Badge {
+                                    text: row.status;
+                                    variant: row.status == "Active" ? "success" :
+                                             row.status == "Warning" ? "warning" :
+                                             row.status == "Offline" ? "danger" : "primary";
+                                    has-dot: true;
+                                }
+                            }
+                        }
+
+                        // Col 4: Latency
+                        HorizontalLayout {
+                            horizontal-stretch: 15;
+                            alignment: end;
+                            Text {
+                                text: row.latency;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: Typography.weight-semibold;
+                                color: row.status == "Warning" ? #f59e0b : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    // 1px divider between rows (except last)
+                    if idx < root.rows.length - 1: Rectangle {
+                        height: 1px;
+                        y: parent.height - 1px;
+                        background: Palette.border-subtle;
+                    }
+
+                    row-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.selected-row = idx;
+                            root.row-selected(idx, row.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

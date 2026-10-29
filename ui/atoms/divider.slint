@@ -1,0 +1,60 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Divider {
+    in property <string> orientation: "horizontal"; // "horizontal" | "vertical"
+    in property <string> text: "";
+    in property <color> divider-color: Palette.border-subtle;
+    in property <length> thickness: 1px;
+
+    horizontal-stretch: root.orientation == "vertical" ? 0 : 1;
+    vertical-stretch: root.orientation == "vertical" ? 1 : 0;
+
+    // 1. Simple Horizontal Line Divider
+    if root.text == "" && root.orientation == "horizontal": Rectangle {
+        background: root.divider-color;
+        height: root.thickness;
+        horizontal-stretch: 1;
+        vertical-stretch: 0;
+    }
+
+    // 2. Simple Vertical Line Divider
+    if root.text == "" && root.orientation == "vertical": Rectangle {
+        background: root.divider-color;
+        width: root.thickness;
+        horizontal-stretch: 0;
+        vertical-stretch: 1;
+    }
+
+    // 3. Horizontal Divider with Centered Label Text (e.g. ──── SECTION ────)
+    if root.text != "" && root.orientation == "horizontal": HorizontalLayout {
+        spacing: Spacing.space-md;
+        alignment: center;
+        height: 24px;
+        vertical-stretch: 0;
+
+        Rectangle {
+            height: root.thickness;
+            horizontal-stretch: 1;
+            y: (parent.height - self.height) / 2;
+            background: root.divider-color;
+        }
+
+        Text {
+            text: root.text;
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            font-weight: Typography.weight-semibold;
+            color: Palette.text-secondary;
+            vertical-alignment: center;
+        }
+
+        Rectangle {
+            height: root.thickness;
+            horizontal-stretch: 1;
+            y: (parent.height - self.height) / 2;
+            background: root.divider-color;
+        }
+    }
+}

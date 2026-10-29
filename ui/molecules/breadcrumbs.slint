@@ -1,0 +1,76 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct BreadcrumbItem {
+    id: string,
+    label: string,
+}
+
+export component Breadcrumbs {
+    in property <[BreadcrumbItem]> items: [
+        { id: "root", label: "Dashboard" },
+        { id: "infra", label: "Infrastructure" },
+        { id: "gpu", label: "GPU Pipeline" }
+    ];
+    callback item-clicked(int, string);
+
+    height: 28px;
+    horizontal-stretch: 0;
+    vertical-stretch: 0;
+
+    HorizontalLayout {
+        spacing: Spacing.space-xs;
+        alignment: start;
+
+        for item[idx] in root.items: HorizontalLayout {
+            spacing: Spacing.space-xs;
+            alignment: center;
+
+            // 1. Crumb Item (Link or Active Label)
+            crumb-btn := Rectangle {
+                height: 24px;
+                border-radius: Spacing.radius-sm;
+                background: idx < root.items.length - 1 && crumb-touch.has-hover ?
+                            (Palette.dark-mode ? #1e293b88 : #e2e8f088) : transparent;
+
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    alignment: center;
+
+                    Text {
+                        text: item.label;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        font-weight: idx == root.items.length - 1 ? Typography.weight-semibold : Typography.weight-normal;
+                        color: idx == root.items.length - 1 ? Palette.text-primary :
+                               crumb-touch.has-hover ? Palette.accent : Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                crumb-touch := TouchArea {
+                    mouse-cursor: idx < root.items.length - 1 ? pointer : default;
+                    clicked => {
+                        if (idx < root.items.length - 1) {
+                            root.item-clicked(idx, item.id);
+                        }
+                    }
+                }
+            }
+
+            // 2. Vector Chevron Separator (between items)
+            if idx < root.items.length - 1: VerticalLayout {
+                alignment: center;
+                width: 14px;
+                Image {
+                    source: @image-url("../../assets/icons/chevron-right.svg");
+                    width: 12px;
+                    height: 12px;
+                    colorize: Palette.text-secondary;
+                }
+            }
+        }
+    }
+}
