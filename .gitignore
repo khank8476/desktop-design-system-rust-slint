@@ -3,4 +3,29 @@
 Cargo.lock
 .idea/
 .vscode/
+*.swp
+*.swo
+
+# Local Databases & Transaction Logs
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+*.crt
+credentials.json
+token.txt
+
+# OS-Specific & Logs
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
 

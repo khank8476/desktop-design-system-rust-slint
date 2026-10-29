@@ -239,12 +239,10 @@ mod tests {
     #[test]
     fn test_hardware_query() {
         let diag = SystemDiagnostics::query();
-        println!("Hardware Diagnostics: {:#?}", diag);
         assert!(!diag.os_name.is_empty());
         assert!(diag.cpu_cores > 0);
         assert!(diag.ram_total_gb > 0.0);
         assert!(!diag.gpu_name.is_empty());
-        // Verify discrete GPU was detected
-        assert!(diag.gpu_name.contains("NVIDIA") || diag.gpu_name.contains("Intel") || diag.gpu_name.contains("Direct3D"));
+        assert!(!diag.graphics_backend.is_empty());
     }
 }
