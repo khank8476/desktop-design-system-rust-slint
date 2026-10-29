@@ -1,0 +1,369 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+global DateUtils {
+    pure public function month-name(month: int) -> string {
+        if (month == 1) { return "January"; }
+        if (month == 2) { return "February"; }
+        if (month == 3) { return "March"; }
+        if (month == 4) { return "April"; }
+        if (month == 5) { return "May"; }
+        if (month == 6) { return "June"; }
+        if (month == 7) { return "July"; }
+        if (month == 8) { return "August"; }
+        if (month == 9) { return "September"; }
+        if (month == 10) { return "October"; }
+        if (month == 11) { return "November"; }
+        return "December";
+    }
+
+    pure public function is-leap-year(year: int) -> bool {
+        return (Math.floor(year / 4) * 4 == year && Math.floor(year / 100) * 100 != year) || (Math.floor(year / 400) * 400 == year);
+    }
+
+    pure public function days-in-month(year: int, month: int) -> int {
+        if (month == 2) {
+            return DateUtils.is-leap-year(year) ? 29 : 28;
+        }
+        if (month == 4 || month == 6 || month == 9 || month == 11) {
+            return 30;
+        }
+        return 31;
+    }
+
+    pure function month-offset(m: int) -> int {
+        if (m == 1) { return 0; }
+        if (m == 2) { return 3; }
+        if (m == 3) { return 2; }
+        if (m == 4) { return 5; }
+        if (m == 5) { return 0; }
+        if (m == 6) { return 3; }
+        if (m == 7) { return 5; }
+        if (m == 8) { return 1; }
+        if (m == 9) { return 4; }
+        if (m == 10) { return 6; }
+        if (m == 11) { return 2; }
+        return 4;
+    }
+
+    pure public function day-of-week(y: int, m: int, d: int) -> int {
+        let y-adj = m < 3 ? y - 1 : y;
+        let sum = y-adj + Math.floor(y-adj / 4) - Math.floor(y-adj / 100) + Math.floor(y-adj / 400) + DateUtils.month-offset(m) + d;
+        return sum - Math.floor(sum / 7) * 7;
+    }
+}
+
+export component DatePicker {
+    in property <string> label: "";
+    in property <string> placeholder: "Select Date...";
+    in-out property <int> selected-year: 2026;
+    in-out property <int> selected-month: 10;
+    in-out property <int> selected-day: 29;
+    in-out property <string> formatted-date: selected-year + "-" + (selected-month < 10 ? "0" : "") + selected-month + "-" + (selected-day < 10 ? "0" : "") + selected-day;
+    
+    // View state when browsing months inside the calendar
+    property <int> view-year: selected-year;
+    property <int> view-month: selected-month;
+    property <int> first-day-offset: DateUtils.day-of-week(root.view-year, root.view-month, 1);
+    property <int> total-days: DateUtils.days-in-month(root.view-year, root.view-month);
+    
+    callback date-selected(string); // emits formatted YYYY-MM-DD
+
+    min-height: 40px;
+    horizontal-stretch: 0;
+
+    VerticalLayout {
+        spacing: 4px;
+
+        if root.label != "": Text {
+            text: root.label;
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            font-weight: 600;
+            color: Palette.text-secondary;
+        }
+
+        // Trigger Box
+        trigger := Rectangle {
+            min-height: 40px;
+            border-radius: Spacing.radius-md;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #1e293b : #ffffff;
+
+            HorizontalLayout {
+                padding-left: Spacing.space-md;
+                padding-right: Spacing.space-md;
+                alignment: space-between;
+
+                Text {
+                    text: root.formatted-date != "" ? root.formatted-date : root.placeholder;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    color: root.formatted-date != "" ? Palette.text-primary : Palette.text-placeholder;
+                    vertical-alignment: center;
+                }
+
+                // Vector Calendar Icon
+                VerticalLayout {
+                    alignment: center;
+                    width: 16px;
+                    Image {
+                        source: @image-url("../../assets/icons/calendar.svg");
+                        width: 16px;
+                        height: 16px;
+                        colorize: Palette.text-secondary;
+                    }
+                }
+            }
+
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.view-year = root.selected-year;
+                    root.view-month = root.selected-month;
+                    popup.show();
+                }
+            }
+        }
+    }
+
+    // Floating Calendar Popover
+    popup := PopupWindow {
+        x: 0;
+        y: trigger.height + 6px;
+        width: 310px;
+
+        Rectangle {
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #0f172a : #ffffff;
+            drop-shadow-blur: 24px;
+            drop-shadow-color: #00000099;
+            drop-shadow-offset-y: 6px;
+
+            VerticalLayout {
+                padding: Spacing.space-md;
+                spacing: Spacing.space-sm;
+
+                // Month / Year Navigation Header
+                HorizontalLayout {
+                    alignment: space-between;
+                    height: 32px;
+
+                    // Prev Month Button
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: Spacing.radius-sm;
+                        background: prev-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Image {
+                            source: @image-url("../../assets/icons/chevron-left.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: Palette.text-secondary;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        prev-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                if (root.view-month == 1) {
+                                    root.view-month = 12;
+                                    root.view-year -= 1;
+                                } else {
+                                    root.view-month -= 1;
+                                }
+                            }
+                        }
+                    }
+
+                    // Month & Year Label
+                    Text {
+                        text: DateUtils.month-name(root.view-month) + " " + root.view-year;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: 700;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+
+                    // Next Month Button
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: Spacing.radius-sm;
+                        background: next-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Image {
+                            source: @image-url("../../assets/icons/chevron-right.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: Palette.text-secondary;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        next-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                if (root.view-month == 12) {
+                                    root.view-month = 1;
+                                    root.view-year += 1;
+                                } else {
+                                    root.view-month += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Days of Week Header
+                HorizontalLayout {
+                    spacing: 4px;
+                    height: 20px;
+
+                    for day-name in ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]: Text {
+                        text: day-name;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: 600;
+                        color: Palette.text-placeholder;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        width: 36px;
+                    }
+                }
+
+                // Divider line
+                Rectangle {
+                    height: 1px;
+                    background: Palette.border-subtle;
+                }
+
+                // Calendar Grid (6 rows x 7 columns)
+                VerticalLayout {
+                    spacing: 2px;
+
+                    for row in 6: HorizontalLayout {
+                        spacing: 4px;
+                        height: 32px;
+
+                        for col in 7: cell := Rectangle {
+                            width: 36px;
+                            height: 32px;
+                            border-radius: Spacing.radius-md;
+
+                            property <int> cell-idx: row * 7 + col;
+                            property <int> day-num: cell-idx - root.first-day-offset + 1;
+                            property <bool> is-valid: day-num >= 1 && day-num <= root.total-days;
+                            property <bool> is-selected: is-valid && day-num == root.selected-day && root.view-month == root.selected-month && root.view-year == root.selected-year;
+
+                            background: !is-valid ? transparent :
+                                        is-selected ? Palette.accent :
+                                        cell-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            if is-valid: Text {
+                                text: day-num;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: is-selected ? 700 : 500;
+                                color: is-selected ? #ffffff :
+                                       Palette.text-primary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            cell-touch := TouchArea {
+                                mouse-cursor: is-valid ? pointer : default;
+                                clicked => {
+                                    if (is-valid) {
+                                        root.selected-day = day-num;
+                                        root.selected-month = root.view-month;
+                                        root.selected-year = root.view-year;
+                                        root.formatted-date = root.selected-year + "-" + (root.selected-month < 10 ? "0" : "") + root.selected-month + "-" + (root.selected-day < 10 ? "0" : "") + root.selected-day;
+                                        root.date-selected(root.formatted-date);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Footer Quick Actions
+                Rectangle {
+                    height: 1px;
+                    background: Palette.border-subtle;
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    height: 28px;
+
+                    // Today Button
+                    Rectangle {
+                        width: 60px;
+                        height: 26px;
+                        border-radius: Spacing.radius-sm;
+                        background: today-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Text {
+                            text: "Today";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: 600;
+                            color: Palette.accent;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        today-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.selected-year = 2026;
+                                root.selected-month = 10;
+                                root.selected-day = 29;
+                                root.view-year = 2026;
+                                root.view-month = 10;
+                                root.formatted-date = "2026-10-29";
+                                root.date-selected(root.formatted-date);
+                            }
+                        }
+                    }
+
+                    // Done / Close Button
+                    Rectangle {
+                        width: 50px;
+                        height: 26px;
+                        border-radius: Spacing.radius-sm;
+                        background: Palette.accent;
+
+                        Text {
+                            text: "Done";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: 600;
+                            color: #ffffff;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                popup.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

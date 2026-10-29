@@ -58,7 +58,9 @@ c/
 │   │   ├── alert.slint        # Dismissible banner cards with status icons
 │   │   ├── tabs.slint         # Segmented horizontal view switch
 │   │   ├── tooltip.slint      # Hover popover hint container
-│   │   └── breadcrumbs.slint  # Multi-level hierarchical path trail
+│   │   ├── breadcrumbs.slint  # Multi-level hierarchical path trail
+│   │   ├── datepicker.slint   # Interactive calendar month grid popover
+│   │   └── timepicker.slint   # Precision 24H/12H hour-minute time stepper
 │   └── organisms/             # High-level desktop modules
 │       ├── modal.slint        # Centered backdrop dialog
 │       ├── crud_modal.slint   # Data entry & edit modal form for SQLite records
@@ -154,11 +156,12 @@ cargo clean
   - ✅ **Bundled SQLite CRUD Engine:** WAL mode, transaction safety, full modal editing & deletion.
   - ✅ **360° System & GPU Diagnostics:** Sub-millisecond direct in-process hardware telemetry.
   - ✅ **Demo 1 (CryptoStream Tracker):** High-speed 120 FPS trading matrix example.
+  - ✅ **DatePicker & TimePicker Molecules:** Interactive calendar popover with month navigation & 24H/12H precision time stepper.
   - ✅ **Crates.io Publication:** `v0.1.1` live and indexed.
 - **Next Planned Deliverables:**
+  - 🔜 **TreeView / File Explorer Atom:** Collapsible file tree with folder expansion and selection.
+  - 🔜 **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons.
   - 🔜 **Demo 2:** Native Local Audio/Media Player or Markdown Document Studio.
-  - 🔜 **Cross-Platform Validation:** Linux (X11/Wayland) and macOS (Metal) headless CI checks.
-  - 🔜 **Advanced Components:** TreeView / File Explorer Atom and Date/Time Picker.
 
 ---
 

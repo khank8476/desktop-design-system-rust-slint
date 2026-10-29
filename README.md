@@ -45,7 +45,9 @@ ui/
 │   ├── alert.slint        # Status banners with vector icons and dismiss
 │   ├── tabs.slint         # Fluid segmented tabs control
 │   ├── tooltip.slint      # Floating contextual hint popover
-│   └── breadcrumbs.slint  # Hierarchical navigation trail with vector chevrons
+│   ├── breadcrumbs.slint  # Hierarchical navigation trail with vector chevrons
+│   ├── datepicker.slint   # Interactive calendar month grid popover
+│   └── timepicker.slint   # Precision 24H/12H hour-minute time stepper
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── crud_modal.slint   # Interactive modal form for SQLite record creation
@@ -90,6 +92,8 @@ import {
     Divider,
     Tooltip,
     Breadcrumbs,
+    DatePicker,
+    TimePicker,
     ModalDialog, 
     Dropdown, 
     AccordionItem, 

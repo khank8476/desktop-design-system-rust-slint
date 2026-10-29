@@ -18,6 +18,8 @@ import { Alert } from "molecules/alert.slint";
 import { SegmentedTabs } from "molecules/tabs.slint";
 import { Tooltip } from "molecules/tooltip.slint";
 import { Breadcrumbs } from "molecules/breadcrumbs.slint";
+import { DatePicker } from "molecules/datepicker.slint";
+import { TimePicker } from "molecules/timepicker.slint";
 import { ModalDialog } from "organisms/modal.slint";
 import { Dropdown } from "organisms/dropdown.slint";
 import { LiveFeedView, FeedItem } from "organisms/feed.slint";
@@ -51,6 +53,8 @@ export component AppWindow inherits Window {
     in-out property <int> demo-radio-sel: 0;
     in-out property <int> demo-stepper-val: 16;
     in-out property <bool> demo-tooltip-hover: false;
+    in-out property <string> demo-date: "2026-10-29";
+    in-out property <string> demo-time-24: "14:30";
 
     // Live Feed properties & callbacks
     in-out property <[FeedItem]> live-feed-items: [];
@@ -228,6 +232,54 @@ export component AppWindow inherits Window {
                                     variant: "danger";
                                     clicked => {
                                         root.trigger-sample-toast("danger", "Process Warning", "Hardware GPU buffer spike detected.");
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                        // Date & Time Selection (Molecules)
+                        VerticalLayout {
+                            spacing: Spacing.space-md;
+
+                            VerticalLayout {
+                                spacing: 2px;
+                                Text {
+                                    text: "Date & Time Pickers (Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Interactive calendar popover with month navigation and precision time steppers.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-xl;
+                                alignment: start;
+
+                                DatePicker {
+                                    width: 270px;
+                                    label: "Target Deployment Date";
+                                    formatted-date <=> root.demo-date;
+                                    date-selected(d) => {
+                                        root.trigger-sample-toast("info", "Date Selected", "Scheduled for: " + d);
+                                    }
+                                }
+
+                                TimePicker {
+                                    width: 240px;
+                                    label: "Execution Window (24H)";
+                                    formatted-time <=> root.demo-time-24;
+                                    is-24h: true;
+                                    time-selected(t) => {
+                                        root.trigger-sample-toast("info", "Time Selected", "Execution window: " + t);
                                     }
                                 }
                             }

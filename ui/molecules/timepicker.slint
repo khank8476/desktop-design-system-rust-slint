@@ -1,0 +1,472 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component TimePicker {
+    in property <string> label: "";
+    in property <string> placeholder: "Select Time...";
+    in property <bool> is-24h: true;
+    in-out property <int> hour: 14;
+    in-out property <int> minute: 30;
+    in-out property <string> period: "PM"; // "AM" or "PM" when !is-24h
+    in-out property <string> formatted-time: 
+        is-24h ? 
+            (hour < 10 ? "0" : "") + hour + ":" + (minute < 10 ? "0" : "") + minute :
+            ((Math.mod(hour, 12) == 0 ? 12 : Math.mod(hour, 12)) < 10 ? "0" : "") + (Math.mod(hour, 12) == 0 ? 12 : Math.mod(hour, 12)) + ":" + (minute < 10 ? "0" : "") + minute + " " + period;
+
+    callback time-selected(string); // emits formatted time
+
+    min-height: 40px;
+    horizontal-stretch: 0;
+
+    VerticalLayout {
+        spacing: 4px;
+
+        if root.label != "": Text {
+            text: root.label;
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            font-weight: 600;
+            color: Palette.text-secondary;
+        }
+
+        // Trigger Box
+        trigger := Rectangle {
+            min-height: 40px;
+            border-radius: Spacing.radius-md;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #1e293b : #ffffff;
+
+            HorizontalLayout {
+                padding-left: Spacing.space-md;
+                padding-right: Spacing.space-md;
+                alignment: space-between;
+
+                Text {
+                    text: root.formatted-time != "" ? root.formatted-time : root.placeholder;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    color: root.formatted-time != "" ? Palette.text-primary : Palette.text-placeholder;
+                    vertical-alignment: center;
+                }
+
+                // Vector Clock Icon
+                VerticalLayout {
+                    alignment: center;
+                    width: 16px;
+                    Image {
+                        source: @image-url("../../assets/icons/clock.svg");
+                        width: 16px;
+                        height: 16px;
+                        colorize: Palette.text-secondary;
+                    }
+                }
+            }
+
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    popup.show();
+                }
+            }
+        }
+    }
+
+    // Floating Time Popover
+    popup := PopupWindow {
+        x: 0;
+        y: trigger.height + 6px;
+        width: 250px;
+
+        Rectangle {
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #0f172a : #ffffff;
+            drop-shadow-blur: 24px;
+            drop-shadow-color: #00000099;
+            drop-shadow-offset-y: 6px;
+
+            VerticalLayout {
+                padding: Spacing.space-md;
+                spacing: Spacing.space-md;
+
+                // Title
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "Select Time";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        font-weight: 700;
+                        color: Palette.text-primary;
+                    }
+
+                    // Format Badge (24H vs 12H)
+                    Rectangle {
+                        border-radius: Spacing.radius-sm;
+                        background: Palette.bg-surface-active;
+                        width: 62px;
+                        height: 20px;
+
+                        Text {
+                            text: root.is-24h ? "24-Hour" : "12-Hour";
+                            font-family: Typography.font-family;
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Palette.accent;
+                            vertical-alignment: center;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+                    }
+                }
+
+                // Interactive Precision Stepper Boxes
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: Spacing.space-sm;
+
+                    // Hour Stepper
+                    VerticalLayout {
+                        spacing: 4px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 54px;
+                            height: 24px;
+                            border-radius: Spacing.radius-sm;
+                            background: hr-up-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            Image {
+                                source: @image-url("../../assets/icons/chevron-up.svg");
+                                width: 14px;
+                                height: 14px;
+                                colorize: Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            hr-up-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    if (root.hour >= 23) {
+                                        root.hour = 0;
+                                    } else {
+                                        root.hour += 1;
+                                    }
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 54px;
+                            height: 48px;
+                            border-radius: Spacing.radius-md;
+                            background: Palette.dark-mode ? #1e293b : #f1f5f9;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+
+                            Text {
+                                text: (root.hour < 10 ? "0" : "") + root.hour;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xl;
+                                font-weight: 700;
+                                color: Palette.text-primary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 54px;
+                            height: 24px;
+                            border-radius: Spacing.radius-sm;
+                            background: hr-down-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            Image {
+                                source: @image-url("../../assets/icons/chevron-down.svg");
+                                width: 14px;
+                                height: 14px;
+                                colorize: Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            hr-down-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    if (root.hour <= 0) {
+                                        root.hour = 23;
+                                    } else {
+                                        root.hour -= 1;
+                                    }
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+                    }
+
+                    // Colon Separator
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: ":";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xl;
+                            font-weight: 700;
+                            color: Palette.text-secondary;
+                        }
+                    }
+
+                    // Minute Stepper
+                    VerticalLayout {
+                        spacing: 4px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 54px;
+                            height: 24px;
+                            border-radius: Spacing.radius-sm;
+                            background: min-up-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            Image {
+                                source: @image-url("../../assets/icons/chevron-up.svg");
+                                width: 14px;
+                                height: 14px;
+                                colorize: Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            min-up-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    if (root.minute >= 55) {
+                                        root.minute = 0;
+                                    } else {
+                                        root.minute += 5;
+                                    }
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 54px;
+                            height: 48px;
+                            border-radius: Spacing.radius-md;
+                            background: Palette.dark-mode ? #1e293b : #f1f5f9;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+
+                            Text {
+                                text: (root.minute < 10 ? "0" : "") + root.minute;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xl;
+                                font-weight: 700;
+                                color: Palette.text-primary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+                        }
+
+                        Rectangle {
+                            width: 54px;
+                            height: 24px;
+                            border-radius: Spacing.radius-sm;
+                            background: min-down-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                            Image {
+                                source: @image-url("../../assets/icons/chevron-down.svg");
+                                width: 14px;
+                                height: 14px;
+                                colorize: Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            min-down-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    if (root.minute <= 0) {
+                                        root.minute = 55;
+                                    } else {
+                                        root.minute -= 5;
+                                    }
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+                    }
+
+                    // AM/PM Switcher if not 24h
+                    if !root.is-24h: VerticalLayout {
+                        spacing: 6px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 44px;
+                            height: 32px;
+                            border-radius: Spacing.radius-sm;
+                            background: root.period == "AM" ? Palette.accent : Palette.bg-surface-active;
+
+                            Text {
+                                text: "AM";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: 700;
+                                color: root.period == "AM" ? #ffffff : Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.period = "AM";
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 44px;
+                            height: 32px;
+                            border-radius: Spacing.radius-sm;
+                            background: root.period == "PM" ? Palette.accent : Palette.bg-surface-active;
+
+                            Text {
+                                text: "PM";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: 700;
+                                color: root.period == "PM" ? #ffffff : Palette.text-secondary;
+                                x: (parent.width - self.width) / 2;
+                                y: (parent.height - self.height) / 2;
+                            }
+
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.period = "PM";
+                                    root.update-formatted();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Quick Preset Pills
+                HorizontalLayout {
+                    spacing: 4px;
+                    alignment: center;
+
+                    for preset in ["09:00", "12:00", "15:30", "18:00"]: Rectangle {
+                        width: 48px;
+                        height: 24px;
+                        border-radius: Spacing.radius-sm;
+                        background: preset-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface-active;
+
+                        Text {
+                            text: preset;
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            font-weight: 500;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        preset-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                if (preset == "09:00") { root.hour = 9; root.minute = 0; }
+                                if (preset == "12:00") { root.hour = 12; root.minute = 0; }
+                                if (preset == "15:30") { root.hour = 15; root.minute = 30; }
+                                if (preset == "18:00") { root.hour = 18; root.minute = 0; }
+                                root.update-formatted();
+                            }
+                        }
+                    }
+                }
+
+                // Footer Line & Done Button
+                Rectangle {
+                    height: 1px;
+                    background: Palette.border-subtle;
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    height: 28px;
+
+                    // "Now" Button
+                    Rectangle {
+                        width: 50px;
+                        height: 26px;
+                        border-radius: Spacing.radius-sm;
+                        background: now-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Text {
+                            text: "Now";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: 600;
+                            color: Palette.accent;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        now-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.hour = 14;
+                                root.minute = 30;
+                                root.update-formatted();
+                            }
+                        }
+                    }
+
+                    // "Done" Button
+                    Rectangle {
+                        width: 54px;
+                        height: 26px;
+                        border-radius: Spacing.radius-sm;
+                        background: Palette.accent;
+
+                        Text {
+                            text: "Done";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: 600;
+                            color: #ffffff;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                popup.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function update-formatted() {
+        if (root.is-24h) {
+            root.formatted-time = (root.hour < 10 ? "0" : "") + root.hour + ":" + (root.minute < 10 ? "0" : "") + root.minute;
+        } else {
+            let h12 = Math.mod(root.hour, 12) == 0 ? 12 : Math.mod(root.hour, 12);
+            root.formatted-time = (h12 < 10 ? "0" : "") + h12 + ":" + (root.minute < 10 ? "0" : "") + root.minute + " " + root.period;
+        }
+        root.time-selected(root.formatted-time);
+    }
+}
