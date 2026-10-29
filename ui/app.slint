@@ -1137,6 +1137,7 @@ export component AppWindow inherits Window {
                             alignment: space-between;
 
                             VerticalLayout {
+                                horizontal-stretch: 1;
                                 spacing: 2px;
                                 Text {
                                     text: "System Hardware & GPU Capabilities";
@@ -1144,27 +1145,29 @@ export component AppWindow inherits Window {
                                     font-size: Typography.size-lg;
                                     font-weight: Typography.weight-semibold;
                                     color: Palette.text-primary;
+                                    overflow: elide;
                                 }
                                 Text {
-                                    text: "Real-time native Windows registry and kernel telemetry • Sub-millisecond direct query.";
+                                    text: "Real-time native Windows registry and kernel telemetry • Direct query";
                                     font-family: Typography.font-family;
                                     font-size: Typography.size-xs;
                                     color: Palette.text-secondary;
+                                    wrap: word-wrap;
                                 }
                             }
 
                             HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                alignment: center;
+                                spacing: Spacing.space-sm;
+                                alignment: end;
 
                                 Badge {
-                                    text: "Process RSS: " + root.hw-app-memory;
+                                    text: "RSS: " + root.hw-app-memory;
                                     variant: "success";
                                     has-dot: true;
                                 }
 
                                 Button {
-                                    text: "Resample Hardware";
+                                    text: "Resample";
                                     variant: "secondary";
                                     clicked => {
                                         root.refresh-hardware-diagnostics();
@@ -1173,10 +1176,10 @@ export component AppWindow inherits Window {
                             }
                         }
 
-                        // 4-Card 360° Telemetry Grid (2 rows x 2 columns)
+                        // 4-Card 360° Telemetry Grid (2 rows x 2 columns, fluid and responsive)
                         // Row 1: CPU Subsystem & Physical RAM
                         HorizontalLayout {
-                            spacing: Spacing.space-lg;
+                            spacing: Spacing.space-md;
 
                             // Card 1: CPU Subsystem
                             Rectangle {
@@ -1187,8 +1190,8 @@ export component AppWindow inherits Window {
                                 background: Palette.bg-surface;
 
                                 VerticalLayout {
-                                    padding: Spacing.space-lg;
-                                    spacing: Spacing.space-md;
+                                    padding: Spacing.space-md;
+                                    spacing: Spacing.space-sm;
 
                                     HorizontalLayout {
                                         alignment: space-between;
@@ -1214,9 +1217,17 @@ export component AppWindow inherits Window {
                                             font-size: Typography.size-sm;
                                             font-weight: Typography.weight-bold;
                                             color: Palette.text-primary;
+                                            wrap: word-wrap;
                                         }
                                         Text {
-                                            text: "Clock: " + root.hw-cpu-freq + " • Host: " + root.hw-host-name + " • Uptime: " + root.hw-uptime;
+                                            text: "Clock: " + root.hw-cpu-freq + " • Host: " + root.hw-host-name;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                            wrap: word-wrap;
+                                        }
+                                        Text {
+                                            text: "Uptime: " + root.hw-uptime;
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
@@ -1257,8 +1268,8 @@ export component AppWindow inherits Window {
                                 background: Palette.bg-surface;
 
                                 VerticalLayout {
-                                    padding: Spacing.space-lg;
-                                    spacing: Spacing.space-md;
+                                    padding: Spacing.space-md;
+                                    spacing: Spacing.space-sm;
 
                                     HorizontalLayout {
                                         alignment: space-between;
@@ -1279,14 +1290,22 @@ export component AppWindow inherits Window {
                                     VerticalLayout {
                                         spacing: 2px;
                                         Text {
-                                            text: root.hw-ram-used + " in use (" + Math.round(root.hw-ram-usage) + "%) • " + root.hw-ram-free + " available";
+                                            text: root.hw-ram-used + " in use (" + Math.round(root.hw-ram-usage) + "%)";
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-sm;
                                             font-weight: Typography.weight-bold;
                                             color: Palette.text-primary;
+                                            wrap: word-wrap;
                                         }
                                         Text {
-                                            text: "Zero GC paging pauses • Pure native RSS: " + root.hw-app-memory;
+                                            text: root.hw-ram-free + " available";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                            wrap: word-wrap;
+                                        }
+                                        Text {
+                                            text: "Zero GC paging • Pure native RSS";
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
@@ -1321,7 +1340,7 @@ export component AppWindow inherits Window {
 
                         // Row 2: GPU Capabilities & OS Subsystem
                         HorizontalLayout {
-                            spacing: Spacing.space-lg;
+                            spacing: Spacing.space-md;
 
                             // Card 3: Dedicated GPU & Graphics Pipeline
                             Rectangle {
@@ -1332,8 +1351,8 @@ export component AppWindow inherits Window {
                                 background: Palette.bg-surface;
 
                                 VerticalLayout {
-                                    padding: Spacing.space-lg;
-                                    spacing: Spacing.space-md;
+                                    padding: Spacing.space-md;
+                                    spacing: Spacing.space-sm;
 
                                     HorizontalLayout {
                                         alignment: space-between;
@@ -1359,25 +1378,27 @@ export component AppWindow inherits Window {
                                             font-size: Typography.size-sm;
                                             font-weight: Typography.weight-bold;
                                             color: Palette.text-primary;
+                                            wrap: word-wrap;
                                         }
                                         Text {
                                             text: root.hw-gpu-secondary;
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
+                                            wrap: word-wrap;
                                         }
                                         Text {
                                             text: root.hw-graphics-backend;
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.accent;
+                                            wrap: word-wrap;
                                         }
                                     }
 
                                     HorizontalLayout {
-                                        spacing: Spacing.space-sm;
+                                        spacing: Spacing.space-xs;
                                         Badge { text: "120 FPS Target"; variant: "neutral"; }
-                                        Badge { text: "Subpixel Antialiasing"; variant: "neutral"; }
                                         Badge { text: "Raytracing Ready"; variant: "neutral"; }
                                     }
                                 }
@@ -1392,8 +1413,8 @@ export component AppWindow inherits Window {
                                 background: Palette.bg-surface;
 
                                 VerticalLayout {
-                                    padding: Spacing.space-lg;
-                                    spacing: Spacing.space-md;
+                                    padding: Spacing.space-md;
+                                    spacing: Spacing.space-sm;
 
                                     HorizontalLayout {
                                         alignment: space-between;
@@ -1419,19 +1440,20 @@ export component AppWindow inherits Window {
                                             font-size: Typography.size-sm;
                                             font-weight: Typography.weight-bold;
                                             color: Palette.text-primary;
+                                            wrap: word-wrap;
                                         }
                                         Text {
                                             text: "DirectX 12 Swapchain • WAL SQLite Active";
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
+                                            wrap: word-wrap;
                                         }
                                     }
 
                                     HorizontalLayout {
-                                        spacing: Spacing.space-sm;
+                                        spacing: Spacing.space-xs;
                                         Badge { text: "Zero Webview"; variant: "neutral"; }
-                                        Badge { text: "Sub-25MB Footprint"; variant: "neutral"; }
                                         Badge { text: "ACID Safe"; variant: "neutral"; }
                                     }
                                 }
