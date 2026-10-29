@@ -438,15 +438,19 @@ fn main() -> Result<(), slint::PlatformError> {
 }
 
 fn apply_hardware_diagnostics(app: &AppWindow, diag: &SystemDiagnostics) {
-    app.set_hw_os_name(format!("{} (Kernel {})", diag.os_name, diag.kernel_version).into());
+    app.set_hw_os_name(format!("{} (Build {})", diag.os_name, diag.kernel_version).into());
     app.set_hw_host_name(diag.host_name.clone().into());
+    app.set_hw_uptime(diag.uptime_str.clone().into());
+    app.set_hw_app_memory(format!("{:.1} MB", diag.app_memory_mb).into());
     app.set_hw_cpu_brand(diag.cpu_brand.clone().into());
     app.set_hw_cpu_cores(diag.cpu_cores as i32);
     app.set_hw_cpu_usage(diag.cpu_usage_pct);
     app.set_hw_cpu_freq(format!("{:.1} GHz", (diag.cpu_frequency_mhz as f64) / 1000.0).into());
     app.set_hw_ram_total(format!("{:.1} GB", diag.ram_total_gb).into());
     app.set_hw_ram_used(format!("{:.1} GB", diag.ram_used_gb).into());
+    app.set_hw_ram_free(format!("{:.1} GB", diag.ram_free_gb).into());
     app.set_hw_ram_usage(diag.ram_usage_pct);
     app.set_hw_gpu_name(diag.gpu_name.clone().into());
+    app.set_hw_gpu_secondary(diag.gpu_secondary.clone().into());
     app.set_hw_graphics_backend(diag.graphics_backend.clone().into());
 }
