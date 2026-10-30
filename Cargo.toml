@@ -1,6 +1,6 @@
-[package]
+﻿[package]
 name = "desktop-design-system"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 description = "High-performance native desktop design system, component library, and turnkey CRUD template built with Rust and Slint."
 license = "MIT"
@@ -35,3 +35,4 @@ lto = true           # Link Time Optimization (cross-crate inlining & dead code 
 codegen-units = 1    # Enables maximum LTO optimizations
 strip = true         # Strips all debug symbols from the .exe
 panic = "abort"      # Strips unnecessary panic unwinding tables
+
