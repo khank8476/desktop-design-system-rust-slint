@@ -139,117 +139,123 @@ export component TreeView {
                             background: Palette.accent;
                         }
 
-                        // Left Content Group: Indented Chevron + Icon + File Label
+                        // Full-row content layout: Left group + Right badge
                         HorizontalLayout {
-                            x: 10px + (node.level * 18px);
-                            width: parent.width - (10px + (node.level * 18px)) - 85px;
-                            height: parent.height;
+                            padding-left: 10px + (node.level * 18px);
+                            padding-right: 12px;
                             spacing: 6px;
-                            alignment: start;
+                            alignment: space-between;
 
-                            // Chevron toggle (only for expandable folders)
-                            Rectangle {
-                                width: 14px;
-                                height: 14px;
-                                y: (parent.height - self.height) / 2;
+                            // Left Group: Chevron + Node Icon + Label (All centered on horizontal line)
+                            HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
 
-                                if node.has-children && node.expanded: Image {
-                                    source: @image-url("../../assets/icons/chevron-down.svg");
-                                    width: 12px;
-                                    height: 12px;
-                                    colorize: Palette.text-secondary;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
-                                }
+                                // Chevron toggle (only for expandable folders)
+                                VerticalLayout {
+                                    alignment: center;
+                                    width: 14px;
 
-                                if node.has-children && !node.expanded: Image {
-                                    source: @image-url("../../assets/icons/chevron-right.svg");
-                                    width: 12px;
-                                    height: 12px;
-                                    colorize: Palette.text-secondary;
-                                    x: (parent.width - self.width) / 2;
-                                    y: (parent.height - self.height) / 2;
-                                }
+                                    Rectangle {
+                                        width: 14px;
+                                        height: 14px;
 
-                                chevron-touch := TouchArea {
-                                    mouse-cursor: node.has-children ? pointer : default;
-                                    clicked => {
-                                        if (node.has-children) {
-                                            root.toggle-expand(node.id, node.expanded);
+                                        if node.has-children && node.expanded: Image {
+                                            source: @image-url("../../assets/icons/chevron-down.svg");
+                                            width: 12px;
+                                            height: 12px;
+                                            colorize: Palette.text-secondary;
+                                            x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
+                                        }
+
+                                        if node.has-children && !node.expanded: Image {
+                                            source: @image-url("../../assets/icons/chevron-right.svg");
+                                            width: 12px;
+                                            height: 12px;
+                                            colorize: Palette.text-secondary;
+                                            x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
                                         }
                                     }
                                 }
-                            }
 
-                            // Node Vector Icon
-                            Rectangle {
-                                width: 16px;
-                                height: 16px;
-                                y: (parent.height - self.height) / 2;
-
-                                // Folder Open
-                                if node.is-folder && node.expanded: Image {
-                                    source: @image-url("../../assets/icons/folder-open.svg");
+                                // Node Vector Icon
+                                VerticalLayout {
+                                    alignment: center;
                                     width: 16px;
-                                    height: 16px;
-                                    colorize: #38bdf8; // Sky blue folder
+
+                                    Rectangle {
+                                        width: 16px;
+                                        height: 16px;
+
+                                        // Folder Open
+                                        if node.is-folder && node.expanded: Image {
+                                            source: @image-url("../../assets/icons/folder-open.svg");
+                                            width: 16px;
+                                            height: 16px;
+                                            colorize: #38bdf8; // Sky blue folder
+                                        }
+
+                                        // Folder Closed
+                                        if node.is-folder && !node.expanded: Image {
+                                            source: @image-url("../../assets/icons/folder.svg");
+                                            width: 16px;
+                                            height: 16px;
+                                            colorize: #f59e0b; // Amber gold folder
+                                        }
+
+                                        // Code file (Rust, Slint, Toml)
+                                        if !node.is-folder && node.icon == "code": Image {
+                                            source: @image-url("../../assets/icons/file-code.svg");
+                                            width: 15px;
+                                            height: 15px;
+                                            colorize: Palette.accent;
+                                        }
+
+                                        // Generic file
+                                        if !node.is-folder && node.icon != "code": Image {
+                                            source: @image-url("../../assets/icons/file.svg");
+                                            width: 15px;
+                                            height: 15px;
+                                            colorize: Palette.text-secondary;
+                                        }
+                                    }
                                 }
 
-                                // Folder Closed
-                                if node.is-folder && !node.expanded: Image {
-                                    source: @image-url("../../assets/icons/folder.svg");
-                                    width: 16px;
-                                    height: 16px;
-                                    colorize: #f59e0b; // Amber gold folder
-                                }
-
-                                // Code file (Rust, Slint, Toml)
-                                if !node.is-folder && node.icon == "code": Image {
-                                    source: @image-url("../../assets/icons/file-code.svg");
-                                    width: 15px;
-                                    height: 15px;
-                                    colorize: Palette.accent;
-                                }
-
-                                // Generic file
-                                if !node.is-folder && node.icon != "code": Image {
-                                    source: @image-url("../../assets/icons/file.svg");
-                                    width: 15px;
-                                    height: 15px;
-                                    colorize: Palette.text-secondary;
-                                }
-                            }
-
-                            // Node Text Label
-                            Text {
-                                text: node.label;
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-sm;
-                                font-weight: is-selected ? 700 : (node.is-folder ? 600 : 400);
-                                color: is-selected ? Palette.accent : Palette.text-primary;
-                                vertical-alignment: center;
-                                overflow: elide;
-                            }
-                        }
-
-                        // Right Group: Badge strictly pinned to right edge for 100% column alignment!
-                        if node.badge != "": Rectangle {
-                            x: parent.width - self.width - 12px;
-                            y: (parent.height - self.height) / 2;
-                            height: 20px;
-                            border-radius: Spacing.radius-sm;
-                            background: is-selected ? (Palette.dark-mode ? #334155 : #bae6fd) : (Palette.dark-mode ? #1f2937 : #f1f5f9);
-
-                            HorizontalLayout {
-                                padding-left: 6px;
-                                padding-right: 6px;
+                                // Node Text Label
                                 Text {
-                                    text: node.badge;
+                                    text: node.label;
                                     font-family: Typography.font-family;
-                                    font-size: 10px;
-                                    font-weight: 600;
-                                    color: is-selected ? Palette.accent : Palette.text-secondary;
+                                    font-size: Typography.size-sm;
+                                    font-weight: is-selected ? 700 : (node.is-folder ? 600 : 400);
+                                    color: is-selected ? Palette.accent : Palette.text-primary;
                                     vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                            }
+
+                            // Right Group: Badge / Size Tag strictly centered on horizontal baseline & right-aligned
+                            if node.badge != "": VerticalLayout {
+                                alignment: center;
+
+                                Rectangle {
+                                    height: 20px;
+                                    border-radius: Spacing.radius-sm;
+                                    background: is-selected ? (Palette.dark-mode ? #334155 : #bae6fd) : (Palette.dark-mode ? #1f2937 : #f1f5f9);
+
+                                    HorizontalLayout {
+                                        padding-left: 7px;
+                                        padding-right: 7px;
+                                        Text {
+                                            text: node.badge;
+                                            font-family: Typography.font-family;
+                                            font-size: 10px;
+                                            font-weight: 600;
+                                            color: is-selected ? Palette.accent : Palette.text-secondary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
                                 }
                             }
                         }
