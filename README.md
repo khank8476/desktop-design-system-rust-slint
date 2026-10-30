@@ -47,7 +47,8 @@ ui/
 │   ├── tooltip.slint      # Floating contextual hint popover
 │   ├── breadcrumbs.slint  # Hierarchical navigation trail with vector chevrons
 │   ├── datepicker.slint   # Interactive calendar month grid popover
-│   └── timepicker.slint   # Precision 24H/12H hour-minute time stepper
+│   ├── timepicker.slint   # Precision 24H/12H hour-minute time stepper
+│   └── treeview.slint     # Collapsible file & folder tree with active node inspector
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── crud_modal.slint   # Interactive modal form for SQLite record creation
@@ -94,6 +95,8 @@ import {
     Breadcrumbs,
     DatePicker,
     TimePicker,
+    TreeView,
+    TreeNodeData,
     ModalDialog, 
     Dropdown, 
     AccordionItem, 

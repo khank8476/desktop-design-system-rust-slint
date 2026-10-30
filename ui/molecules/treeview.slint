@@ -1,0 +1,272 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct TreeNodeData {
+    id: string,
+    label: string,
+    icon: string,          // "code", "file", "folder", etc.
+    level: int,            // 0, 1, 2, ... indentation depth
+    is-folder: bool,
+    expanded: bool,
+    has-children: bool,
+    badge: string,         // e.g. "12 KB", "dir", "v0.1.1"
+}
+
+export component TreeView {
+    in property <string> title: "Project Explorer";
+    in property <[TreeNodeData]> items: [
+        { id: "root", label: "desktop-design-system", icon: "folder", level: 0, is-folder: true, expanded: true, has-children: true, badge: "root" },
+        { id: "src", label: "src", icon: "folder", level: 1, is-folder: true, expanded: true, has-children: true, badge: "dir" },
+        { id: "src-main", label: "main.rs", icon: "code", level: 2, is-folder: false, expanded: false, has-children: false, badge: "18.4 KB" },
+        { id: "src-lib", label: "lib.rs", icon: "code", level: 2, is-folder: false, expanded: false, has-children: false, badge: "0.4 KB" },
+        { id: "src-sys", label: "system_info.rs", icon: "code", level: 2, is-folder: false, expanded: false, has-children: false, badge: "9.2 KB" },
+        { id: "src-db", label: "db/", icon: "folder", level: 2, is-folder: true, expanded: false, has-children: true, badge: "dir" },
+        { id: "ui", label: "ui", icon: "folder", level: 1, is-folder: true, expanded: true, has-children: true, badge: "dir" },
+        { id: "ui-app", label: "app.slint", icon: "code", level: 2, is-folder: false, expanded: false, has-children: false, badge: "42.1 KB" },
+        { id: "ui-index", label: "index.slint", icon: "code", level: 2, is-folder: false, expanded: false, has-children: false, badge: "2.1 KB" },
+        { id: "cargo", label: "Cargo.toml", icon: "code", level: 1, is-folder: false, expanded: false, has-children: false, badge: "1.1 KB" },
+        { id: "readme", label: "README.md", icon: "file", level: 1, is-folder: false, expanded: false, has-children: false, badge: "8.5 KB" }
+    ];
+
+    in-out property <string> selected-id: "src-main";
+    callback node-selected(string, string, bool); // (id, label, is-folder)
+    callback toggle-expand(string, bool);          // (id, current-expanded)
+
+    min-width: 260px;
+    min-height: 200px;
+    horizontal-stretch: 1;
+
+    Rectangle {
+        border-radius: Spacing.radius-lg;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.dark-mode ? #111827 : #ffffff;
+        clip: true;
+
+        VerticalLayout {
+            // Header Bar
+            if root.title != "": VerticalLayout {
+                spacing: 0px;
+
+                Rectangle {
+                    height: 38px;
+                    background: Palette.dark-mode ? #1f2937 : #f8fafc;
+
+                    HorizontalLayout {
+                        padding-left: Spacing.space-md;
+                        padding-right: Spacing.space-md;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/components.svg");
+                                    width: 14px;
+                                    height: 14px;
+                                    colorize: Palette.accent;
+                                }
+                            }
+
+                            Text {
+                                text: root.title;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: 700;
+                                color: Palette.text-primary;
+                                vertical-alignment: center;
+                                letter-spacing: 0.5px;
+                            }
+                        }
+
+                        // Item count badge
+                        Rectangle {
+                            height: 20px;
+                            border-radius: Spacing.radius-sm;
+                            background: Palette.dark-mode ? #374151 : #e2e8f0;
+
+                            HorizontalLayout {
+                                padding-left: 6px;
+                                padding-right: 6px;
+                                Text {
+                                    text: root.items.length + " nodes";
+                                    font-family: Typography.font-family;
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    color: Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: Palette.border-subtle;
+                }
+            }
+
+            // Tree Nodes List
+            VerticalLayout {
+                padding-top: 4px;
+                padding-bottom: 4px;
+                spacing: 1px;
+
+                for node in root.items: node-row := Rectangle {
+                    height: 32px;
+                    border-radius: Spacing.radius-sm;
+
+                    property <bool> is-selected: node.id == root.selected-id;
+                    background: is-selected ? 
+                        (Palette.dark-mode ? #1e293b : #e0f2fe) : 
+                        (row-touch.has-hover ? (Palette.dark-mode ? #1f2937 : #f1f5f9) : transparent);
+
+                    // Left active indicator strip
+                    if is-selected: Rectangle {
+                        x: 0;
+                        y: 4px;
+                        width: 3px;
+                        height: parent.height - 8px;
+                        border-radius: 1.5px;
+                        background: Palette.accent;
+                    }
+
+                    HorizontalLayout {
+                        padding-left: 10px + (node.level * 18px);
+                        padding-right: 12px;
+                        spacing: 6px;
+                        alignment: space-between;
+
+                        // Left group: Chevron + Icon + Label
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: start;
+
+                            // Chevron toggle (only for expandable folders)
+                            Rectangle {
+                                width: 14px;
+                                height: 14px;
+                                y: (parent.height - self.height) / 2;
+
+                                if node.has-children && node.expanded: Image {
+                                    source: @image-url("../../assets/icons/chevron-down.svg");
+                                    width: 12px;
+                                    height: 12px;
+                                    colorize: Palette.text-secondary;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                if node.has-children && !node.expanded: Image {
+                                    source: @image-url("../../assets/icons/chevron-right.svg");
+                                    width: 12px;
+                                    height: 12px;
+                                    colorize: Palette.text-secondary;
+                                    x: (parent.width - self.width) / 2;
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                chevron-touch := TouchArea {
+                                    mouse-cursor: node.has-children ? pointer : default;
+                                    clicked => {
+                                        if (node.has-children) {
+                                            root.toggle-expand(node.id, node.expanded);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Node Vector Icon
+                            Rectangle {
+                                width: 16px;
+                                height: 16px;
+                                y: (parent.height - self.height) / 2;
+
+                                // Folder Open
+                                if node.is-folder && node.expanded: Image {
+                                    source: @image-url("../../assets/icons/folder-open.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: #38bdf8; // Sky blue folder
+                                }
+
+                                // Folder Closed
+                                if node.is-folder && !node.expanded: Image {
+                                    source: @image-url("../../assets/icons/folder.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: #f59e0b; // Amber gold folder
+                                }
+
+                                // Code file (Rust, Slint, Toml)
+                                if !node.is-folder && node.icon == "code": Image {
+                                    source: @image-url("../../assets/icons/file-code.svg");
+                                    width: 15px;
+                                    height: 15px;
+                                    colorize: Palette.accent;
+                                }
+
+                                // Generic file
+                                if !node.is-folder && node.icon != "code": Image {
+                                    source: @image-url("../../assets/icons/file.svg");
+                                    width: 15px;
+                                    height: 15px;
+                                    colorize: Palette.text-secondary;
+                                }
+                            }
+
+                            // Node Text Label
+                            Text {
+                                text: node.label;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: is-selected ? 700 : (node.is-folder ? 600 : 400);
+                                color: is-selected ? Palette.accent : Palette.text-primary;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+
+                        // Right group: Optional Badge / Size Tag
+                        if node.badge != "": Rectangle {
+                            height: 18px;
+                            border-radius: Spacing.radius-sm;
+                            background: is-selected ? (Palette.dark-mode ? #334155 : #bae6fd) : (Palette.dark-mode ? #1f2937 : #f1f5f9);
+                            y: (parent.height - self.height) / 2;
+
+                            HorizontalLayout {
+                                padding-left: 6px;
+                                padding-right: 6px;
+                                Text {
+                                    text: node.badge;
+                                    font-family: Typography.font-family;
+                                    font-size: 10px;
+                                    font-weight: 500;
+                                    color: is-selected ? Palette.accent : Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    row-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.selected-id = node.id;
+                            root.node-selected(node.id, node.label, node.is-folder);
+                            if (node.has-children) {
+                                root.toggle-expand(node.id, node.expanded);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

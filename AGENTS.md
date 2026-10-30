@@ -32,6 +32,7 @@ c/
 │   ├── main.rs                # Standalone application entrypoint (UI event loop, timer, channels)
 │   ├── lib.rs                 # Library entrypoint (re-exports Palette, system_info, and db)
 │   ├── db.rs                  # Thread-safe SQLite engine with WAL mode & CRUD worker actor
+│   ├── file_tree.rs           # In-process directory & tree scanner with sub-ms flattened traversal
 │   └── system_info.rs         # 360° hardware telemetry API (CPU, RAM, GPU, OS, graphics surface)
 │
 ├── ui/
@@ -60,7 +61,8 @@ c/
 │   │   ├── tooltip.slint      # Hover popover hint container
 │   │   ├── breadcrumbs.slint  # Multi-level hierarchical path trail
 │   │   ├── datepicker.slint   # Interactive calendar month grid popover
-│   │   └── timepicker.slint   # Precision 24H/12H hour-minute time stepper
+│   │   ├── timepicker.slint   # Precision 24H/12H hour-minute time stepper
+│   │   └── treeview.slint     # Collapsible file tree with folder expansion & inspector
 │   └── organisms/             # High-level desktop modules
 │       ├── modal.slint        # Centered backdrop dialog
 │       ├── crud_modal.slint   # Data entry & edit modal form for SQLite records
@@ -157,9 +159,9 @@ cargo clean
   - ✅ **360° System & GPU Diagnostics:** Sub-millisecond direct in-process hardware telemetry.
   - ✅ **Demo 1 (CryptoStream Tracker):** High-speed 120 FPS trading matrix example.
   - ✅ **DatePicker & TimePicker Molecules:** Interactive calendar popover with month navigation & 24H/12H precision time stepper.
+  - ✅ **TreeView & File Explorer Engine:** Collapsible file tree with folder expansion, node inspector, and in-process directory scanner.
   - ✅ **Crates.io Publication:** `v0.1.1` live and indexed.
 - **Next Planned Deliverables:**
-  - 🔜 **TreeView / File Explorer Atom:** Collapsible file tree with folder expansion and selection.
   - 🔜 **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons.
   - 🔜 **Demo 2:** Native Local Audio/Media Player or Markdown Document Studio.
 

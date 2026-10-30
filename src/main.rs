@@ -2,6 +2,7 @@
 #![windows_subsystem = "windows"]
 
 use desktop_design_system::db::DatabaseManager;
+use desktop_design_system::file_tree::{FileNode, FileTreeManager};
 use desktop_design_system::system_info::SystemDiagnostics;
 use slint::Model;
 use std::cell::RefCell;
@@ -430,11 +431,76 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    // 11. In-Process File Explorer TreeView Engine
+    let tree_manager = Rc::new(RefCell::new(FileTreeManager::new(".")));
+    let initial_tree_nodes = tree_manager.borrow().generate_visible_nodes();
+    let slint_tree_nodes = map_file_nodes(&initial_tree_nodes);
+    app.set_tree_items(Rc::new(slint::VecModel::from(slint_tree_nodes)).into());
+
+    let tree_mgr_expand = tree_manager.clone();
+    let app_weak_expand = app.as_weak();
+    app.on_tree_toggle_expand(move |node_id, _curr_state| {
+        let mut mgr = tree_mgr_expand.borrow_mut();
+        mgr.toggle_expand(node_id.as_str());
+        let visible = mgr.generate_visible_nodes();
+        if let Some(app) = app_weak_expand.upgrade() {
+            let mapped = map_file_nodes(&visible);
+            app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+        }
+    });
+
+    let app_weak_sel = app.as_weak();
+    app.on_tree_node_selected(move |id, label, is_folder| {
+        if let Some(app) = app_weak_sel.upgrade() {
+            app.set_tree_selected_id(id.clone());
+            app.set_tree_selected_label(label.clone());
+            app.set_tree_selected_is_folder(is_folder);
+            app.invoke_trigger_sample_toast(
+                "info".into(),
+                if is_folder { "Folder Selected".into() } else { "File Selected".into() },
+                format!("Inspecting node: {}", label).into(),
+            );
+        }
+    });
+
+    let tree_mgr_refresh = tree_manager.clone();
+    let app_weak_refresh = app.as_weak();
+    app.on_tree_refresh_scan(move || {
+        let mut mgr = tree_mgr_refresh.borrow_mut();
+        *mgr = FileTreeManager::new(".");
+        let visible = mgr.generate_visible_nodes();
+        if let Some(app) = app_weak_refresh.upgrade() {
+            let mapped = map_file_nodes(&visible);
+            app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+            app.invoke_trigger_sample_toast(
+                "success".into(),
+                "Workspace Tree Scanned".into(),
+                format!("Indexed {} active filesystem items in-process.", visible.len()).into(),
+            );
+        }
+    });
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 
-    // 11. Start the native desktop event loop
+    // 12. Start the native desktop event loop
     app.run()
+}
+
+fn map_file_nodes(nodes: &[FileNode]) -> Vec<TreeNodeData> {
+    nodes
+        .iter()
+        .map(|n| TreeNodeData {
+            id: n.id.clone().into(),
+            label: n.label.clone().into(),
+            icon: n.icon.clone().into(),
+            level: n.level,
+            is_folder: n.is_folder,
+            expanded: n.expanded,
+            has_children: n.has_children,
+            badge: n.badge.clone().into(),
+        })
+        .collect()
 }
 
 fn apply_hardware_diagnostics(app: &AppWindow, diag: &SystemDiagnostics) {

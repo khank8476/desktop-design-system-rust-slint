@@ -2,6 +2,7 @@ slint::include_modules!();
 
 pub mod db;
 pub mod system_info;
+pub mod file_tree;
 
 /// Queries the operating system for its active color scheme (Dark / Light).
 /// Fully compatible across Windows, macOS, and Linux.
