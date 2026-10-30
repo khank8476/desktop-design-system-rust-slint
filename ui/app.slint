@@ -82,6 +82,17 @@ export component AppWindow inherits Window {
     callback tree-node-selected(string, string, bool);
     callback tree-toggle-expand(string, bool);
     callback tree-refresh-scan();
+    in-out property <string> tree-current-path: ".";
+    callback tree-browse-folder();
+    callback tree-load-path(string);
+    callback tree-quick-jump(string);
+
+    // Desktop Shortcut Generator properties & callbacks
+    in-out property <bool> shortcut-installed: false;
+    in-out property <string> shortcut-path: "";
+    callback create-desktop-shortcut();
+    callback remove-desktop-shortcut();
+    callback check-desktop-shortcut();
 
     // Live Feed properties & callbacks
     in-out property <[FeedItem]> live-feed-items: [];
@@ -824,6 +835,52 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
+                                // Directory Navigation & Scanning Toolbar
+                                HorizontalLayout {
+                                    spacing: Spacing.space-sm;
+                                    alignment: start;
+
+                                    VerticalLayout {
+                                        horizontal-stretch: 1;
+                                        TextInputField {
+                                            placeholder: "Directory path (e.g. C:/... or .)";
+                                            text <=> root.tree-current-path;
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Browse...";
+                                        variant: "secondary";
+                                        clicked => {
+                                            root.tree-browse-folder();
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Scan Path";
+                                        variant: "primary";
+                                        clicked => {
+                                            root.tree-load-path(root.tree-current-path);
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Workspace";
+                                        variant: "ghost";
+                                        clicked => {
+                                            root.tree-quick-jump("workspace");
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Desktop";
+                                        variant: "ghost";
+                                        clicked => {
+                                            root.tree-quick-jump("desktop");
+                                        }
+                                    }
+                                }
+
                                 // Desktop 2-Column Split: TreeView on Left, Node Details Inspector on Right
                                 HorizontalLayout {
                                     spacing: Spacing.space-lg;
@@ -831,7 +888,7 @@ export component AppWindow inherits Window {
 
                                     // Left Column: Interactive Scrollable TreeView
                                     TreeView {
-                                        title: "Project Repository Tree";
+                                        title: root.tree-current-path != "" ? ("Directory: " + root.tree-current-path) : "Project Repository Tree";
                                         items: root.tree-items;
                                         selected-id <=> root.tree-selected-id;
                                         horizontal-stretch: 1;
@@ -1439,6 +1496,91 @@ export component AppWindow inherits Window {
                                     alignment: center;
                                     ToggleSwitch {
                                         checked <=> Palette.dark-mode;
+                                    }
+                                }
+                            }
+                        }
+
+                        Divider { text: "NATIVE DESKTOP SHORTCUT & LAUNCHER"; }
+
+                        // Native Desktop Shortcut Row
+                        Rectangle {
+                            border-radius: Spacing.radius-lg;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            background: Palette.bg-surface;
+
+                            HorizontalLayout {
+                                padding: Spacing.space-lg;
+                                alignment: space-between;
+
+                                // Left: Setting Info
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Image {
+                                        source: @image-url("../assets/icons/file.svg");
+                                        width: 24px;
+                                        height: 24px;
+                                        colorize: Palette.accent;
+                                        vertical-alignment: center;
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 3px;
+                                        alignment: center;
+
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            alignment: start;
+
+                                            Text {
+                                                text: "Desktop Shortcut Launcher";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-base;
+                                                font-weight: Typography.weight-semibold;
+                                                color: Palette.text-primary;
+                                                vertical-alignment: center;
+                                            }
+
+                                            Badge {
+                                                text: root.shortcut-installed ? "Installed" : "Not Created";
+                                                variant: root.shortcut-installed ? "success" : "neutral";
+                                                has-dot: root.shortcut-installed;
+                                            }
+                                        }
+
+                                        Text {
+                                            text: root.shortcut-installed 
+                                                ? "Active shortcut at: " + root.shortcut-path
+                                                : "Creates a native Shell .lnk on user's Desktop with embedded application icon.";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+                                }
+
+                                // Right: Actions
+                                HorizontalLayout {
+                                    spacing: Spacing.space-sm;
+                                    alignment: center;
+
+                                    if !root.shortcut-installed: Button {
+                                        text: "Create Shortcut";
+                                        variant: "primary";
+                                        clicked => {
+                                            root.create-desktop-shortcut();
+                                        }
+                                    }
+
+                                    if root.shortcut-installed: Button {
+                                        text: "Remove Shortcut";
+                                        variant: "danger";
+                                        clicked => {
+                                            root.remove-desktop-shortcut();
+                                        }
                                     }
                                 }
                             }

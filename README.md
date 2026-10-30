@@ -13,7 +13,8 @@ A hardware-accelerated, pure native desktop design system built with **Rust** an
 - **🌓 Automatic OS Dark/Light Detection**: Real-time operating system theme detection (queries Windows Registry, macOS Appearance, and Linux FreeDesktop portals).
 - **🖥️ HiDPI & Retina-Ready**: Calibrated typography scaling and subpixel antialiasing using direct GPU vector rendering (DirectX / Metal / Vulkan).
 - **🪟 Collapsible Master-Detail Navigation**: Responsive 250px full sidebar to 68px compact icon rail with GPU-smooth animations.
-- **🌲 Hierarchical TreeView & File Explorer**: Collapsible directory tree with sub-millisecond in-process filesystem scanning (`file_tree.rs`), internal `ScrollView`, active node inspector, and column-aligned size tags.
+- **🌲 Hierarchical TreeView & Folder Browser**: In-process filesystem scanning (`file_tree.rs`) with native folder picker dialog (`rfd`), manual path navigation, quick jump shortcuts, collapsible folders, and active node inspector.
+- **🔗 Native Desktop Shortcut Generator**: 1-line in-process Windows Shell `.lnk` and Linux `.desktop` launcher creation with embedded app icons, smart deduplication, and 5-barrier safe removal.
 - **💾 Persistent UI Preferences Engine**: Bundled SQLite key-value preference engine with WAL mode and asynchronous actor thread (e.g., auto-persisting sidebar collapse/expand state across app restarts).
 - **🗂️ 3-Tier Segmented Sub-Tab Architecture**: Organized component navigation dividing atomic primitives, interactive molecules, and complex organisms.
 - **📅 Modern DatePicker & TimePicker**: Interactive calendar month popover with fluid navigation and precision 24H/12H hour-minute time steppers.
@@ -202,31 +203,41 @@ To demonstrate real-world integration in diverse business domains without bloati
 
 ---
 
-## 📦 Installation & Publishing Options
+## 📦 Installation & Consumption
 
-### 1. Install Directly from GitHub via Cargo
-Any developer can install the standalone desktop executable immediately via Cargo:
+### 1. Install from Crates.io
+Install the standalone native desktop application directly onto your system:
 ```powershell
-cargo install --git https://github.com/khank8476/desktop-design-system-rust-slint.git
+cargo install desktop-design-system
 ```
 
-### 2. Use as a Dependency in Another Project
+### 2. Add as a Dependency to Your Desktop App
+Add to your project's `Cargo.toml`:
 ```toml
 [dependencies]
-desktop-design-system = { git = "https://github.com/khank8476/desktop-design-system-rust-slint.git" }
+desktop-design-system = "0.2.1"
 slint = "1.9"
 ```
 
-### 3. Publishing to Crates.io (`cargo publish`)
-The crate's metadata (keywords, categories, license, repository) is fully configured in `Cargo.toml`. To publish publicly to the official Rust registry:
-```powershell
-# 1. Login with your crates.io API token (from crates.io/settings/tokens)
-cargo login <YOUR_CRATES_IO_TOKEN>
+### 3. 1-Line Desktop Shortcut Creation & Safe Removal
+Any native Rust application consuming this crate can manage desktop shortcuts with smart deduplication and strict safety checks:
+```rust
+use desktop_design_system::shortcut::{check_shortcut, create_shortcut, remove_shortcut, ShortcutResult};
 
-# 2. Publish crate
-cargo publish
+// Check if launcher exists on user's Desktop
+let status = check_shortcut("My Application");
+
+// Create desktop shortcut with embedded application icon
+create_shortcut(
+    "My Application",
+    None, // auto-detects current_exe()
+    None, // auto-detects assets/app-icon.ico
+    Some("My High-Performance Desktop Tool"),
+)?;
+
+// Safely remove shortcut (enforces 5 containment safety barriers)
+remove_shortcut("My Application")?;
 ```
-Once published, anyone can install via `cargo install desktop-design-system` or add `desktop-design-system = "0.2.1"`.
 
 ---
 

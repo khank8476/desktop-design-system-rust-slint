@@ -3,11 +3,16 @@
 
 use desktop_design_system::db::DatabaseManager;
 use desktop_design_system::file_tree::{FileNode, FileTreeManager};
+use desktop_design_system::shortcut::{
+    check_shortcut, create_shortcut, get_desktop_dir, remove_shortcut, ShortcutResult, ShortcutStatus,
+};
+use std::path::PathBuf;
 use desktop_design_system::system_info::SystemDiagnostics;
 use slint::Model;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc;
+use std::sync::{Arc, Mutex};
 
 slint::include_modules!();
 
@@ -455,16 +460,17 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
-    // 11. In-Process File Explorer TreeView Engine
-    let tree_manager = Rc::new(RefCell::new(FileTreeManager::new(".")));
-    let initial_tree_nodes = tree_manager.borrow().generate_visible_nodes();
+    // 11. In-Process File Explorer TreeView Engine & Directory Browser
+    let tree_manager = Arc::new(Mutex::new(FileTreeManager::new(".")));
+    let initial_tree_nodes = tree_manager.lock().unwrap().generate_visible_nodes();
     let slint_tree_nodes = map_file_nodes(&initial_tree_nodes);
     app.set_tree_items(Rc::new(slint::VecModel::from(slint_tree_nodes)).into());
+    app.set_tree_current_path(tree_manager.lock().unwrap().current_root_display().into());
 
     let tree_mgr_expand = tree_manager.clone();
     let app_weak_expand = app.as_weak();
     app.on_tree_toggle_expand(move |node_id, _curr_state| {
-        let mut mgr = tree_mgr_expand.borrow_mut();
+        let mut mgr = tree_mgr_expand.lock().unwrap();
         mgr.toggle_expand(node_id.as_str());
         let visible = mgr.generate_visible_nodes();
         if let Some(app) = app_weak_expand.upgrade() {
@@ -490,17 +496,226 @@ fn main() -> Result<(), slint::PlatformError> {
     let tree_mgr_refresh = tree_manager.clone();
     let app_weak_refresh = app.as_weak();
     app.on_tree_refresh_scan(move || {
-        let mut mgr = tree_mgr_refresh.borrow_mut();
-        *mgr = FileTreeManager::new(".");
+        let mut mgr = tree_mgr_refresh.lock().unwrap();
+        let cur_path = mgr.current_root_display();
+        let _ = mgr.set_root(&cur_path);
         let visible = mgr.generate_visible_nodes();
         if let Some(app) = app_weak_refresh.upgrade() {
             let mapped = map_file_nodes(&visible);
             app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+            app.set_tree_current_path(mgr.current_root_display().into());
             app.invoke_trigger_sample_toast(
                 "success".into(),
-                "Workspace Tree Scanned".into(),
-                format!("Indexed {} active filesystem items in-process.", visible.len()).into(),
+                "Filesystem Rescanned".into(),
+                format!("Indexed {} items in-process for: {}", visible.len(), cur_path).into(),
             );
+        }
+    });
+
+    // Native in-process Folder Picker Dialog (runs asynchronously to maintain 120 FPS UI loop)
+    let app_weak_browse = app.as_weak();
+    let tree_mgr_browse = tree_manager.clone();
+    app.on_tree_browse_folder(move || {
+        let app_weak = app_weak_browse.clone();
+        let tree_mgr = tree_mgr_browse.clone();
+        std::thread::spawn(move || {
+            if let Some(folder) = rfd::FileDialog::new().pick_folder() {
+                let path_str = folder.to_string_lossy().to_string();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = app_weak.upgrade() {
+                        let mut mgr = tree_mgr.lock().unwrap();
+                        if let Ok(()) = mgr.set_root(&folder) {
+                            let visible = mgr.generate_visible_nodes();
+                            let mapped = map_file_nodes(&visible);
+                            app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+                            app.set_tree_current_path(path_str.clone().into());
+                            app.invoke_trigger_sample_toast(
+                                "success".into(),
+                                "Directory Loaded".into(),
+                                format!("Inspecting folder: {}", path_str).into(),
+                            );
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    // Load directory from manual path input
+    let app_weak_load = app.as_weak();
+    let tree_mgr_load = tree_manager.clone();
+    app.on_tree_load_path(move |raw_path| {
+        let trimmed = raw_path.trim();
+        if trimmed.is_empty() { return; }
+        let mut mgr = tree_mgr_load.lock().unwrap();
+        match mgr.set_root(trimmed) {
+            Ok(()) => {
+                let visible = mgr.generate_visible_nodes();
+                let mapped = map_file_nodes(&visible);
+                if let Some(app) = app_weak_load.upgrade() {
+                    app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+                    app.set_tree_current_path(mgr.current_root_display().into());
+                    app.invoke_trigger_sample_toast(
+                        "success".into(),
+                        "Directory Loaded".into(),
+                        format!("Indexed {} items in: {}", visible.len(), mgr.current_root_display()).into(),
+                    );
+                }
+            }
+            Err(err) => {
+                if let Some(app) = app_weak_load.upgrade() {
+                    app.invoke_trigger_sample_toast(
+                        "danger".into(),
+                        "Invalid Directory".into(),
+                        err.to_string().into(),
+                    );
+                }
+            }
+        }
+    });
+
+    // Quick jump directory shortcuts
+    let app_weak_jump = app.as_weak();
+    let tree_mgr_jump = tree_manager.clone();
+    app.on_tree_quick_jump(move |target| {
+        let target_str = target.as_str();
+        let dest = match target_str {
+            "desktop" => get_desktop_dir().ok(),
+            "home" => std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")).map(PathBuf::from).ok(),
+            _ => Some(PathBuf::from(".")),
+        };
+
+        if let Some(dest_path) = dest {
+            let mut mgr = tree_mgr_jump.lock().unwrap();
+            if let Ok(()) = mgr.set_root(&dest_path) {
+                let visible = mgr.generate_visible_nodes();
+                let mapped = map_file_nodes(&visible);
+                if let Some(app) = app_weak_jump.upgrade() {
+                    app.set_tree_items(Rc::new(slint::VecModel::from(mapped)).into());
+                    app.set_tree_current_path(mgr.current_root_display().into());
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "Switched Directory".into(),
+                        format!("Active folder: {}", mgr.current_root_display()).into(),
+                    );
+                }
+            }
+        }
+    });
+
+    // 12. Native Desktop Shortcut Integration
+    let app_name = "Native Desktop Design System";
+    let shortcut_status = check_shortcut(app_name);
+    match shortcut_status {
+        ShortcutStatus::Installed(p) => {
+            app.set_shortcut_installed(true);
+            app.set_shortcut_path(p.to_string_lossy().to_string().into());
+        }
+        ShortcutStatus::NotInstalled => {
+            app.set_shortcut_installed(false);
+            app.set_shortcut_path("".into());
+        }
+    }
+
+    let app_weak_create_sc = app.as_weak();
+    app.on_create_desktop_shortcut(move || {
+        let app_name = "Native Desktop Design System";
+        match create_shortcut(
+            app_name,
+            None,
+            None,
+            Some("High-performance Native Rust Desktop Design System & Component Library"),
+        ) {
+            Ok(ShortcutResult::Created(p)) => {
+                if let Some(app) = app_weak_create_sc.upgrade() {
+                    app.set_shortcut_installed(true);
+                    app.set_shortcut_path(p.to_string_lossy().to_string().into());
+                    app.invoke_trigger_sample_toast(
+                        "success".into(),
+                        "Desktop Shortcut Created".into(),
+                        format!("Launcher successfully placed at {}", p.display()).into(),
+                    );
+                }
+            }
+            Ok(ShortcutResult::AlreadyExists(p)) => {
+                if let Some(app) = app_weak_create_sc.upgrade() {
+                    app.set_shortcut_installed(true);
+                    app.set_shortcut_path(p.to_string_lossy().to_string().into());
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "Shortcut Already Exists".into(),
+                        "Desktop launcher is already present and valid.".into(),
+                    );
+                }
+            }
+            Err(err) => {
+                if let Some(app) = app_weak_create_sc.upgrade() {
+                    app.invoke_trigger_sample_toast(
+                        "danger".into(),
+                        "Shortcut Creation Failed".into(),
+                        err.into(),
+                    );
+                }
+            }
+            _ => {}
+        }
+    });
+
+    let app_weak_remove_sc = app.as_weak();
+    app.on_remove_desktop_shortcut(move || {
+        let app_name = "Native Desktop Design System";
+        match remove_shortcut(app_name) {
+            Ok(ShortcutResult::Removed(p)) => {
+                if let Some(app) = app_weak_remove_sc.upgrade() {
+                    app.set_shortcut_installed(false);
+                    app.set_shortcut_path("".into());
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "Desktop Shortcut Removed".into(),
+                        format!("Safely removed launcher: {}", p.display()).into(),
+                    );
+                }
+            }
+            Ok(ShortcutResult::NotFound) => {
+                if let Some(app) = app_weak_remove_sc.upgrade() {
+                    app.set_shortcut_installed(false);
+                    app.set_shortcut_path("".into());
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "No Shortcut Found".into(),
+                        "Desktop shortcut was not found.".into(),
+                    );
+                }
+            }
+            Err(err) => {
+                if let Some(app) = app_weak_remove_sc.upgrade() {
+                    app.invoke_trigger_sample_toast(
+                        "danger".into(),
+                        "Removal Failed".into(),
+                        err.into(),
+                    );
+                }
+            }
+            _ => {}
+        }
+    });
+
+    let app_weak_check_sc = app.as_weak();
+    app.on_check_desktop_shortcut(move || {
+        let app_name = "Native Desktop Design System";
+        match check_shortcut(app_name) {
+            ShortcutStatus::Installed(p) => {
+                if let Some(app) = app_weak_check_sc.upgrade() {
+                    app.set_shortcut_installed(true);
+                    app.set_shortcut_path(p.to_string_lossy().to_string().into());
+                }
+            }
+            ShortcutStatus::NotInstalled => {
+                if let Some(app) = app_weak_check_sc.upgrade() {
+                    app.set_shortcut_installed(false);
+                    app.set_shortcut_path("".into());
+                }
+            }
         }
     });
 

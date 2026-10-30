@@ -37,6 +37,32 @@ impl FileTreeManager {
         }
     }
 
+    /// Changes the root directory, verifying that the target exists and is a directory.
+    pub fn set_root<P: AsRef<Path>>(&mut self, new_root: P) -> Result<(), std::io::Error> {
+        let p = new_root.as_ref();
+        if !p.exists() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Directory does not exist: {}", p.display()),
+            ));
+        }
+        if !p.is_dir() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Path is not a directory: {}", p.display()),
+            ));
+        }
+        self.root_path = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        self.expanded_paths.clear();
+        self.expanded_paths.insert("root".to_string());
+        Ok(())
+    }
+
+    /// Returns the active root directory as a display string
+    pub fn current_root_display(&self) -> String {
+        self.root_path.to_string_lossy().to_string()
+    }
+
     /// Toggles the expanded state of a folder node by ID/path
     pub fn toggle_expand(&mut self, node_id: &str) -> bool {
         if self.expanded_paths.contains(node_id) {
@@ -222,6 +248,20 @@ mod tests {
         manager.toggle_expand("root");
         let reexpanded_count = manager.generate_visible_nodes().len();
         assert_eq!(reexpanded_count, initial_count);
+    }
+
+    #[test]
+    fn test_file_tree_set_root() {
+        let mut manager = FileTreeManager::new(".");
+        
+        // Changing to a valid directory (src)
+        assert!(manager.set_root("src").is_ok());
+        let nodes = manager.generate_visible_nodes();
+        assert!(!nodes.is_empty());
+        assert_eq!(nodes[0].label, "src");
+
+        // Changing to a non-existent directory fails safely
+        assert!(manager.set_root("non_existent_folder_xyz_123").is_err());
     }
 }
 
