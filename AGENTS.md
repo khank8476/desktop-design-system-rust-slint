@@ -7,7 +7,7 @@
 ## 1. Project Identity & Architecture
 
 - **Crate Name:** `desktop-design-system`
-- **Current Version:** `0.2.0` (Published on [crates.io/crates/desktop-design-system](https://crates.io/crates/desktop-design-system))
+- **Current Version:** `0.2.1` (Published on [crates.io/crates/desktop-design-system](https://crates.io/crates/desktop-design-system))
 - **Repository:** `https://github.com/khank8476/desktop-design-system-rust-slint`
 - **Core Tech Stack:**
   - **Language:** Pure Native Rust (Edition 2021)
@@ -160,7 +160,7 @@ cargo clean
   - ✅ **Demo 1 (CryptoStream Tracker):** High-speed 120 FPS trading matrix example.
   - ✅ **DatePicker & TimePicker Molecules:** Interactive calendar popover with month navigation & 24H/12H precision time stepper.
   - ✅ **TreeView & File Explorer Engine:** Collapsible file tree with internal `ScrollView`, column-aligned badges, node inspector, and in-process directory scanner.
-  - ✅ **Crates.io Publication:** `v0.2.0` live and indexed.
+  - ✅ **Crates.io Publication:** `v0.2.1` live and indexed.
 - **Next Planned Deliverables:**
   - 🔜 **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons.
   - 🔜 **Demo 2:** Native Local Audio/Media Player or Markdown Document Studio.
