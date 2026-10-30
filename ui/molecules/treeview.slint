@@ -62,6 +62,7 @@ export component TreeView {
                         HorizontalLayout {
                             spacing: 8px;
                             alignment: start;
+                            horizontal-stretch: 1;
 
                             VerticalLayout {
                                 alignment: center;
@@ -81,11 +82,14 @@ export component TreeView {
                                 color: Palette.text-primary;
                                 vertical-alignment: center;
                                 letter-spacing: 0.5px;
+                                overflow: elide;
+                                horizontal-stretch: 1;
                             }
                         }
 
                         // Item count badge
                         Rectangle {
+                            horizontal-stretch: 0;
                             height: 22px;
                             border-radius: Spacing.radius-sm;
                             background: Palette.dark-mode ? #374151 : #e2e8f0;

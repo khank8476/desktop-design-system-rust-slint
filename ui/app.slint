@@ -836,47 +836,73 @@ export component AppWindow inherits Window {
                                 }
 
                                 // Directory Navigation & Scanning Toolbar
-                                HorizontalLayout {
+                                VerticalLayout {
                                     spacing: Spacing.space-sm;
-                                    alignment: start;
 
-                                    VerticalLayout {
-                                        horizontal-stretch: 1;
+                                    // Row 1: Active Directory Path Input & Primary Actions
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+
                                         TextInputField {
+                                            horizontal-stretch: 1;
+                                            min-width: 150px;
                                             placeholder: "Directory path (e.g. C:/... or .)";
                                             text <=> root.tree-current-path;
                                         }
-                                    }
 
-                                    Button {
-                                        text: "Browse...";
-                                        variant: "secondary";
-                                        clicked => {
-                                            root.tree-browse-folder();
+                                        Button {
+                                            text: "Browse Folder...";
+                                            variant: "secondary";
+                                            clicked => {
+                                                root.tree-browse-folder();
+                                            }
+                                        }
+
+                                        Button {
+                                            text: "Scan Path";
+                                            variant: "primary";
+                                            clicked => {
+                                                root.tree-load-path(root.tree-current-path);
+                                            }
                                         }
                                     }
 
-                                    Button {
-                                        text: "Scan Path";
-                                        variant: "primary";
-                                        clicked => {
-                                            root.tree-load-path(root.tree-current-path);
-                                        }
-                                    }
+                                    // Row 2: Quick Jump Presets (Workspace, Desktop, User Home)
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: start;
 
-                                    Button {
-                                        text: "Workspace";
-                                        variant: "ghost";
-                                        clicked => {
-                                            root.tree-quick-jump("workspace");
+                                        Text {
+                                            text: "Quick Access:";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-secondary;
+                                            vertical-alignment: center;
                                         }
-                                    }
 
-                                    Button {
-                                        text: "Desktop";
-                                        variant: "ghost";
-                                        clicked => {
-                                            root.tree-quick-jump("desktop");
+                                        Button {
+                                            text: "Workspace";
+                                            variant: "ghost";
+                                            clicked => {
+                                                root.tree-quick-jump("workspace");
+                                            }
+                                        }
+
+                                        Button {
+                                            text: "Desktop";
+                                            variant: "ghost";
+                                            clicked => {
+                                                root.tree-quick-jump("desktop");
+                                            }
+                                        }
+
+                                        Button {
+                                            text: "Home Directory";
+                                            variant: "ghost";
+                                            clicked => {
+                                                root.tree-quick-jump("home");
+                                            }
                                         }
                                     }
                                 }
@@ -888,7 +914,7 @@ export component AppWindow inherits Window {
 
                                     // Left Column: Interactive Scrollable TreeView
                                     TreeView {
-                                        title: root.tree-current-path != "" ? ("Directory: " + root.tree-current-path) : "Project Repository Tree";
+                                        title: "Project Repository Tree";
                                         items: root.tree-items;
                                         selected-id <=> root.tree-selected-id;
                                         horizontal-stretch: 1;
@@ -1514,10 +1540,12 @@ export component AppWindow inherits Window {
                                 padding: Spacing.space-lg;
                                 alignment: space-between;
 
-                                // Left: Setting Info
+                                // Left: Setting Info (Constrained and stretchable)
                                 HorizontalLayout {
                                     spacing: Spacing.space-md;
                                     alignment: center;
+                                    horizontal-stretch: 1;
+                                    min-width: 0px;
 
                                     Image {
                                         source: @image-url("../assets/icons/file.svg");
@@ -1530,6 +1558,8 @@ export component AppWindow inherits Window {
                                     VerticalLayout {
                                         spacing: 3px;
                                         alignment: center;
+                                        horizontal-stretch: 1;
+                                        min-width: 0px;
 
                                         HorizontalLayout {
                                             spacing: Spacing.space-sm;
@@ -1558,14 +1588,18 @@ export component AppWindow inherits Window {
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
+                                            overflow: elide;
+                                            horizontal-stretch: 1;
                                         }
                                     }
                                 }
 
-                                // Right: Actions
+                                // Right: Actions (Pinned width, never pushed out)
                                 HorizontalLayout {
                                     spacing: Spacing.space-sm;
-                                    alignment: center;
+                                    alignment: end;
+                                    horizontal-stretch: 0;
+                                    min-width: 140px;
 
                                     if !root.shortcut-installed: Button {
                                         text: "Create Shortcut";

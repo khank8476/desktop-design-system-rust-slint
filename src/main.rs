@@ -507,7 +507,7 @@ fn main() -> Result<(), slint::PlatformError> {
             app.invoke_trigger_sample_toast(
                 "success".into(),
                 "Filesystem Rescanned".into(),
-                format!("Indexed {} items in-process for: {}", visible.len(), cur_path).into(),
+                format!("Indexed {} files and folders in-process.", visible.len()).into(),
             );
         }
     });
@@ -532,7 +532,7 @@ fn main() -> Result<(), slint::PlatformError> {
                             app.invoke_trigger_sample_toast(
                                 "success".into(),
                                 "Directory Loaded".into(),
-                                format!("Inspecting folder: {}", path_str).into(),
+                                format!("Loaded {} files and folders.", visible.len()).into(),
                             );
                         }
                     }
@@ -558,7 +558,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     app.invoke_trigger_sample_toast(
                         "success".into(),
                         "Directory Loaded".into(),
-                        format!("Indexed {} items in: {}", visible.len(), mgr.current_root_display()).into(),
+                        format!("Indexed {} items in selected directory.", visible.len()).into(),
                     );
                 }
             }
@@ -596,7 +596,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     app.invoke_trigger_sample_toast(
                         "info".into(),
                         "Switched Directory".into(),
-                        format!("Active folder: {}", mgr.current_root_display()).into(),
+                        format!("Switched to {} ({} items).", target_str, visible.len()).into(),
                     );
                 }
             }
@@ -633,7 +633,7 @@ fn main() -> Result<(), slint::PlatformError> {
                     app.invoke_trigger_sample_toast(
                         "success".into(),
                         "Desktop Shortcut Created".into(),
-                        format!("Launcher successfully placed at {}", p.display()).into(),
+                        "Launcher successfully placed on your Desktop.".into(),
                     );
                 }
             }
@@ -665,14 +665,14 @@ fn main() -> Result<(), slint::PlatformError> {
     app.on_remove_desktop_shortcut(move || {
         let app_name = "Native Desktop Design System";
         match remove_shortcut(app_name) {
-            Ok(ShortcutResult::Removed(p)) => {
+            Ok(ShortcutResult::Removed(_p)) => {
                 if let Some(app) = app_weak_remove_sc.upgrade() {
                     app.set_shortcut_installed(false);
                     app.set_shortcut_path("".into());
                     app.invoke_trigger_sample_toast(
                         "info".into(),
                         "Desktop Shortcut Removed".into(),
-                        format!("Safely removed launcher: {}", p.display()).into(),
+                        "Launcher cleanly removed from your Desktop.".into(),
                     );
                 }
             }

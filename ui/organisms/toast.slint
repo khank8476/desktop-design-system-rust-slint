@@ -9,8 +9,7 @@ export component ToastNotification {
     in-out property <bool> is-open: false;
     callback closed();
 
-    width: 360px;
-    height: toast-card.preferred-height;
+    width: 380px;
 
     // Smooth Slide & Fade transitions
     opacity: root.is-open ? 1.0 : 0.0;
@@ -41,32 +40,36 @@ export component ToastNotification {
                 horizontal-stretch: 1;
 
                 // Status Icon Badge (Vector SVG)
-                Rectangle {
-                    width: 30px;
-                    height: 30px;
-                    border-radius: Spacing.radius-full;
-                    background: root.status == "danger" ? Palette.danger :
-                                root.status == "success" ? Palette.success :
-                                root.status == "warning" ? #f59e0b :
-                                Palette.accent;
+                VerticalLayout {
+                    alignment: start;
+                    Rectangle {
+                        width: 30px;
+                        height: 30px;
+                        border-radius: Spacing.radius-full;
+                        background: root.status == "danger" ? Palette.danger :
+                                    root.status == "success" ? Palette.success :
+                                    root.status == "warning" ? #f59e0b :
+                                    Palette.accent;
 
-                    Image {
-                        source: root.status == "danger" ? @image-url("../../assets/icons/close.svg") :
-                                root.status == "success" ? @image-url("../../assets/icons/check.svg") :
-                                root.status == "warning" ? @image-url("../../assets/icons/alert.svg") :
-                                @image-url("../../assets/icons/info.svg");
-                        width: 16px;
-                        height: 16px;
-                        colorize: #ffffff;
-                        horizontal-alignment: center;
-                        vertical-alignment: center;
+                        Image {
+                            source: root.status == "danger" ? @image-url("../../assets/icons/close.svg") :
+                                    root.status == "success" ? @image-url("../../assets/icons/check.svg") :
+                                    root.status == "warning" ? @image-url("../../assets/icons/alert.svg") :
+                                    @image-url("../../assets/icons/info.svg");
+                            width: 16px;
+                            height: 16px;
+                            colorize: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
                     }
                 }
 
                 // Text Stack
                 VerticalLayout {
-                    spacing: 2px;
+                    spacing: 4px;
                     horizontal-stretch: 1;
+                    alignment: center;
 
                     Text {
                         text: root.title;
@@ -74,12 +77,13 @@ export component ToastNotification {
                         font-size: Typography.size-base;
                         font-weight: Typography.weight-semibold;
                         color: Palette.text-primary;
+                        overflow: elide;
                     }
 
                     Text {
                         text: root.message;
                         font-family: Typography.font-family;
-                        font-size: Typography.size-sm;
+                        font-size: Typography.size-xs;
                         color: Palette.text-secondary;
                         wrap: word-wrap;
                     }
@@ -87,26 +91,29 @@ export component ToastNotification {
             }
 
             // Vector Close Button
-            close-area := Rectangle {
-                width: 26px;
-                height: 26px;
-                border-radius: Spacing.radius-sm;
-                background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+            VerticalLayout {
+                alignment: start;
+                close-area := Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: Spacing.radius-sm;
+                    background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
-                Image {
-                    source: @image-url("../../assets/icons/close.svg");
-                    width: 14px;
-                    height: 14px;
-                    colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                }
+                    Image {
+                        source: @image-url("../../assets/icons/close.svg");
+                        width: 14px;
+                        height: 14px;
+                        colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
 
-                close-touch := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        root.is-open = false;
-                        root.closed();
+                    close-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.is-open = false;
+                            root.closed();
+                        }
                     }
                 }
             }

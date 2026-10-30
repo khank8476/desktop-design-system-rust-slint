@@ -52,7 +52,8 @@ impl FileTreeManager {
                 format!("Path is not a directory: {}", p.display()),
             ));
         }
-        self.root_path = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        let canon = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+        self.root_path = clean_canonical_path(&canon);
         self.expanded_paths.clear();
         self.expanded_paths.insert("root".to_string());
         Ok(())
@@ -60,7 +61,7 @@ impl FileTreeManager {
 
     /// Returns the active root directory as a display string
     pub fn current_root_display(&self) -> String {
-        self.root_path.to_string_lossy().to_string()
+        clean_path_str(&self.root_path.to_string_lossy())
     }
 
     /// Toggles the expanded state of a folder node by ID/path
@@ -216,6 +217,23 @@ fn format_file_size(path: &Path) -> String {
         }
     } else {
         "".to_string()
+    }
+}
+
+fn clean_canonical_path(path: &Path) -> PathBuf {
+    let s = path.to_string_lossy();
+    if let Some(stripped) = s.strip_prefix(r"\\?\") {
+        PathBuf::from(stripped)
+    } else {
+        path.to_path_buf()
+    }
+}
+
+fn clean_path_str(raw: &str) -> String {
+    if let Some(stripped) = raw.strip_prefix(r"\\?\") {
+        stripped.to_string()
+    } else {
+        raw.to_string()
     }
 }
 
