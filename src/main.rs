@@ -29,6 +29,10 @@ enum DbCmd {
     Delete {
         id: i64,
     },
+    SetPreference {
+        key: String,
+        value: String,
+    },
 }
 
 fn main() -> Result<(), slint::PlatformError> {
@@ -365,6 +369,9 @@ fn main() -> Result<(), slint::PlatformError> {
                         });
                     }
                 }
+                DbCmd::SetPreference { key, value } => {
+                    let _ = db.set_preference(&key, &value);
+                }
             }
         }
     });
@@ -413,6 +420,23 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // 9. Initial Load from SQLite on Startup
     let _ = db_tx.send(DbCmd::LoadAll);
+
+    // Restore User Preferences from SQLite (Persistent Sidebar & UI State)
+    if let Ok(db_init) = DatabaseManager::new("desktop_crud.db") {
+        if let Ok(Some(collapsed)) = db_init.get_preference("sidebar_collapsed") {
+            if collapsed == "true" {
+                app.set_sidebar_collapsed(true);
+            }
+        }
+    }
+
+    let db_tx_pref = db_tx.clone();
+    app.on_sidebar_toggle_collapsed(move |collapsed| {
+        let _ = db_tx_pref.send(DbCmd::SetPreference {
+            key: "sidebar_collapsed".into(),
+            value: collapsed.to_string(),
+        });
+    });
 
     // 10. Sample 360° Hardware Diagnostics & GPU Telemetry
     let initial_diag = SystemDiagnostics::query();

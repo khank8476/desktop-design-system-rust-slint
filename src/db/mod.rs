@@ -52,6 +52,14 @@ impl DatabaseManager {
             )",
             [],
         )?;
+
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS preferences (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )",
+            [],
+        )?;
         Ok(())
     }
 
@@ -155,6 +163,27 @@ impl DatabaseManager {
             .execute("DELETE FROM services WHERE id = ?1", params![id])?;
         Ok(affected > 0)
     }
+
+    /// Read a user preference by key
+    pub fn get_preference(&self, key: &str) -> Result<Option<String>> {
+        let mut stmt = self.conn.prepare("SELECT value FROM preferences WHERE key = ?1")?;
+        let mut rows = stmt.query(params![key])?;
+        if let Some(row) = rows.next()? {
+            Ok(Some(row.get(0)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Set or update a user preference (Upsert)
+    pub fn set_preference(&self, key: &str, value: &str) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO preferences (key, value) VALUES (?1, ?2)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            params![key, value],
+        )?;
+        Ok(())
+    }
 }
 
 /// Helper function to generate clean ISO-like timestamps without pulling heavy chrono crate
@@ -205,5 +234,21 @@ mod tests {
         let after_delete = db.get_all().expect("Query failed");
         assert_eq!(after_delete.len(), 5);
         assert!(after_delete.iter().all(|r| r.id != inserted.id));
+    }
+
+    #[test]
+    fn test_preference_persistence() {
+        let db = DatabaseManager::new_in_memory().expect("In-memory DB init failed");
+
+        // Initially empty
+        assert_eq!(db.get_preference("sidebar_collapsed").unwrap(), None);
+
+        // Set preference
+        db.set_preference("sidebar_collapsed", "true").unwrap();
+        assert_eq!(db.get_preference("sidebar_collapsed").unwrap(), Some("true".to_string()));
+
+        // Update preference
+        db.set_preference("sidebar_collapsed", "false").unwrap();
+        assert_eq!(db.get_preference("sidebar_collapsed").unwrap(), Some("false".to_string()));
     }
 }

@@ -153,13 +153,13 @@ cargo clean
 ## 5. Current State & Immediate Roadmap
 
 - **Completed Phases:**
-  - ✅ **Tier 1, 2 & 3 Component Library:** 30+ production desktop components.
+  - ✅ **Tier 1, 2 & 3 Component Library:** 30+ production desktop components with dedicated 3-tier sub-tab navigation (`Tier 1: Atomic Primitives`, `Tier 2: Interactive Molecules`, `Tier 3: Desktop Organisms & Tools`).
   - ✅ **Design Token Engine:** Reactive Dark Mode & Light Mode tokens.
-  - ✅ **Bundled SQLite CRUD Engine:** WAL mode, transaction safety, full modal editing & deletion.
+  - ✅ **Bundled SQLite CRUD & Preferences Engine:** WAL mode, transaction safety, full modal editing & deletion, plus persistent UI key-value preferences (e.g., sidebar collapse state across app restarts).
   - ✅ **360° System & GPU Diagnostics:** Sub-millisecond direct in-process hardware telemetry.
   - ✅ **Demo 1 (CryptoStream Tracker):** High-speed 120 FPS trading matrix example.
   - ✅ **DatePicker & TimePicker Molecules:** Interactive calendar popover with month navigation & 24H/12H precision time stepper.
-  - ✅ **TreeView & File Explorer Engine:** Collapsible file tree with folder expansion, node inspector, and in-process directory scanner.
+  - ✅ **TreeView & File Explorer Engine:** Collapsible file tree with internal `ScrollView`, column-aligned badges, node inspector, and in-process directory scanner.
   - ✅ **Crates.io Publication:** `v0.1.1` live and indexed.
 - **Next Planned Deliverables:**
   - 🔜 **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons.

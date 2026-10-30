@@ -42,6 +42,9 @@ export component AppWindow inherits Window {
 
     in-out property <bool> show-modal: false;
     in-out property <int> selected-tab: 0;
+    in-out property <int> selected-tier-tab: 0;
+    in-out property <bool> sidebar-collapsed: false;
+    callback sidebar-toggle-collapsed(bool);
 
     // Tier 1 Interactive Demo Properties
     in-out property <float> demo-slider-val: 72.0;
@@ -132,6 +135,10 @@ export component AppWindow inherits Window {
         // 1. Collapsible Desktop Sidebar
         sidebar := DesktopSidebar {
             active-index <=> root.selected-tab;
+            collapsed <=> root.sidebar-collapsed;
+            toggle-collapse => {
+                root.sidebar-toggle-collapsed(root.sidebar-collapsed);
+            }
         }
 
         // 2. Main Application Workspace
@@ -193,455 +200,534 @@ export component AppWindow inherits Window {
                     }
 
                     // ==========================================
-                    // TAB 0: COMPONENTS SHOWCASE (Spacious, Uncluttered Desktop Layout)
+                    // TAB 0: COMPONENTS SHOWCASE (Segmented by Tiers)
                     // ==========================================
                     if root.selected-tab == 0: VerticalLayout {
-                        spacing: 36px; // Generous vertical breathing room
+                        spacing: Spacing.space-lg;
 
-                        // 1. Desktop Organisms Showcase
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Desktop Organisms";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Top-level composite window dialogs, floating toasts, and opaque dropdowns.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            // Row 1: Modal + Dropdown
-                            HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                alignment: start;
-
-                                Button {
-                                    text: "Launch Modal Dialog";
-                                    variant: "primary";
-                                    clicked => {
-                                        root.show-modal = true;
-                                    }
-                                }
-
-                                Dropdown {
-                                    width: 260px;
-                                    placeholder: "Select Density Profile...";
-                                }
-                            }
-
-                            // Row 2: Toast Notification Triggers
-                            HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                alignment: start;
-
-                                Button {
-                                    text: "Trigger Success Toast";
-                                    variant: "secondary";
-                                    clicked => {
-                                        root.trigger-sample-toast("success", "Build Succeeded", "Native Rust binary optimized and signed.");
-                                    }
-                                }
-
-                                Button {
-                                    text: "Trigger Warning Toast";
-                                    variant: "danger";
-                                    clicked => {
-                                        root.trigger-sample-toast("danger", "Process Warning", "Hardware GPU buffer spike detected.");
-                                    }
-                                }
-                            }
+                        // Tier Selection Sub-Tabs
+                        SegmentedTabs {
+                            tabs: [
+                                "Tier 1: Atomic Primitives",
+                                "Tier 2: Interactive Molecules",
+                                "Tier 3: Desktop Organisms & Tools"
+                            ];
+                            active-tab <=> root.selected-tier-tab;
                         }
 
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // Date & Time Selection (Molecules)
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Date & Time Pickers (Molecules)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Interactive calendar popover with month navigation and precision time steppers.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                spacing: Spacing.space-xl;
-                                alignment: start;
-
-                                DatePicker {
-                                    width: 270px;
-                                    label: "Target Deployment Date";
-                                    formatted-date <=> root.demo-date;
-                                    date-selected(d) => {
-                                        root.trigger-sample-toast("info", "Date Selected", "Scheduled for: " + d);
-                                    }
-                                }
-
-                                TimePicker {
-                                    width: 240px;
-                                    label: "Execution Window (24H)";
-                                    formatted-time <=> root.demo-time-24;
-                                    is-24h: true;
-                                    time-selected(t) => {
-                                        root.trigger-sample-toast("info", "Time Selected", "Execution window: " + t);
-                                    }
-                                }
-                            }
+                        Rectangle {
+                            height: 1px;
+                            background: Palette.border-subtle;
                         }
 
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
+                        // ----------------------------------------------------
+                        // SUB-TAB 0: TIER 1 ATOMIC PRIMITIVES
+                        // ----------------------------------------------------
+                        if root.selected-tier-tab == 0: VerticalLayout {
+                            spacing: 28px;
 
-                        // 2. Tier 1: Sliders & Progress Indicators (Interactive)
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Sliders & Progress Controls (Tier 1 Atoms)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Drag the slider thumb to dynamically update the progress bar in real-time.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            // Slider driving ProgressBar
+                            // 1. Buttons & Actions
                             VerticalLayout {
                                 spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Buttons & Action Controls (Tier 1 Atoms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Interactive action buttons with hover states, focus rings, and variant colorways.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
 
                                 HorizontalLayout {
-                                    alignment: space-between;
+                                    spacing: Spacing.space-md;
+                                    Button { text: "Primary Action"; variant: "primary"; }
+                                    Button { text: "Secondary"; variant: "secondary"; }
+                                    Button { text: "Ghost Action"; variant: "ghost"; }
+                                    Button { text: "Destructive Action"; variant: "danger"; }
+                                    Button { text: "Disabled Action"; enabled: false; }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 2. Inputs & Form Fields
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Inputs & Form Fields (Tier 1 Atoms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Single-line inputs with focus accents, placeholder hints, and password masking.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-lg;
+                                    TextInputField {
+                                        placeholder: "Search components or documentation...";
+                                    }
+                                    TextInputField {
+                                        placeholder: "Enter secret credentials...";
+                                        input-type: InputType.password;
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 3. Status Badges & Indicators
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
                                     Text {
-                                        text: "GPU Memory Buffer Allocation";
+                                        text: "Status Badges & Pills (Tier 1 Atoms)";
                                         font-family: Typography.font-family;
-                                        font-size: Typography.size-sm;
-                                        font-weight: Typography.weight-medium;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
                                         color: Palette.text-primary;
                                     }
                                     Text {
-                                        text: Math.round(root.demo-slider-val) + "% Allocated";
-                                        font-family: Typography.font-family;
-                                        font-size: Typography.size-sm;
-                                        color: Palette.accent;
-                                        font-weight: Typography.weight-semibold;
-                                    }
-                                }
-
-                                Slider {
-                                    value <=> root.demo-slider-val;
-                                    minimum: 0.0;
-                                    maximum: 100.0;
-                                    show-value: false;
-                                }
-
-                                ProgressBar {
-                                    progress: root.demo-slider-val / 100.0;
-                                    bar-height: 8px;
-                                    variant: root.demo-slider-val > 85.0 ? "danger" : "primary";
-                                }
-                            }
-
-                            // Secondary Success Progress Bar
-                            VerticalLayout {
-                                spacing: Spacing.space-xs;
-                                HorizontalLayout {
-                                    alignment: space-between;
-                                    Text {
-                                        text: "Shader Compilation Pipeline";
+                                        text: "Compact high-contrast pills with live colored status dots and theme-aware tints.";
                                         font-family: Typography.font-family;
                                         font-size: Typography.size-xs;
                                         color: Palette.text-secondary;
                                     }
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    Badge {
+                                        text: "Engine Active";
+                                        variant: "success";
+                                        has-dot: true;
+                                    }
+
+                                    Badge {
+                                        text: "Rust v1.9 Native";
+                                        variant: "primary";
+                                        has-dot: true;
+                                    }
+
+                                    Badge {
+                                        text: "LTO Strip Active";
+                                        variant: "warning";
+                                        has-dot: true;
+                                    }
+
+                                    Badge {
+                                        text: "Buffer Spike";
+                                        variant: "danger";
+                                        has-dot: true;
+                                    }
+
+                                    Badge {
+                                        text: "Zero Web Overhead";
+                                        variant: "neutral";
+                                        has-dot: false;
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 4. Checkboxes & Selection Controls
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
                                     Text {
-                                        text: "100% Completed";
+                                        text: "Checkboxes & Selection (Tier 1 Atoms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Accessible desktop checkbox states: checked, unchecked, indeterminate, and disabled.";
                                         font-family: Typography.font-family;
                                         font-size: Typography.size-xs;
-                                        color: Palette.success;
-                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-secondary;
                                     }
                                 }
 
-                                ProgressBar {
-                                    progress: 1.0;
-                                    bar-height: 6px;
-                                    variant: "success";
-                                }
-                            }
-                        }
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xl;
+                                    alignment: start;
 
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 3. Tier 1: Checkboxes & Selection Controls
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Checkboxes & Selection (Tier 1 Atoms)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Accessible desktop checkbox states: checked, unchecked, indeterminate, and disabled.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                spacing: Spacing.space-xl;
-                                alignment: start;
-
-                                VerticalLayout {
-                                    spacing: Spacing.space-sm;
-                                    Checkbox {
-                                        text: "Hardware Direct3D/Metal acceleration";
-                                        checked <=> root.demo-chk-1;
-                                    }
-                                    Checkbox {
-                                        text: "Subpixel antialiasing & LCD font smoothing";
-                                        checked <=> root.demo-chk-2;
-                                    }
-                                }
-
-                                VerticalLayout {
-                                    spacing: Spacing.space-sm;
-                                    Checkbox {
-                                        text: "Batch compile multi-target distribution";
-                                        indeterminate <=> root.demo-indeterminate;
-                                    }
-                                    Checkbox {
-                                        text: "Software legacy rasterizer (Deprecated)";
-                                        enabled: false;
-                                        checked: false;
-                                    }
-                                }
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 4. Tier 1: Status Badges & Indicators
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Status Badges & Pills (Tier 1 Atoms)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Compact high-contrast pills with live colored status dots and theme-aware tints.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                alignment: start;
-
-                                Badge {
-                                    text: "Engine Active";
-                                    variant: "success";
-                                    has-dot: true;
-                                }
-
-                                Badge {
-                                    text: "Rust v1.9 Native";
-                                    variant: "primary";
-                                    has-dot: true;
-                                }
-
-                                Badge {
-                                    text: "LTO Strip Active";
-                                    variant: "warning";
-                                    has-dot: true;
-                                }
-
-                                Badge {
-                                    text: "Buffer Spike";
-                                    variant: "danger";
-                                    has-dot: true;
-                                }
-
-                                Badge {
-                                    text: "Zero Web Overhead";
-                                    variant: "neutral";
-                                    has-dot: false;
-                                }
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 5. Tier 2: Radio Groups & Mutually Exclusive Choices
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Radio Selection & Options (Tier 2 Atoms)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Accessible mutually exclusive selection with primary and secondary description text.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            VerticalLayout {
-                                spacing: Spacing.space-sm;
-
-                                RadioButton {
-                                    text: "DirectX 12 / Metal Hardware Pipeline";
-                                    description: "Maximum GPU throughput at 120 FPS native refresh rate.";
-                                    checked: root.demo-radio-sel == 0;
-                                    toggled => { root.demo-radio-sel = 0; }
-                                }
-
-                                RadioButton {
-                                    text: "Vulkan Cross-Platform Graphics";
-                                    description: "Unified shading engine optimized for multi-vendor desktop GPUs.";
-                                    checked: root.demo-radio-sel == 1;
-                                    toggled => { root.demo-radio-sel = 1; }
-                                }
-
-                                RadioButton {
-                                    text: "Low-Power Headless Software Rasterizer";
-                                    description: "Fallback CPU execution for background automation environments.";
-                                    checked: root.demo-radio-sel == 2;
-                                    toggled => { root.demo-radio-sel = 2; }
-                                }
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 6. Tier 2: Steppers, Spinners & Tooltip Hints
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Numeric Steppers, Spinners & Tooltips (Tier 2)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Precision value inputs, async activity spinners, and floating contextual hints.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            // Row 1: Stepper & Background Spinner (Clean responsive layout)
-                            HorizontalLayout {
-                                spacing: Spacing.space-xl;
-                                alignment: start;
-
-                                // Stepper Control with unit
-                                VerticalLayout {
-                                    spacing: Spacing.space-xs;
-                                    Text {
-                                        text: "Typography Base Scale";
-                                        font-family: Typography.font-family;
-                                        font-size: Typography.size-sm;
-                                        color: Palette.text-primary;
-                                        font-weight: Typography.weight-medium;
-                                    }
-                                    Stepper {
-                                        value <=> root.demo-stepper-val;
-                                        minimum: 8;
-                                        maximum: 48;
-                                        step: 2;
-                                        unit: "px";
-                                    }
-                                }
-
-                                // Async Rotating Spinner with text
-                                VerticalLayout {
-                                    spacing: Spacing.space-xs;
-                                    Text {
-                                        text: "Background Compiler Status";
-                                        font-family: Typography.font-family;
-                                        font-size: Typography.size-sm;
-                                        color: Palette.text-primary;
-                                        font-weight: Typography.weight-medium;
-                                    }
-                                    HorizontalLayout {
+                                    VerticalLayout {
                                         spacing: Spacing.space-sm;
-                                        alignment: start;
-                                        Spinner {
-                                            size: 22px;
-                                            spinner-color: Palette.accent;
+                                        Checkbox {
+                                            text: "Hardware Direct3D/Metal acceleration";
+                                            checked <=> root.demo-chk-1;
+                                        }
+                                        Checkbox {
+                                            text: "Subpixel antialiasing & LCD font smoothing";
+                                            checked <=> root.demo-chk-2;
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: Spacing.space-sm;
+                                        Checkbox {
+                                            text: "Batch compile multi-target distribution";
+                                            indeterminate <=> root.demo-indeterminate;
+                                        }
+                                        Checkbox {
+                                            text: "Software legacy rasterizer (Deprecated)";
+                                            enabled: false;
+                                            checked: false;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 5. Sliders & Progress Indicators
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Sliders & Progress Controls (Tier 1 Atoms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Drag the slider thumb to dynamically update the progress bar in real-time.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: Spacing.space-sm;
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "GPU Memory Buffer Allocation";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-medium;
+                                            color: Palette.text-primary;
                                         }
                                         Text {
-                                            text: "JIT Shaders compiling in background...";
+                                            text: Math.round(root.demo-slider-val) + "% Allocated";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            color: Palette.accent;
+                                            font-weight: Typography.weight-semibold;
+                                        }
+                                    }
+
+                                    Slider {
+                                        value <=> root.demo-slider-val;
+                                        minimum: 0.0;
+                                        maximum: 100.0;
+                                        show-value: false;
+                                    }
+
+                                    ProgressBar {
+                                        progress: root.demo-slider-val / 100.0;
+                                        bar-height: 8px;
+                                        variant: root.demo-slider-val > 85.0 ? "danger" : "primary";
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: Spacing.space-xs;
+                                    HorizontalLayout {
+                                        alignment: space-between;
+                                        Text {
+                                            text: "Shader Compilation Pipeline";
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-xs;
                                             color: Palette.text-secondary;
-                                            vertical-alignment: center;
+                                        }
+                                        Text {
+                                            text: "100% Completed";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.success;
+                                            font-weight: Typography.weight-semibold;
+                                        }
+                                    }
+
+                                    ProgressBar {
+                                        progress: 1.0;
+                                        bar-height: 6px;
+                                        variant: "success";
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 6. Radio Groups & Mutually Exclusive Choices
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Radio Selection & Options (Tier 1 Atoms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Accessible mutually exclusive selection with primary and secondary description text.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: Spacing.space-sm;
+
+                                    RadioButton {
+                                        text: "DirectX 12 / Metal Hardware Pipeline";
+                                        description: "Maximum GPU throughput at 120 FPS native refresh rate.";
+                                        checked: root.demo-radio-sel == 0;
+                                        toggled => { root.demo-radio-sel = 0; }
+                                    }
+
+                                    RadioButton {
+                                        text: "Vulkan Cross-Platform Graphics";
+                                        description: "Unified shading engine optimized for multi-vendor desktop GPUs.";
+                                        checked: root.demo-radio-sel == 1;
+                                        toggled => { root.demo-radio-sel = 1; }
+                                    }
+
+                                    RadioButton {
+                                        text: "Low-Power Headless Software Rasterizer";
+                                        description: "Fallback CPU execution for background automation environments.";
+                                        checked: root.demo-radio-sel == 2;
+                                        toggled => { root.demo-radio-sel = 2; }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 7. Numeric Steppers & Spinners
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Numeric Steppers & Spinners (Tier 1 Atoms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Precision value inputs and async vector activity spinners.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xl;
+                                    alignment: start;
+
+                                    VerticalLayout {
+                                        spacing: Spacing.space-xs;
+                                        Text {
+                                            text: "Typography Base Scale";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            color: Palette.text-primary;
+                                            font-weight: Typography.weight-medium;
+                                        }
+                                        Stepper {
+                                            value <=> root.demo-stepper-val;
+                                            minimum: 8;
+                                            maximum: 48;
+                                            step: 2;
+                                            unit: "px";
+                                        }
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: Spacing.space-xs;
+                                        Text {
+                                            text: "Background Compiler Status";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            color: Palette.text-primary;
+                                            font-weight: Typography.weight-medium;
+                                        }
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            alignment: start;
+                                            Spinner {
+                                                size: 22px;
+                                                spinner-color: Palette.accent;
+                                            }
+                                            Text {
+                                                text: "JIT Shaders compiling in background...";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ----------------------------------------------------
+                        // SUB-TAB 1: TIER 2 INTERACTIVE MOLECULES
+                        // ----------------------------------------------------
+                        if root.selected-tier-tab == 1: VerticalLayout {
+                            spacing: 28px;
+
+                            // 1. Date & Time Selection (Molecules)
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Date & Time Pickers (Tier 2 Molecules)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Interactive calendar popover with month navigation and precision time steppers.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xl;
+                                    alignment: start;
+
+                                    DatePicker {
+                                        width: 270px;
+                                        label: "Target Deployment Date";
+                                        formatted-date <=> root.demo-date;
+                                        date-selected(d) => {
+                                            root.trigger-sample-toast("info", "Date Selected", "Scheduled for: " + d);
+                                        }
+                                    }
+
+                                    TimePicker {
+                                        width: 240px;
+                                        label: "Execution Window (24H)";
+                                        formatted-time <=> root.demo-time-24;
+                                        is-24h: true;
+                                        time-selected(t) => {
+                                            root.trigger-sample-toast("info", "Time Selected", "Execution window: " + t);
                                         }
                                     }
                                 }
                             }
 
-                            // Row 2: Contextual Tooltip Popover (Moved below for perfect responsiveness)
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 2. Accordions
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Accordion Disclosure Panels (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Expandable content panels with smooth transitions and theme support.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                VerticalLayout {
+                                    spacing: Spacing.space-sm;
+
+                                    AccordionItem {
+                                        title: "Why is hardware-accelerated desktop rendering faster?";
+                                        description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
+                                        expanded: true;
+                                    }
+
+                                    AccordionItem {
+                                        title: "How does the auto theme detection work?";
+                                        description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 3. Alerts & Notification Banners
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Alerts & Notifications (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Visual contextual banners for status messages and critical warnings.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                Alert {
+                                    status: "info";
+                                    title: "Native Direct GPU Pipeline";
+                                    message: "All native components are dynamically rendered via GPU with zero web overhead.";
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 4. Contextual Tooltips & Hover Hints
                             VerticalLayout {
                                 spacing: Spacing.space-xs;
                                 Text {
-                                    text: "Contextual Hint Popover (Desktop Tooltip)";
+                                    text: "Contextual Hint Popovers (Tier 2 Molecules)";
                                     font-family: Typography.font-family;
-                                    font-size: Typography.size-sm;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
                                     color: Palette.text-primary;
-                                    font-weight: Typography.weight-medium;
+                                }
+                                Text {
+                                    text: "Floating hints that appear when hovering over triggers.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
                                 }
 
                                 HorizontalLayout {
@@ -678,387 +764,379 @@ export component AppWindow inherits Window {
                                     }
                                 }
                             }
-                        }
 
-                        Divider { text: "TIER 3: DATA GRID & HIERARCHY"; }
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
 
-                        // 7. Tier 3: Enterprise Data Grid Table & Breadcrumb Hierarchy
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
+                            // 5. Hierarchical Breadcrumbs Navigation
                             VerticalLayout {
-                                spacing: 2px;
+                                spacing: Spacing.space-sm;
                                 Text {
-                                    text: "Enterprise Data Grid & Breadcrumbs (Tier 3 Organisms)";
+                                    text: "Breadcrumb Hierarchy Navigation (Tier 2 Molecules)";
                                     font-family: Typography.font-family;
                                     font-size: Typography.size-lg;
                                     font-weight: Typography.weight-semibold;
                                     color: Palette.text-primary;
                                 }
                                 Text {
-                                    text: "High-density desktop table with status badges, zebra striping, and instant row selection.";
+                                    text: "Multi-level breadcrumb path trail with clickable segment links.";
                                     font-family: Typography.font-family;
                                     font-size: Typography.size-xs;
                                     color: Palette.text-secondary;
                                 }
-                            }
 
-                            // Hierarchical Breadcrumb Navigation
-                            Breadcrumbs {
-                                items: [
-                                    { id: "root", label: "Clusters" },
-                                    { id: "us-east", label: "US-East Direct3D" },
-                                    { id: "telemetry", label: "Runtime Telemetry Matrix" }
-                                ];
-                                item-clicked(idx, id) => {
-                                    root.trigger-sample-toast("info", "Breadcrumb Trail", "Navigated to: " + id);
+                                Breadcrumbs {
+                                    items: [
+                                        { id: "root", label: "Clusters" },
+                                        { id: "us-east", label: "US-East Direct3D" },
+                                        { id: "telemetry", label: "Runtime Telemetry Matrix" }
+                                    ];
+                                    item-clicked(idx, id) => {
+                                        root.trigger-sample-toast("info", "Breadcrumb Trail", "Navigated to: " + id);
+                                    }
                                 }
                             }
+                        }
 
-                            // Interactive Local SQLite CRUD Toolbar
-                            HorizontalLayout {
-                                alignment: space-between;
+                        // ----------------------------------------------------
+                        // SUB-TAB 2: TIER 3 DESKTOP ORGANISMS & TOOLS
+                        // ----------------------------------------------------
+                        if root.selected-tier-tab == 2: VerticalLayout {
+                            spacing: 28px;
 
-                                // Left: Status & Count
-                                HorizontalLayout {
-                                    spacing: Spacing.space-sm;
-                                    alignment: center;
+                            // 1. Hierarchical TreeView & File Explorer
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
 
-                                    Badge {
-                                        text: "SQLite WAL Mode";
-                                        variant: "success";
-                                        has-dot: true;
-                                    }
-
+                                VerticalLayout {
+                                    spacing: 2px;
                                     Text {
-                                        text: "• " + root.db-records.length + " Total Records";
+                                        text: "Hierarchical File Explorer & TreeView (Tier 3 Organisms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Collapsible directory tree with sub-millisecond in-process filesystem scanning and node inspection.";
                                         font-family: Typography.font-family;
                                         font-size: Typography.size-xs;
                                         color: Palette.text-secondary;
-                                        vertical-alignment: center;
                                     }
                                 }
 
-                                // Right: CRUD Action Buttons
+                                // Desktop 2-Column Split: TreeView on Left, Node Details Inspector on Right
                                 HorizontalLayout {
-                                    spacing: Spacing.space-sm;
-                                    alignment: center;
+                                    spacing: Spacing.space-lg;
+                                    height: 380px;
 
-                                    Button {
-                                        text: "Add Record";
-                                        variant: "primary";
-                                        clicked => {
-                                            root.form-service = "";
-                                            root.form-runtime = "";
-                                            root.form-status = "Active";
-                                            root.form-latency = "1.0 ms";
-                                            root.is-editing-record = false;
-                                            root.show-crud-modal = true;
+                                    // Left Column: Interactive Scrollable TreeView
+                                    TreeView {
+                                        title: "Project Repository Tree";
+                                        items: root.tree-items;
+                                        selected-id <=> root.tree-selected-id;
+                                        horizontal-stretch: 1;
+                                        node-selected(id, label, is-folder) => {
+                                            root.tree-selected-id = id;
+                                            root.tree-selected-label = label;
+                                            root.tree-selected-is-folder = is-folder;
+                                            root.tree-node-selected(id, label, is-folder);
+                                        }
+                                        toggle-expand(id, expanded) => {
+                                            root.tree-toggle-expand(id, expanded);
                                         }
                                     }
 
-                                    Button {
-                                        text: "Edit Selected";
-                                        variant: "secondary";
-                                        enabled: root.db-records.length > 0;
-                                        clicked => {
-                                            if root.selected-record-idx >= 0 && root.selected-record-idx < root.db-records.length {
-                                                root.form-service = root.db-records[root.selected-record-idx].service;
-                                                root.form-runtime = root.db-records[root.selected-record-idx].runtime;
-                                                root.form-status = root.db-records[root.selected-record-idx].status;
-                                                root.form-latency = root.db-records[root.selected-record-idx].latency;
-                                                root.edit-record-id = root.db-records[root.selected-record-idx].id;
-                                                root.is-editing-record = true;
+                                    // Right Column: Node Inspector & Filesystem Actions
+                                    Rectangle {
+                                        width: 320px;
+                                        border-radius: Spacing.radius-lg;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+                                        background: Palette.dark-mode ? #111827 : #ffffff;
+                                        clip: true;
+
+                                        VerticalLayout {
+                                            // Header
+                                            VerticalLayout {
+                                                spacing: 0px;
+
+                                                Rectangle {
+                                                    height: 38px;
+                                                    background: Palette.dark-mode ? #1f2937 : #f8fafc;
+
+                                                    HorizontalLayout {
+                                                        padding-left: Spacing.space-md;
+                                                        padding-right: Spacing.space-md;
+                                                        alignment: space-between;
+
+                                                        Text {
+                                                            text: "NODE INSPECTOR";
+                                                            font-family: Typography.font-family;
+                                                            font-size: Typography.size-xs;
+                                                            font-weight: 700;
+                                                            color: Palette.text-primary;
+                                                            vertical-alignment: center;
+                                                            letter-spacing: 0.5px;
+                                                        }
+
+                                                        Badge {
+                                                            text: root.tree-selected-is-folder ? "Folder" : "File";
+                                                            variant: root.tree-selected-is-folder ? "secondary" : "primary";
+                                                        }
+                                                    }
+                                                }
+
+                                                Rectangle {
+                                                    height: 1px;
+                                                    background: Palette.border-subtle;
+                                                }
+                                            }
+
+                                            // Node Details Body
+                                            VerticalLayout {
+                                                padding: Spacing.space-md;
+                                                spacing: Spacing.space-md;
+
+                                                VerticalLayout {
+                                                    spacing: 4px;
+                                                    Text {
+                                                        text: "Selected Node Path";
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        color: Palette.text-secondary;
+                                                    }
+                                                    Text {
+                                                        text: root.tree-selected-label;
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-base;
+                                                        font-weight: 700;
+                                                        color: Palette.text-primary;
+                                                        wrap: word-wrap;
+                                                    }
+                                                }
+
+                                                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                                                VerticalLayout {
+                                                    spacing: 4px;
+                                                    Text {
+                                                        text: "Node Identifier (UUID / Path)";
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        color: Palette.text-secondary;
+                                                    }
+                                                    Text {
+                                                        text: root.tree-selected-id;
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        color: Palette.accent;
+                                                        wrap: word-wrap;
+                                                    }
+                                                }
+
+                                                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                                                VerticalLayout {
+                                                    spacing: Spacing.space-sm;
+
+                                                    Button {
+                                                        text: "Scan Local Workspace";
+                                                        variant: "primary";
+                                                        clicked => {
+                                                            root.tree-refresh-scan();
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        text: "Direct in-process query via std::fs with 0 child processes.";
+                                                        font-family: Typography.font-family;
+                                                        font-size: 11px;
+                                                        color: Palette.text-secondary;
+                                                        horizontal-alignment: center;
+                                                        wrap: word-wrap;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 2. Enterprise Data Grid Table & SQLite CRUD Toolbar
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Enterprise Data Grid & SQLite Engine (Tier 3 Organisms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "High-density desktop table with SQLite WAL persistence, live counts, and modal editing.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                // Interactive Local SQLite CRUD Toolbar
+                                HorizontalLayout {
+                                    alignment: space-between;
+
+                                    // Left: Status & Count
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: center;
+
+                                        Badge {
+                                            text: "SQLite WAL Mode";
+                                            variant: "success";
+                                            has-dot: true;
+                                        }
+
+                                        Text {
+                                            text: "• " + root.db-records.length + " Total Records";
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+
+                                    // Right: CRUD Action Buttons
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: center;
+
+                                        Button {
+                                            text: "Add Record";
+                                            variant: "primary";
+                                            clicked => {
+                                                root.form-service = "";
+                                                root.form-runtime = "";
+                                                root.form-status = "Active";
+                                                root.form-latency = "1.0 ms";
+                                                root.is-editing-record = false;
                                                 root.show-crud-modal = true;
                                             }
                                         }
+
+                                        Button {
+                                            text: "Edit Selected";
+                                            variant: "secondary";
+                                            enabled: root.db-records.length > 0;
+                                            clicked => {
+                                                if root.selected-record-idx >= 0 && root.selected-record-idx < root.db-records.length {
+                                                    root.form-service = root.db-records[root.selected-record-idx].service;
+                                                    root.form-runtime = root.db-records[root.selected-record-idx].runtime;
+                                                    root.form-status = root.db-records[root.selected-record-idx].status;
+                                                    root.form-latency = root.db-records[root.selected-record-idx].latency;
+                                                    root.edit-record-id = root.db-records[root.selected-record-idx].id;
+                                                    root.is-editing-record = true;
+                                                    root.show-crud-modal = true;
+                                                }
+                                            }
+                                        }
+
+                                        Button {
+                                            text: "Delete Selected";
+                                            variant: "danger";
+                                            enabled: root.db-records.length > 0;
+                                            clicked => {
+                                                root.show-delete-confirm = true;
+                                            }
+                                        }
+
+                                        Button {
+                                            text: "Reload";
+                                            variant: "ghost";
+                                            clicked => {
+                                                root.db-refresh();
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Desktop High-Density Data Grid Table (Bound to local SQLite database)
+                                DataTable {
+                                    rows: root.db-records;
+                                    selected-row <=> root.selected-record-idx;
+                                    row-selected(idx, id) => {
+                                        root.selected-record-idx = idx;
+                                        root.trigger-sample-toast("info", "Record Selected", "Inspecting SQLite service: " + id);
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 3. Desktop Organisms: Modals, Dropdowns & Toasts
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Desktop Modals, Dropdowns & Notifications (Tier 3 Organisms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "Top-level composite window dialogs, floating toasts, and opaque dropdowns.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                // Row 1: Modal + Dropdown
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    Button {
+                                        text: "Launch Modal Dialog";
+                                        variant: "primary";
+                                        clicked => {
+                                            root.show-modal = true;
+                                        }
+                                    }
+
+                                    Dropdown {
+                                        width: 260px;
+                                        placeholder: "Select Density Profile...";
+                                    }
+                                }
+
+                                // Row 2: Toast Notification Triggers
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    Button {
+                                        text: "Trigger Success Toast";
+                                        variant: "secondary";
+                                        clicked => {
+                                            root.trigger-sample-toast("success", "Build Succeeded", "Native Rust binary optimized and signed.");
+                                        }
                                     }
 
                                     Button {
-                                        text: "Delete Selected";
+                                        text: "Trigger Warning Toast";
                                         variant: "danger";
-                                        enabled: root.db-records.length > 0;
                                         clicked => {
-                                            root.show-delete-confirm = true;
-                                        }
-                                    }
-
-                                    Button {
-                                        text: "Reload";
-                                        variant: "ghost";
-                                        clicked => {
-                                            root.db-refresh();
+                                            root.trigger-sample-toast("danger", "Process Warning", "Hardware GPU buffer spike detected.");
                                         }
                                     }
                                 }
-                            }
-
-                            // Desktop High-Density Data Grid Table (Bound to local SQLite database)
-                            DataTable {
-                                rows: root.db-records;
-                                selected-row <=> root.selected-record-idx;
-                                row-selected(idx, id) => {
-                                    root.selected-record-idx = idx;
-                                    root.trigger-sample-toast("info", "Record Selected", "Inspecting SQLite service: " + id);
-                                }
-                            }
-                        }
-
-                        Divider { text: "TIER 3: HIERARCHICAL TREEVIEW & FILE EXPLORER"; }
-
-                        // 8. Tier 3: TreeView & File Explorer
-                        VerticalLayout {
-                            spacing: Spacing.space-md;
-
-                            VerticalLayout {
-                                spacing: 2px;
-                                Text {
-                                    text: "Hierarchical File Explorer & TreeView (Tier 3 Molecules)";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-lg;
-                                    font-weight: Typography.weight-semibold;
-                                    color: Palette.text-primary;
-                                }
-                                Text {
-                                    text: "Collapsible directory tree with sub-millisecond in-process filesystem scanning and node inspection.";
-                                    font-family: Typography.font-family;
-                                    font-size: Typography.size-xs;
-                                    color: Palette.text-secondary;
-                                }
-                            }
-
-                            // Desktop 2-Column Split: TreeView on Left, Node Details Inspector on Right
-                            HorizontalLayout {
-                                spacing: Spacing.space-lg;
-                                alignment: start;
-
-                                // Left Column: Interactive TreeView
-                                TreeView {
-                                    title: "Project Repository Tree";
-                                    items: root.tree-items;
-                                    selected-id <=> root.tree-selected-id;
-                                    node-selected(id, label, is-folder) => {
-                                        root.tree-selected-id = id;
-                                        root.tree-selected-label = label;
-                                        root.tree-selected-is-folder = is-folder;
-                                        root.tree-node-selected(id, label, is-folder);
-                                    }
-                                    toggle-expand(id, expanded) => {
-                                        root.tree-toggle-expand(id, expanded);
-                                    }
-                                }
-
-                                // Right Column: Node Inspector & Filesystem Actions
-                                Rectangle {
-                                    width: 320px;
-                                    border-radius: Spacing.radius-lg;
-                                    border-width: 1px;
-                                    border-color: Palette.border-subtle;
-                                    background: Palette.dark-mode ? #111827 : #ffffff;
-                                    clip: true;
-
-                                    VerticalLayout {
-                                        // Header
-                                        VerticalLayout {
-                                            spacing: 0px;
-
-                                            Rectangle {
-                                                height: 38px;
-                                                background: Palette.dark-mode ? #1f2937 : #f8fafc;
-
-                                                HorizontalLayout {
-                                                    padding-left: Spacing.space-md;
-                                                    padding-right: Spacing.space-md;
-                                                    alignment: space-between;
-
-                                                    Text {
-                                                        text: "NODE INSPECTOR";
-                                                        font-family: Typography.font-family;
-                                                        font-size: Typography.size-xs;
-                                                        font-weight: 700;
-                                                        color: Palette.text-primary;
-                                                        vertical-alignment: center;
-                                                        letter-spacing: 0.5px;
-                                                    }
-
-                                                    Badge {
-                                                        text: root.tree-selected-is-folder ? "Folder" : "File";
-                                                        variant: root.tree-selected-is-folder ? "secondary" : "primary";
-                                                    }
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                height: 1px;
-                                                background: Palette.border-subtle;
-                                            }
-                                        }
-
-                                        // Node Details Body
-                                        VerticalLayout {
-                                            padding: Spacing.space-md;
-                                            spacing: Spacing.space-md;
-
-                                            VerticalLayout {
-                                                spacing: 4px;
-                                                Text {
-                                                    text: "Selected Node Path";
-                                                    font-family: Typography.font-family;
-                                                    font-size: Typography.size-xs;
-                                                    color: Palette.text-secondary;
-                                                }
-                                                Text {
-                                                    text: root.tree-selected-label;
-                                                    font-family: Typography.font-family;
-                                                    font-size: Typography.size-base;
-                                                    font-weight: 700;
-                                                    color: Palette.text-primary;
-                                                    wrap: word-wrap;
-                                                }
-                                            }
-
-                                            Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                                            VerticalLayout {
-                                                spacing: 4px;
-                                                Text {
-                                                    text: "Node Identifier (UUID / Path)";
-                                                    font-family: Typography.font-family;
-                                                    font-size: Typography.size-xs;
-                                                    color: Palette.text-secondary;
-                                                }
-                                                Text {
-                                                    text: root.tree-selected-id;
-                                                    font-family: Typography.font-family;
-                                                    font-size: Typography.size-xs;
-                                                    color: Palette.accent;
-                                                    wrap: word-wrap;
-                                                }
-                                            }
-
-                                            Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                                            VerticalLayout {
-                                                spacing: Spacing.space-sm;
-
-                                                Button {
-                                                    text: "Scan Local Workspace";
-                                                    variant: "primary";
-                                                    clicked => {
-                                                        root.tree-refresh-scan();
-                                                    }
-                                                }
-
-                                                Text {
-                                                    text: "Direct in-process query via std::fs with 0 child processes.";
-                                                    font-family: Typography.font-family;
-                                                    font-size: 11px;
-                                                    color: Palette.text-secondary;
-                                                    horizontal-alignment: center;
-                                                    wrap: word-wrap;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        Divider {}
-
-                        // 8. Molecules: Alerts
-                        VerticalLayout {
-                            spacing: Spacing.space-sm;
-                            Text {
-                                text: "Alerts & Notifications (Molecules)";
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-lg;
-                                font-weight: Typography.weight-semibold;
-                                color: Palette.text-primary;
-                            }
-
-                            Alert {
-                                status: "info";
-                                title: "Native Direct GPU Pipeline";
-                                message: "All native components are dynamically rendered via GPU with zero web overhead.";
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 6. Molecules: Accordions
-                        VerticalLayout {
-                            spacing: Spacing.space-sm;
-                            Text {
-                                text: "Accordion Panels (Molecules)";
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-lg;
-                                font-weight: Typography.weight-semibold;
-                                color: Palette.text-primary;
-                            }
-
-                            VerticalLayout {
-                                spacing: Spacing.space-sm;
-
-                                AccordionItem {
-                                    title: "Why is hardware-accelerated desktop rendering faster?";
-                                    description: "Unlike Electron which boots an entire Chromium browser engine and NodeJS runtime (eating 400MB+ RAM), this design system compiles directly to native instructions and paints onto DirectX/Metal/Vulkan surfaces.";
-                                    expanded: true;
-                                }
-
-                                AccordionItem {
-                                    title: "How does the auto theme detection work?";
-                                    description: "The Rust backend queries the native operating system's theme registry. When your OS switches to dark or light mode, Slint's reactive palette instantly cascades the change to all atomic and molecule components.";
-                                }
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 7. Atoms: Buttons
-                        VerticalLayout {
-                            spacing: Spacing.space-sm;
-                            Text {
-                                text: "Buttons & Actions (Atoms)";
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-lg;
-                                font-weight: Typography.weight-semibold;
-                                color: Palette.text-primary;
-                            }
-
-                            HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                Button { text: "Primary Action"; variant: "primary"; }
-                                Button { text: "Secondary"; variant: "secondary"; }
-                                Button { text: "Ghost Action"; variant: "ghost"; }
-                            }
-
-                            HorizontalLayout {
-                                spacing: Spacing.space-md;
-                                Button { text: "Destructive Action"; variant: "danger"; }
-                                Button { text: "Disabled Action"; enabled: false; }
-                            }
-                        }
-
-                        Rectangle { height: 1px; background: Palette.border-subtle; }
-
-                        // 8. Atoms: Inputs & Form Fields
-                        VerticalLayout {
-                            spacing: Spacing.space-sm;
-                            Text {
-                                text: "Inputs & Form Fields (Atoms)";
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-lg;
-                                font-weight: Typography.weight-semibold;
-                                color: Palette.text-primary;
-                            }
-
-                            TextInputField {
-                                placeholder: "Search components or documentation...";
-                            }
-                            TextInputField {
-                                placeholder: "Enter secret credentials...";
-                                input-type: InputType.password;
                             }
                         }
                     }

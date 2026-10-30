@@ -1,3 +1,4 @@
+import { ScrollView } from "std-widgets.slint";
 import { Palette } from "../tokens/colors.slint";
 import { Typography } from "../tokens/typography.slint";
 import { Spacing } from "../tokens/spacing.slint";
@@ -33,8 +34,8 @@ export component TreeView {
     callback node-selected(string, string, bool); // (id, label, is-folder)
     callback toggle-expand(string, bool);          // (id, current-expanded)
 
-    min-width: 260px;
-    min-height: 200px;
+    min-width: 280px;
+    min-height: 250px;
     horizontal-stretch: 1;
 
     Rectangle {
@@ -50,7 +51,7 @@ export component TreeView {
                 spacing: 0px;
 
                 Rectangle {
-                    height: 38px;
+                    height: 40px;
                     background: Palette.dark-mode ? #1f2937 : #f8fafc;
 
                     HorizontalLayout {
@@ -66,8 +67,8 @@ export component TreeView {
                                 alignment: center;
                                 Image {
                                     source: @image-url("../../assets/icons/components.svg");
-                                    width: 14px;
-                                    height: 14px;
+                                    width: 15px;
+                                    height: 15px;
                                     colorize: Palette.accent;
                                 }
                             }
@@ -85,17 +86,17 @@ export component TreeView {
 
                         // Item count badge
                         Rectangle {
-                            height: 20px;
+                            height: 22px;
                             border-radius: Spacing.radius-sm;
                             background: Palette.dark-mode ? #374151 : #e2e8f0;
 
                             HorizontalLayout {
-                                padding-left: 6px;
-                                padding-right: 6px;
+                                padding-left: 8px;
+                                padding-right: 8px;
                                 Text {
                                     text: root.items.length + " nodes";
                                     font-family: Typography.font-family;
-                                    font-size: 10px;
+                                    font-size: 11px;
                                     font-weight: 600;
                                     color: Palette.text-secondary;
                                     vertical-alignment: center;
@@ -111,39 +112,38 @@ export component TreeView {
                 }
             }
 
-            // Tree Nodes List
-            VerticalLayout {
-                padding-top: 4px;
-                padding-bottom: 4px;
-                spacing: 1px;
+            // Scrollable Tree Nodes Surface
+            ScrollView {
+                VerticalLayout {
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    padding-right: 6px;
+                    spacing: 2px;
 
-                for node in root.items: node-row := Rectangle {
-                    height: 32px;
-                    border-radius: Spacing.radius-sm;
+                    for node in root.items: node-row := Rectangle {
+                        height: 32px;
+                        border-radius: Spacing.radius-sm;
 
-                    property <bool> is-selected: node.id == root.selected-id;
-                    background: is-selected ? 
-                        (Palette.dark-mode ? #1e293b : #e0f2fe) : 
-                        (row-touch.has-hover ? (Palette.dark-mode ? #1f2937 : #f1f5f9) : transparent);
+                        property <bool> is-selected: node.id == root.selected-id;
+                        background: is-selected ? 
+                            (Palette.dark-mode ? #1e293b : #e0f2fe) : 
+                            (row-touch.has-hover ? (Palette.dark-mode ? #1f2937 : #f1f5f9) : transparent);
 
-                    // Left active indicator strip
-                    if is-selected: Rectangle {
-                        x: 0;
-                        y: 4px;
-                        width: 3px;
-                        height: parent.height - 8px;
-                        border-radius: 1.5px;
-                        background: Palette.accent;
-                    }
+                        // Left active indicator strip
+                        if is-selected: Rectangle {
+                            x: 0;
+                            y: 4px;
+                            width: 3px;
+                            height: parent.height - 8px;
+                            border-radius: 1.5px;
+                            background: Palette.accent;
+                        }
 
-                    HorizontalLayout {
-                        padding-left: 10px + (node.level * 18px);
-                        padding-right: 12px;
-                        spacing: 6px;
-                        alignment: space-between;
-
-                        // Left group: Chevron + Icon + Label
+                        // Left Content Group: Indented Chevron + Icon + File Label
                         HorizontalLayout {
+                            x: 10px + (node.level * 18px);
+                            width: parent.width - (10px + (node.level * 18px)) - 85px;
+                            height: parent.height;
                             spacing: 6px;
                             alignment: start;
 
@@ -232,12 +232,13 @@ export component TreeView {
                             }
                         }
 
-                        // Right group: Optional Badge / Size Tag
+                        // Right Group: Badge strictly pinned to right edge for 100% column alignment!
                         if node.badge != "": Rectangle {
-                            height: 18px;
+                            x: parent.width - self.width - 12px;
+                            y: (parent.height - self.height) / 2;
+                            height: 20px;
                             border-radius: Spacing.radius-sm;
                             background: is-selected ? (Palette.dark-mode ? #334155 : #bae6fd) : (Palette.dark-mode ? #1f2937 : #f1f5f9);
-                            y: (parent.height - self.height) / 2;
 
                             HorizontalLayout {
                                 padding-left: 6px;
@@ -246,21 +247,21 @@ export component TreeView {
                                     text: node.badge;
                                     font-family: Typography.font-family;
                                     font-size: 10px;
-                                    font-weight: 500;
+                                    font-weight: 600;
                                     color: is-selected ? Palette.accent : Palette.text-secondary;
                                     vertical-alignment: center;
                                 }
                             }
                         }
-                    }
 
-                    row-touch := TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => {
-                            root.selected-id = node.id;
-                            root.node-selected(node.id, node.label, node.is-folder);
-                            if (node.has-children) {
-                                root.toggle-expand(node.id, node.expanded);
+                        row-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.selected-id = node.id;
+                                root.node-selected(node.id, node.label, node.is-folder);
+                                if (node.has-children) {
+                                    root.toggle-expand(node.id, node.expanded);
+                                }
                             }
                         }
                     }
@@ -269,4 +270,3 @@ export component TreeView {
         }
     }
 }
-
