@@ -108,20 +108,24 @@ export component FormField {
                 }
 
                 // Status Indicator Icons (Alert for error, Check for valid)
-                if root.has-error: Image {
-                    source: @image-url("../../assets/icons/alert.svg");
-                    width: 16px;
-                    height: 16px;
-                    colorize: Palette.danger;
-                    vertical-alignment: center;
+                if root.has-error: VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: @image-url("../../assets/icons/alert.svg");
+                        width: 16px;
+                        height: 16px;
+                        colorize: Palette.danger;
+                    }
                 }
 
-                if !root.has-error && root.is-valid: Image {
-                    source: @image-url("../../assets/icons/check.svg");
-                    width: 16px;
-                    height: 16px;
-                    colorize: Palette.success;
-                    vertical-alignment: center;
+                if !root.has-error && root.is-valid: VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: @image-url("../../assets/icons/check.svg");
+                        width: 16px;
+                        height: 16px;
+                        colorize: Palette.success;
+                    }
                 }
             }
 
@@ -141,12 +145,14 @@ export component FormField {
             spacing: 4px;
             alignment: start;
 
-            Image {
-                source: @image-url("../../assets/icons/alert.svg");
-                width: 12px;
-                height: 12px;
-                colorize: Palette.danger;
-                vertical-alignment: center;
+            VerticalLayout {
+                alignment: center;
+                Image {
+                    source: @image-url("../../assets/icons/alert.svg");
+                    width: 12px;
+                    height: 12px;
+                    colorize: Palette.danger;
+                }
             }
 
             Text {

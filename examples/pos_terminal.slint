@@ -114,6 +114,7 @@ export component PosTerminalWindow inherits Window {
     callback set-quick-tender(int); // cents
     callback tender-input-changed(string);
     callback finalize-checkout(string); // payment_method
+    callback print-active-receipt();
     callback start-new-order();
 
     // ========================================================
@@ -190,6 +191,12 @@ export component PosTerminalWindow inherits Window {
                     Badge {
                         text: "100% Offline Ready";
                         variant: "success";
+                        has-dot: true;
+                    }
+
+                    Badge {
+                        text: "Thermal ESC/POS Spooler";
+                        variant: "neutral";
                         has-dot: true;
                     }
 
@@ -915,6 +922,14 @@ export component PosTerminalWindow inherits Window {
                     HorizontalLayout {
                         spacing: Spacing.space-md;
                         alignment: center;
+
+                        Button {
+                            text: "Print ESC/POS Thermal [F8]";
+                            variant: "secondary";
+                            clicked => {
+                                root.print-active-receipt();
+                            }
+                        }
 
                         Button {
                             text: "Start New Order [Space / Enter]";

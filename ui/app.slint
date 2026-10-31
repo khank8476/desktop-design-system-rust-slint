@@ -892,18 +892,26 @@ export component AppWindow inherits Window {
                                     spacing: Spacing.space-md;
                                     alignment: start;
 
-                                    Button {
-                                        text: "Open Context Menu";
-                                        variant: "secondary";
-                                        clicked => {
-                                            demo-ctx-menu.show();
-                                        }
-                                    }
+                                    btn-wrapper := Rectangle {
+                                        width: 180px;
+                                        height: 40px;
 
-                                    demo-ctx-menu := ContextMenu {
-                                        items: root.demo-context-items;
-                                        item-selected(action-id) => {
-                                            root.trigger-sample-toast("info", "Context Action Triggered", "Executed menu action: " + action-id);
+                                        Button {
+                                            width: 100%;
+                                            height: 100%;
+                                            text: "Open Context Menu";
+                                            variant: "secondary";
+                                            clicked => {
+                                                demo-ctx-menu.show();
+                                            }
+                                        }
+
+                                        demo-ctx-menu := ContextMenu {
+                                            menu-y: 44px;
+                                            items: root.demo-context-items;
+                                            item-selected(action-id) => {
+                                                root.trigger-sample-toast("info", "Context Action Triggered", "Executed menu action: " + action-id);
+                                            }
                                         }
                                     }
                                 }
@@ -1348,8 +1356,93 @@ export component AppWindow inherits Window {
                                 }
 
                                 HorizontalLayout {
+                                    spacing: Spacing.space-xl;
                                     alignment: start;
+
+                                    // Left: Realistic Thermal Canvas
                                     ReceiptCanvas { }
+
+                                    // Right: Industrial ESC/POS Hardware & Spooler Pipeline
+                                    Rectangle {
+                                        width: 360px;
+                                        border-radius: Spacing.radius-lg;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+                                        background: Palette.bg-surface;
+
+                                        VerticalLayout {
+                                            padding: Spacing.space-lg;
+                                            spacing: Spacing.space-md;
+
+                                            Text {
+                                                text: "INDUSTRIAL ESC/POS THERMAL PIPELINE";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                font-weight: 700;
+                                                color: Palette.text-primary;
+                                                letter-spacing: 0.5px;
+                                            }
+
+                                            Text {
+                                                text: "How production POS printing works end-to-end: Native Rust formats raw ESC/POS byte streams (init, alignment, auto-cut) dispatched directly to hardware with zero web overhead.";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                                wrap: word-wrap;
+                                            }
+
+                                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                                            // Connection Channels
+                                            VerticalLayout {
+                                                spacing: 6px;
+
+                                                HorizontalLayout {
+                                                    alignment: space-between;
+                                                    Text { text: "Network TCP/IP:"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                                    Badge { text: "Port 9100 RAW"; variant: "accent"; }
+                                                }
+                                                HorizontalLayout {
+                                                    alignment: space-between;
+                                                    Text { text: "USB / Serial:"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                                    Badge { text: "Virtual COM3"; variant: "neutral"; }
+                                                }
+                                                HorizontalLayout {
+                                                    alignment: space-between;
+                                                    Text { text: "Windows Spooler:"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                                    Badge { text: "winspool.drv RAW"; variant: "success"; has-dot: true; }
+                                                }
+                                                HorizontalLayout {
+                                                    alignment: space-between;
+                                                    Text { text: "Auto-Guillotine Cutter:"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                                    Badge { text: "Full Cut (GS V 0)"; variant: "neutral"; }
+                                                }
+                                            }
+
+                                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                                            // Interactive Spooler Triggers
+                                            VerticalLayout {
+                                                spacing: Spacing.space-sm;
+
+                                                Button {
+                                                    text: "Spool Test Print Job";
+                                                    variant: "primary";
+                                                    clicked => {
+                                                        root.trigger-sample-toast("success", "Thermal Print Spooled", "Generated receipts/ORD-SAMPLE.txt and sent ESC/POS cut job.");
+                                                    }
+                                                }
+
+                                                Button {
+                                                    text: "Isolated POS Showcase";
+                                                    variant: "secondary";
+                                                    clicked => {
+                                                        root.trigger-sample-toast("info", "Run Isolated POS Demo", "Execute 'cargo run --example pos_terminal' in terminal.");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

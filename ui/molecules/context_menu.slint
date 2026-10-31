@@ -16,6 +16,8 @@ export component ContextMenu {
     in property <[ContextMenuItem]> items: [];
     in-out property <bool> is-open: false;
     in property <length> menu-width: 220px;
+    in property <length> menu-x: 0px;
+    in property <length> menu-y: 0px;
     callback item-selected(string); // (id)
 
     public function show() {
@@ -27,6 +29,8 @@ export component ContextMenu {
     }
 
     popup := PopupWindow {
+        x: root.menu-x;
+        y: root.menu-y;
         width: root.menu-width;
 
         menu-card := Rectangle {
@@ -39,21 +43,23 @@ export component ContextMenu {
             drop-shadow-offset-y: 6px;
 
             VerticalLayout {
-                padding: 4px;
+                padding: 6px;
                 spacing: 2px;
 
-                for item in root.items: Rectangle {
+                for item in root.items: item-container := Rectangle {
+                    height: item.is-divider ? 9px : 34px;
+
+                    // Divider element
                     if item.is-divider: Rectangle {
                         height: 1px;
+                        y: 4px;
                         background: Palette.border-subtle;
-                        HorizontalLayout {
-                            padding-top: 3px;
-                            padding-bottom: 3px;
-                        }
                     }
 
+                    // Interactive Menu Row
                     if !item.is-divider: item-row := Rectangle {
                         height: 32px;
+                        y: 1px;
                         border-radius: Spacing.radius-sm;
                         background: !item.enabled ? transparent :
                                     item-touch.has-hover ? (item.is-danger ? #ef444422 : Palette.bg-surface-hover) :
@@ -125,4 +131,3 @@ export component ContextMenu {
         }
     }
 }
-

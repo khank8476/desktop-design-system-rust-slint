@@ -1,4 +1,7 @@
 use desktop_design_system::is_system_dark_mode;
+use desktop_design_system::receipt_printer::{
+    save_receipt_to_disk, spool_receipt_print, ReceiptData, ReceiptItemData,
+};
 use rusqlite::{params, Connection};
 use slint::VecModel;
 use std::cell::RefCell;
@@ -201,6 +204,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let products = load_products_from_db(&db_conn.borrow());
     let state = Rc::new(RefCell::new(PosTerminalState::new(products)));
+    let last_receipt_data = Rc::new(RefCell::new(None::<ReceiptData>));
 
     // 2. Initialize UI Window
     let app = PosTerminalWindow::new()?;
@@ -472,6 +476,7 @@ fn main() -> Result<(), slint::PlatformError> {
     // 13. Callback: Finalize Checkout & Print Receipt
     let state_checkout = state.clone();
     let db_checkout = db_conn.clone();
+    let last_receipt_checkout = last_receipt_data.clone();
     let app_weak_checkout = app.as_weak();
     app.on_finalize_checkout(move |payment_method| {
         let st = state_checkout.borrow();
@@ -539,6 +544,36 @@ fn main() -> Result<(), slint::PlatformError> {
             })
             .collect();
 
+        let receipt_data_model = ReceiptData {
+            merchant_name: "NATIVE RETAIL & COMMERCE LAB".to_string(),
+            merchant_address: "742 Evergreen Terrace, Suite 100".to_string(),
+            merchant_phone: "Tel: +1 (555) 019-2834".to_string(),
+            order_no: st.order_no.clone(),
+            timestamp: "2026-10-31 15:45:00".to_string(),
+            cashier_name: "Alex M. (Terminal 01)".to_string(),
+            items: st.cart.iter().map(|item| {
+                let line_total = item.unit_price_cents * item.qty * (100 - item.discount_pct) / 100;
+                ReceiptItemData {
+                    name: item.name.clone(),
+                    sku: item.sku.clone(),
+                    qty: item.qty,
+                    unit_price_cents: item.unit_price_cents,
+                    line_total_cents: line_total,
+                }
+            }).collect(),
+            subtotal_cents: st.subtotal_cents(),
+            tax_cents: st.tax_cents(),
+            discount_cents: st.discount_cents(),
+            total_cents: total,
+            payment_method: payment_method.as_str().to_string(),
+            tendered_cents: tendered,
+            change_cents: change,
+        };
+
+        // Automatically write receipt file to disk
+        let _ = save_receipt_to_disk(&receipt_data_model);
+        *last_receipt_checkout.borrow_mut() = Some(receipt_data_model);
+
         let order_saved = st.order_no.clone();
         drop(st);
 
@@ -554,6 +589,34 @@ fn main() -> Result<(), slint::PlatformError> {
                 "Transaction Finalized".into(),
                 format!("Order {} settled and committed to SQLite.", order_saved).into(),
             );
+        }
+    });
+
+    // 14. Callback: Print Active Receipt (ESC/POS Thermal Spooler)
+    let last_receipt_print = last_receipt_data.clone();
+    let app_weak_print = app.as_weak();
+    app.on_print_active_receipt(move || {
+        if let Some(data) = last_receipt_print.borrow().as_ref() {
+            match spool_receipt_print(data) {
+                Ok(path) => {
+                    if let Some(app) = app_weak_print.upgrade() {
+                        app.invoke_trigger_toast(
+                            "success".into(),
+                            "Thermal Receipt Spooled".into(),
+                            format!("Sent ESC/POS cut job to printer ({}).", path.display()).into(),
+                        );
+                    }
+                }
+                Err(e) => {
+                    if let Some(app) = app_weak_print.upgrade() {
+                        app.invoke_trigger_toast(
+                            "danger".into(),
+                            "Print Spooler Error".into(),
+                            e.into(),
+                        );
+                    }
+                }
+            }
         }
     });
 
