@@ -1,0 +1,128 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct ContextMenuItem {
+    id: string,
+    label: string,
+    shortcut: string,
+    icon: string, // "close" | "check" | "plus" | "minus" | "info" | "settings" | ""
+    is-danger: bool,
+    is-divider: bool,
+    enabled: bool,
+}
+
+export component ContextMenu {
+    in property <[ContextMenuItem]> items: [];
+    in-out property <bool> is-open: false;
+    in property <length> menu-width: 220px;
+    callback item-selected(string); // (id)
+
+    public function show() {
+        popup.show();
+    }
+
+    public function close() {
+        popup.close();
+    }
+
+    popup := PopupWindow {
+        width: root.menu-width;
+
+        menu-card := Rectangle {
+            border-radius: Spacing.radius-md;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
+            background: Palette.dark-mode ? #1e293b : #ffffff;
+            drop-shadow-blur: 16px;
+            drop-shadow-color: #00000040;
+            drop-shadow-offset-y: 6px;
+
+            VerticalLayout {
+                padding: 4px;
+                spacing: 2px;
+
+                for item in root.items: Rectangle {
+                    if item.is-divider: Rectangle {
+                        height: 1px;
+                        background: Palette.border-subtle;
+                        HorizontalLayout {
+                            padding-top: 3px;
+                            padding-bottom: 3px;
+                        }
+                    }
+
+                    if !item.is-divider: item-row := Rectangle {
+                        height: 32px;
+                        border-radius: Spacing.radius-sm;
+                        background: !item.enabled ? transparent :
+                                    item-touch.has-hover ? (item.is-danger ? #ef444422 : Palette.bg-surface-hover) :
+                                    transparent;
+
+                        HorizontalLayout {
+                            padding-left: Spacing.space-sm;
+                            padding-right: Spacing.space-sm;
+                            spacing: Spacing.space-sm;
+                            alignment: space-between;
+
+                            // Left: Optional Icon + Label
+                            HorizontalLayout {
+                                spacing: Spacing.space-sm;
+                                horizontal-stretch: 1;
+
+                                if item.icon != "": VerticalLayout {
+                                    alignment: center;
+                                    Image {
+                                        source: item.icon == "close" ? @image-url("../../assets/icons/close.svg") :
+                                                item.icon == "check" ? @image-url("../../assets/icons/check.svg") :
+                                                item.icon == "plus" ? @image-url("../../assets/icons/plus.svg") :
+                                                item.icon == "minus" ? @image-url("../../assets/icons/minus.svg") :
+                                                item.icon == "settings" ? @image-url("../../assets/icons/settings.svg") :
+                                                @image-url("../../assets/icons/info.svg");
+                                        width: 14px;
+                                        height: 14px;
+                                        colorize: !item.enabled ? Palette.text-placeholder :
+                                                  item.is-danger ? Palette.danger :
+                                                  Palette.text-secondary;
+                                    }
+                                }
+
+                                Text {
+                                    text: item.label;
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-sm;
+                                    font-weight: Typography.weight-medium;
+                                    color: !item.enabled ? Palette.text-placeholder :
+                                           item.is-danger ? Palette.danger :
+                                           Palette.text-primary;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                            }
+
+                            // Right: Keyboard Shortcut Accelerator Hint (e.g. "Del", "Ctrl+D")
+                            if item.shortcut != "": Text {
+                                text: item.shortcut;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: !item.enabled ? Palette.text-placeholder : Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        item-touch := TouchArea {
+                            enabled: item.enabled;
+                            mouse-cursor: item.enabled ? pointer : default;
+                            clicked => {
+                                root.item-selected(item.id);
+                                popup.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

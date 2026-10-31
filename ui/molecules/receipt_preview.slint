@@ -1,0 +1,334 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct ReceiptItem {
+    name: string,
+    sku: string,
+    qty: int,
+    unit-price: string,
+    line-total: string,
+}
+
+export component ReceiptCanvas {
+    in property <string> merchant-name: "NATIVE RETAIL & COMMERCE LAB";
+    in property <string> merchant-address: "742 Evergreen Terrace, Suite 100";
+    in property <string> merchant-phone: "Tel: +1 (555) 019-2834";
+    in property <string> order-number: "ORD-84920";
+    in property <string> cashier-name: "Counter 01 / Admin";
+    in property <string> timestamp: "2026-10-31 14:30:00";
+    
+    in property <[ReceiptItem]> items: [
+        { name: "Artisan Dark Roast Coffee", sku: "BEV-01", qty: 2, unit-price: "$4.50", line-total: "$9.00" },
+        { name: "Fresh Butter Croissant", sku: "BAK-04", qty: 1, unit-price: "$3.75", line-total: "$3.75" },
+        { name: "Mechanical Keycap Set", sku: "TEC-12", qty: 1, unit-price: "$24.00", line-total: "$24.00" }
+    ];
+
+    in property <string> subtotal: "$36.75";
+    in property <string> tax: "$3.03";
+    in property <string> discount: "$0.00";
+    in property <string> total: "$39.78";
+    in property <string> payment-method: "CASH TENDERED";
+    in property <string> tendered: "$50.00";
+    in property <string> change: "$10.22";
+    in property <string> barcode-text: "*ORD-84920*";
+    in property <string> footer-message: "Zero Electron. Zero Bloat. Pure Native Speed.";
+
+    width: 340px;
+
+    // Thermal Receipt Paper Card Container
+    paper-card := Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: #cbd5e1;
+        background: #ffffff; // Always paper-white for true receipt feel
+        drop-shadow-blur: 20px;
+        drop-shadow-color: #00000033;
+        drop-shadow-offset-y: 6px;
+
+        VerticalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 24px;
+            padding-bottom: 24px;
+            spacing: 12px;
+
+            // 1. Merchant Header
+            VerticalLayout {
+                spacing: 3px;
+                alignment: center;
+
+                Text {
+                    text: root.merchant-name;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    font-weight: Typography.weight-bold;
+                    color: #0f172a;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: root.merchant-address;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    color: #64748b;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: root.merchant-phone;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    color: #64748b;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Dotted Cut Line
+            Rectangle {
+                height: 1px;
+                background: #e2e8f0;
+            }
+
+            // 2. Order Metadata
+            VerticalLayout {
+                spacing: 4px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "ORDER: " + root.order-number;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: Typography.weight-semibold;
+                        color: #1e293b;
+                    }
+                    Text {
+                        text: root.timestamp;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        color: #64748b;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "STAFF: " + root.cashier-name;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        color: #64748b;
+                    }
+                    Text {
+                        text: "TERMINAL 01";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        color: #64748b;
+                    }
+                }
+            }
+
+            // Dotted Cut Line
+            Rectangle {
+                height: 1px;
+                background: #e2e8f0;
+            }
+
+            // 3. Itemized List Header
+            HorizontalLayout {
+                alignment: space-between;
+                Text {
+                    text: "QTY  ITEM DESCRIPTION";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    font-weight: Typography.weight-bold;
+                    color: #475569;
+                }
+                Text {
+                    text: "TOTAL";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    font-weight: Typography.weight-bold;
+                    color: #475569;
+                }
+            }
+
+            // Item rows
+            VerticalLayout {
+                spacing: 6px;
+
+                for item in root.items: VerticalLayout {
+                    spacing: 2px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 8px;
+                            horizontal-stretch: 1;
+
+                            Text {
+                                text: item.qty + "x";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                font-weight: Typography.weight-semibold;
+                                color: #0f172a;
+                            }
+
+                            Text {
+                                text: item.name;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-sm;
+                                color: #1e293b;
+                                overflow: elide;
+                                horizontal-stretch: 1;
+                            }
+                        }
+
+                        Text {
+                            text: item.line-total;
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            font-weight: Typography.weight-semibold;
+                            color: #0f172a;
+                        }
+                    }
+
+                    // SKU & Unit price detail
+                    HorizontalLayout {
+                        padding-left: 24px;
+                        Text {
+                            text: item.sku + " @ " + item.unit-price + " each";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            color: #94a3b8;
+                        }
+                    }
+                }
+            }
+
+            // Dotted Cut Line
+            Rectangle {
+                height: 1px;
+                background: #e2e8f0;
+            }
+
+            // 4. Financial Calculation Summary
+            VerticalLayout {
+                spacing: 4px;
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Subtotal:"; font-size: Typography.size-xs; color: #475569; }
+                    Text { text: root.subtotal; font-size: Typography.size-xs; color: #1e293b; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Sales Tax (8.25%):"; font-size: Typography.size-xs; color: #475569; }
+                    Text { text: root.tax; font-size: Typography.size-xs; color: #1e293b; }
+                }
+
+                if root.discount != "$0.00" && root.discount != "": HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Discount Applied:"; font-size: Typography.size-xs; color: #16a34a; }
+                    Text { text: "-" + root.discount; font-size: Typography.size-xs; color: #16a34a; }
+                }
+
+                Rectangle { height: 1px; background: #cbd5e1; }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text {
+                        text: "TOTAL AMOUNT:";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-bold;
+                        color: #0f172a;
+                    }
+                    Text {
+                        text: root.total;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-bold;
+                        color: #0f172a;
+                    }
+                }
+
+                Rectangle { height: 1px; background: #cbd5e1; }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Payment (" + root.payment-method + "):"; font-size: Typography.size-xs; color: #475569; }
+                    Text { text: root.tendered; font-size: Typography.size-xs; color: #1e293b; }
+                }
+
+                HorizontalLayout {
+                    alignment: space-between;
+                    Text { text: "Change Returned:"; font-size: Typography.size-xs; font-weight: Typography.weight-semibold; color: #0f172a; }
+                    Text { text: root.change; font-size: Typography.size-sm; font-weight: Typography.weight-bold; color: #16a34a; }
+                }
+            }
+
+            // Dotted Cut Line
+            Rectangle {
+                height: 1px;
+                background: #e2e8f0;
+            }
+
+            // 5. Simulated Vector Barcode
+            VerticalLayout {
+                spacing: 6px;
+                alignment: center;
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 2px;
+                    height: 38px;
+
+                    // Alternating procedural barcode stripes
+                    Rectangle { width: 3px; background: #0f172a; }
+                    Rectangle { width: 1px; background: transparent; }
+                    Rectangle { width: 2px; background: #0f172a; }
+                    Rectangle { width: 2px; background: transparent; }
+                    Rectangle { width: 4px; background: #0f172a; }
+                    Rectangle { width: 1px; background: transparent; }
+                    Rectangle { width: 1px; background: #0f172a; }
+                    Rectangle { width: 3px; background: transparent; }
+                    Rectangle { width: 3px; background: #0f172a; }
+                    Rectangle { width: 2px; background: transparent; }
+                    Rectangle { width: 4px; background: #0f172a; }
+                    Rectangle { width: 1px; background: transparent; }
+                    Rectangle { width: 2px; background: #0f172a; }
+                    Rectangle { width: 3px; background: transparent; }
+                    Rectangle { width: 5px; background: #0f172a; }
+                    Rectangle { width: 2px; background: transparent; }
+                    Rectangle { width: 2px; background: #0f172a; }
+                    Rectangle { width: 1px; background: transparent; }
+                    Rectangle { width: 3px; background: #0f172a; }
+                    Rectangle { width: 2px; background: transparent; }
+                    Rectangle { width: 4px; background: #0f172a; }
+                    Rectangle { width: 1px; background: transparent; }
+                    Rectangle { width: 2px; background: #0f172a; }
+                }
+
+                Text {
+                    text: root.barcode-text;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    color: #64748b;
+                    horizontal-alignment: center;
+                    letter-spacing: 2px;
+                }
+            }
+
+            // 6. Thank You Footer
+            Text {
+                text: root.footer-message;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                color: #64748b;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}
+

@@ -21,6 +21,9 @@ import { Breadcrumbs } from "molecules/breadcrumbs.slint";
 import { DatePicker } from "molecules/datepicker.slint";
 import { TimePicker } from "molecules/timepicker.slint";
 import { TreeView, TreeNodeData } from "molecules/treeview.slint";
+import { FormField } from "molecules/form_field.slint";
+import { ContextMenu, ContextMenuItem } from "molecules/context_menu.slint";
+import { ReceiptCanvas, ReceiptItem } from "molecules/receipt_preview.slint";
 import { ModalDialog } from "organisms/modal.slint";
 import { Dropdown } from "organisms/dropdown.slint";
 import { LiveFeedView, FeedItem } from "organisms/feed.slint";
@@ -59,6 +62,17 @@ export component AppWindow inherits Window {
     in-out property <bool> demo-tooltip-hover: false;
     in-out property <string> demo-date: "2026-10-29";
     in-out property <string> demo-time-24: "14:30";
+
+    // FormField & ContextMenu demo properties
+    in-out property <string> demo-field-email: "merchant@native-commerce.io";
+    in-out property <string> demo-field-sku: "BEV-001";
+    in-out property <string> demo-field-price: "34.50";
+    in-out property <[ContextMenuItem]> demo-context-items: [
+        { id: "edit", label: "Edit Product Record", shortcut: "Ctrl+E", icon: "settings", is-danger: false, is-divider: false, enabled: true },
+        { id: "discount", label: "Apply 10% Line Discount", shortcut: "Ctrl+D", icon: "check", is-danger: false, is-divider: false, enabled: true },
+        { id: "divider", label: "", shortcut: "", icon: "", is-danger: false, is-divider: true, enabled: true },
+        { id: "delete", label: "Delete Line Item", shortcut: "Del", icon: "close", is-danger: true, is-divider: false, enabled: true }
+    ];
 
     // TreeView & File Explorer Properties
     in-out property <[TreeNodeData]> tree-items: [
@@ -806,6 +820,94 @@ export component AppWindow inherits Window {
                                     }
                                 }
                             }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 6. Form Field Wrappers & Validation Feedback
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Form Field Wrappers & Validation (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Enterprise input wrappers with reactive validation states, required asterisks, and helper labels.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-lg;
+
+                                    FormField {
+                                        label: "Verified Merchant Email";
+                                        required: true;
+                                        text <=> root.demo-field-email;
+                                        is-valid: true;
+                                        helper-text: "Direct GPU account verified.";
+                                    }
+
+                                    FormField {
+                                        label: "Inventory SKU / Barcode";
+                                        required: true;
+                                        text <=> root.demo-field-sku;
+                                        has-error: true;
+                                        error-text: "SKU format must match 'XXX-000'.";
+                                    }
+
+                                    FormField {
+                                        label: "Unit Price (USD)";
+                                        prefix-text: "$";
+                                        text <=> root.demo-field-price;
+                                        optional-text: "(Optional)";
+                                        helper-text: "Tax calculated automatically.";
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 7. Context Menu Action Popover
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Context Menu & Action Popovers (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Floating popup menu with keyboard accelerators, destructive actions, and auto-dismissal.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    Button {
+                                        text: "Open Context Menu";
+                                        variant: "secondary";
+                                        clicked => {
+                                            demo-ctx-menu.show();
+                                        }
+                                    }
+
+                                    demo-ctx-menu := ContextMenu {
+                                        items: root.demo-context-items;
+                                        item-selected(action-id) => {
+                                            root.trigger-sample-toast("info", "Context Action Triggered", "Executed menu action: " + action-id);
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // ----------------------------------------------------
@@ -1219,6 +1321,35 @@ export component AppWindow inherits Window {
                                             root.trigger-sample-toast("danger", "Process Warning", "Hardware GPU buffer spike detected.");
                                         }
                                     }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 4. Thermal Receipt & Document Canvas
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+
+                                VerticalLayout {
+                                    spacing: 2px;
+                                    Text {
+                                        text: "Thermal Receipt & Document Canvas (Tier 3 Organisms)";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-lg;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: "High-contrast document layout with itemization, procedural barcodes, and tax breakdowns.";
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    alignment: start;
+                                    ReceiptCanvas { }
                                 }
                             }
                         }

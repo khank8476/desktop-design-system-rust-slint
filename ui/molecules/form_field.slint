@@ -1,0 +1,172 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component FormField {
+    in property <string> label: "";
+    in property <bool> required: false;
+    in property <string> optional-text: "";
+    in property <string> placeholder: "Enter value...";
+    in-out property <string> text <=> input.text;
+    in property <bool> enabled: true;
+    in property <bool> read-only: false;
+    in property <InputType> input-type: InputType.text;
+    in property <string> prefix-text: "";
+    
+    // Validation states
+    in property <bool> has-error: false;
+    in property <string> error-text: "";
+    in property <bool> is-valid: false;
+    in property <string> helper-text: "";
+
+    out property <bool> has-focus: input.has-focus;
+
+    callback edited(string);
+    callback accepted();
+
+    horizontal-stretch: 1;
+
+    VerticalLayout {
+        spacing: Spacing.space-xs;
+
+        // 1. Header: Field Label & Indicators
+        if root.label != "": HorizontalLayout {
+            spacing: 4px;
+            alignment: start;
+
+            Text {
+                text: root.label;
+                font-family: Typography.font-family;
+                font-size: Typography.size-sm;
+                font-weight: Typography.weight-medium;
+                color: root.has-error ? Palette.danger : Palette.text-primary;
+                vertical-alignment: center;
+            }
+
+            if root.required: Text {
+                text: "*";
+                font-family: Typography.font-family;
+                font-size: Typography.size-sm;
+                font-weight: Typography.weight-bold;
+                color: Palette.danger;
+                vertical-alignment: center;
+            }
+
+            if !root.required && root.optional-text != "": Text {
+                text: root.optional-text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                color: Palette.text-secondary;
+                vertical-alignment: center;
+            }
+        }
+
+        // 2. Interactive Input Frame
+        input-frame := Rectangle {
+            min-height: 40px;
+            border-radius: Spacing.radius-md;
+            border-width: (input.has-focus || root.has-error || root.is-valid) ? 2px : 1px;
+            border-color: root.has-error ? Palette.danger :
+                         root.is-valid ? Palette.success :
+                         input.has-focus ? Palette.border-focus :
+                         Palette.border-subtle;
+            background: !root.enabled ? (Palette.dark-mode ? #111827 : #f1f5f9) :
+                        input.has-focus ? (Palette.dark-mode ? #1e293b : #ffffff) :
+                        Palette.bg-surface;
+
+            animate border-color { duration: 120ms; easing: ease-out; }
+            animate background { duration: 120ms; easing: ease-out; }
+
+            HorizontalLayout {
+                padding-left: Spacing.space-md;
+                padding-right: Spacing.space-md;
+                spacing: Spacing.space-xs;
+                alignment: center;
+
+                // Optional leading prefix (e.g. "$", "#", "SKU-")
+                if root.prefix-text != "": Text {
+                    text: root.prefix-text;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    font-weight: Typography.weight-semibold;
+                    color: root.has-error ? Palette.danger : Palette.text-secondary;
+                    vertical-alignment: center;
+                }
+
+                // Core Native Input
+                input := TextInput {
+                    horizontal-stretch: 1;
+                    enabled: root.enabled && !root.read-only;
+                    input-type: root.input-type;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-base;
+                    color: root.has-error ? Palette.danger : Palette.text-primary;
+                    vertical-alignment: center;
+
+                    edited => { root.edited(self.text); }
+                    accepted => { root.accepted(); }
+                }
+
+                // Status Indicator Icons (Alert for error, Check for valid)
+                if root.has-error: Image {
+                    source: @image-url("../../assets/icons/alert.svg");
+                    width: 16px;
+                    height: 16px;
+                    colorize: Palette.danger;
+                    vertical-alignment: center;
+                }
+
+                if !root.has-error && root.is-valid: Image {
+                    source: @image-url("../../assets/icons/check.svg");
+                    width: 16px;
+                    height: 16px;
+                    colorize: Palette.success;
+                    vertical-alignment: center;
+                }
+            }
+
+            // In-frame Placeholder text
+            if input.text == "" && !input.has-focus: Text {
+                x: root.prefix-text != "" ? (Spacing.space-md + 16px) : Spacing.space-md;
+                text: root.placeholder;
+                font-family: Typography.font-family;
+                font-size: Typography.size-base;
+                color: Palette.text-placeholder;
+                vertical-alignment: center;
+            }
+        }
+
+        // 3. Footer: Validation Error or Informational Helper Text
+        if root.has-error && root.error-text != "": HorizontalLayout {
+            spacing: 4px;
+            alignment: start;
+
+            Image {
+                source: @image-url("../../assets/icons/alert.svg");
+                width: 12px;
+                height: 12px;
+                colorize: Palette.danger;
+                vertical-alignment: center;
+            }
+
+            Text {
+                text: root.error-text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                font-weight: Typography.weight-medium;
+                color: Palette.danger;
+                vertical-alignment: center;
+                wrap: word-wrap;
+            }
+        }
+
+        if !root.has-error && root.helper-text != "": Text {
+            text: root.helper-text;
+            font-family: Typography.font-family;
+            font-size: Typography.size-xs;
+            color: Palette.text-secondary;
+            wrap: word-wrap;
+        }
+    }
+}
+
