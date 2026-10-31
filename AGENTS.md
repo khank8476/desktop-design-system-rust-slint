@@ -80,7 +80,9 @@ c/
     ├── crypto_tracker.rs      # High-speed live Crypto Price Tracker binary
     ├── crypto_tracker.slint   # Domain-specific trading UI utilizing design tokens
     ├── pos_terminal.rs        # Enterprise Retail & Point-of-Sale Terminal binary with SQLite WAL
-    └── pos_terminal.slint     # High-speed touch & barcode POS UI with checkout and receipt preview
+    ├── pos_terminal.slint     # High-speed touch & barcode POS UI with checkout and receipt preview
+    ├── dev_forge.rs           # DevForge Native Developer Utility Studio binary (8.09 MB)
+    └── dev_forge.slint        # DevForge multi-module developer workspace UI
 ```
 
 ---
@@ -134,6 +136,9 @@ cargo run --example crypto_tracker
 
 # Run the Enterprise Point of Sale (POS) & Retail Terminal
 cargo run --example pos_terminal
+
+# Run the DevForge Native Developer Studio (Sub-10 MB, 120 FPS Direct3D)
+cargo run --example dev_forge
 ```
 
 ### Compiling Optimized Production Binary (< 10 MB)
@@ -173,9 +178,10 @@ cargo clean
   - ✅ **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons, smart deduplication, and 5-barrier safe removal.
   - ✅ **FormField, ContextMenu & ReceiptCanvas Molecules:** Production form validation wrapper with required asterisks and error states, floating action popover with accelerator shortcuts, and industrial thermal document renderer.
   - ✅ **Demo 2 (Enterprise POS Terminal):** High-speed 120 FPS retail counter terminal with catalog search, ticket stepper, context menu discounts, cash/card/QR checkout modal with real-time change calculation, receipt canvas, and transactional SQLite WAL ledger (`examples/pos_terminal.rs`).
+  - ✅ **Demo 3 (DevForge Developer Utility Studio):** High-speed **8.09 MB** Swiss Army Knife for software engineers (`examples/dev_forge.rs`). Features Text & Multi-Case telemetry, Cryptographic Multi-Hash (SHA-256, SHA-512, SHA-1, MD5, CRC32) with live checksum verification, Base64 & URL percent encode/decode with 1-click swap, UUID v4 & ULID batch generator, JSON 2-space/4-space formatter & minifier with AST syntax linter, and live Unix Epoch <-> ISO-8601 UTC converter.
   - ✅ **Crates.io Publication:** `v0.2.1` live and indexed.
 - **Next Planned Deliverables:**
-  - 🔜 **Demo 3:** Native Local Audio/Media Player or Markdown Document Studio.
+  - 🔜 **Demo 4:** Native Local Audio/Media Player or Markdown Document Studio.
 
 ---
 

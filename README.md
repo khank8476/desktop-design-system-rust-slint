@@ -210,6 +210,18 @@ To demonstrate real-world integration in diverse business domains without bloati
   cargo run --example pos_terminal
   ```
 
+- **Available Demo 3: DevForge — Native Developer Utility Studio (Sub-10 MB) ⚡**
+  A high-performance developer Swiss Army knife providing sub-millisecond utility transforms at 120 FPS Direct3D/Metal GPU speed. Zero Electron, zero webview, only **8.09 MB** total standalone executable size:
+  - **🔤 Text & Case Inspector:** Instant character, word, line, and UTF-8 byte telemetry with 1-click `camelCase`, `snake_case`, `kebab-case`, `PascalCase`, `CONSTANT_CASE`, and `Title Case` transforms.
+  - **🛡️ Cryptographic Multi-Hash Generator:** Real-time simultaneous calculation of SHA-256, SHA-512, SHA-1, MD5, and CRC32 with uppercase toggles, 1-click clipboard badges, and interactive checksum match verification.
+  - **🔄 Base64 & URL Percent Engine:** RFC 4648 standard and URL-safe Base64 encoder/decoder, plus RFC 3986 URL query encoder/decoder with 1-click input/output swapping (`⇄`).
+  - **🏷️ UUID v4 & ULID Batch Studio:** Zero-allocation bulk generator for standard random v4 UUIDs and Crockford Base32 timestamped ULIDs with count stepper (1–50) and bulk copy.
+  - **📋 JSON Formatter, Minifier & Lint:** Instant AST syntax validator, 2-space / 4-space pretty printer, compact minifier, and error callouts displaying exact line and column locations.
+  - **⏱️ Unix Epoch & ISO-8601 Studio:** Real-time live epoch ticker with bi-directional human ISO-8601 UTC and local datetime conversions.
+  ```powershell
+  cargo run --example dev_forge
+  ```
+
 ---
 
 ## 📦 Installation & Consumption

@@ -17,6 +17,18 @@ path = "src/lib.rs"
 name = "desktop-design-system"
 path = "src/main.rs"
 
+[[example]]
+name = "crypto_tracker"
+path = "examples/crypto_tracker.rs"
+
+[[example]]
+name = "pos_terminal"
+path = "examples/pos_terminal.rs"
+
+[[example]]
+name = "dev_forge"
+path = "examples/dev_forge.rs"
+
 [dependencies]
 slint = "1.9"
 dark-light = "1.1"

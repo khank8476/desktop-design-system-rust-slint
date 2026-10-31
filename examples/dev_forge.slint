@@ -1,0 +1,1580 @@
+import { ScrollView } from "std-widgets.slint";
+import { 
+    Palette, 
+    Typography, 
+    Spacing, 
+    Button, 
+    TextInputField, 
+    ToggleSwitch, 
+    Badge, 
+    Stepper, 
+    Divider, 
+    SegmentedTabs, 
+    FormField, 
+    ToastNotification 
+} from "../ui/index.slint";
+
+export { Palette }
+
+export struct UuidItem {
+    id-str: string,
+    index-str: string,
+}
+
+component NavTabItem {
+    in property <string> icon-text: "🔤";
+    in property <string> title: "Text Inspector";
+    in property <string> subtitle: "Case & Telemetry";
+    in property <bool> is-active: false;
+    callback clicked();
+
+    min-height: 52px;
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        background: root.is-active ? (Palette.dark-mode ? #1e293b : #e2e8f0) :
+                    touch.has-hover ? (Palette.dark-mode ? #0f172a88 : #f1f5f9) :
+                    transparent;
+        animate background { duration: 120ms; }
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            padding-top: Spacing.space-xs;
+            padding-bottom: Spacing.space-xs;
+            spacing: Spacing.space-sm;
+            alignment: center;
+
+            // Active indicator pill
+            Rectangle {
+                width: 3px;
+                height: 24px;
+                border-radius: 2px;
+                background: root.is-active ? Palette.accent : transparent;
+            }
+
+            // Icon box
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: Spacing.radius-sm;
+                background: root.is-active ? (Palette.accent.with-alpha(0.15)) : (Palette.dark-mode ? #1e293b : #e2e8f0);
+                
+                Text {
+                    text: root.icon-text;
+                    font-size: 14px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+
+            // Labels
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 1px;
+
+                Text {
+                    text: root.title;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    font-weight: root.is-active ? Typography.weight-semibold : Typography.weight-normal;
+                    color: root.is-active ? Palette.accent : Palette.text-primary;
+                }
+
+                Text {
+                    text: root.subtitle;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xs;
+                    color: Palette.text-secondary;
+                }
+            }
+        }
+
+        touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.clicked(); }
+        }
+    }
+}
+
+component StatCard {
+    in property <string> label: "CHARACTERS";
+    in property <string> value: "0";
+    in property <string> unit: "";
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.bg-surface;
+        min-height: 64px;
+
+        VerticalLayout {
+            padding: Spacing.space-sm;
+            spacing: 2px;
+            alignment: center;
+
+            Text {
+                text: root.label;
+                font-family: Typography.font-family;
+                font-size: 11px;
+                font-weight: Typography.weight-semibold;
+                color: Palette.text-secondary;
+                letter-spacing: 0.5px;
+            }
+
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+
+                Text {
+                    text: root.value;
+                    font-family: "Consolas, Cascadia Code, monospace";
+                    font-size: 20px;
+                    font-weight: Typography.weight-bold;
+                    color: Palette.text-primary;
+                }
+
+                if root.unit != "": Text {
+                    text: root.unit;
+                    font-family: Typography.font-family;
+                    font-size: 12px;
+                    color: Palette.text-secondary;
+                    vertical-alignment: bottom;
+                }
+            }
+        }
+    }
+}
+
+component HashOutputRow {
+    in property <string> algorithm: "SHA-256";
+    in property <string> hash-value: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    in property <string> badge-status: "info";
+    callback copy_clicked();
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.bg-surface;
+        min-height: 52px;
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            padding-top: Spacing.space-xs;
+            padding-bottom: Spacing.space-xs;
+            spacing: Spacing.space-md;
+            alignment: center;
+
+            // Algorithm Tag
+            Rectangle {
+                width: 76px;
+                height: 26px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.dark-mode ? #1e293b : #e2e8f0;
+
+                Text {
+                    text: root.algorithm;
+                    font-family: "Consolas, Cascadia Code, monospace";
+                    font-size: 12px;
+                    font-weight: Typography.weight-semibold;
+                    color: Palette.accent;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+
+            // Hash String
+            Text {
+                horizontal-stretch: 1;
+                text: root.hash-value;
+                font-family: "Consolas, Cascadia Code, monospace";
+                font-size: 12px;
+                color: Palette.text-primary;
+                vertical-alignment: center;
+                wrap: word-wrap;
+            }
+
+            // Copy Button
+            Button {
+                text: "Copy";
+                variant: "secondary";
+                clicked => { root.copy_clicked(); }
+            }
+        }
+    }
+}
+
+export component DevForgeWindow inherits Window {
+    title: "DevForge — Native Developer Utility Studio (120 FPS Direct3D)";
+    min-width: 960px;
+    min-height: 720px;
+    preferred-width: 1140px;
+    preferred-height: 780px;
+    background: Palette.bg-canvas;
+
+    // Active tool state:
+    // 0: Text Inspector & Case
+    // 1: Multi-Hash & Crypto
+    // 2: Base64 & URL Engine
+    // 3: UUID & ULID Studio
+    // 4: JSON Formatter & Lint
+    // 5: Unix Epoch & ISO DateTime
+    in-out property <int> active-tool: 0;
+
+    // Toast state
+    in-out property <bool> toast-open: false;
+    in-out property <string> toast-title: "Copied to Clipboard";
+    in-out property <string> toast-msg: "Value copied successfully.";
+    in-out property <string> toast-status: "success";
+
+    // Text Inspector State
+    in-out property <string> text-input: "DevForge is an ultra-fast, native developer studio built with Rust and Slint. 0% Electron!";
+    in-out property <int> text-char-count: 92;
+    in-out property <int> text-word-count: 14;
+    in-out property <int> text-line-count: 1;
+    in-out property <int> text-byte-count: 95;
+    in-out property <string> text-camel: "devForgeIsAnUltraFast";
+    in-out property <string> text-snake: "dev_forge_is_an_ultra_fast";
+    in-out property <string> text-kebab: "dev-forge-is-an-ultra-fast";
+    in-out property <string> text-pascal: "DevForgeIsAnUltraFast";
+    in-out property <string> text-constant: "DEV_FORGE_IS_AN_ULTRA_FAST";
+    in-out property <string> text-title: "Dev Forge Is An Ultra Fast";
+
+    // Multi-Hash State
+    in-out property <string> hash-input: "antigravity-rust-slint-120fps";
+    in-out property <bool> hash-uppercase: false;
+    in-out property <string> hash-sha256: "b0c79f90f2de6f3d97825c35f9dd6329759d9c240954b9d0b642aa5c7546e9df";
+    in-out property <string> hash-sha512: "3f7902d1e21b213b19b05777170a4980076a0d0a514d7a4658514e86a0b1f3c3a9f7d23d8ebc18dfdf649f7e5272a0f8bfdf75a02e604f32e18585e13589c3bc";
+    in-out property <string> hash-sha1: "9b3fb081f964be656cf9119616d0c159235e197c";
+    in-out property <string> hash-md5: "852c03bb87522f671c69f201d4b684cb";
+    in-out property <string> hash-crc32: "7A9F4B12";
+    in-out property <string> compare-checksum: "";
+    in-out property <string> compare-status: "idle"; // "idle" | "match" | "mismatch"
+
+    // Base64 & URL State
+    in-out property <int> b64-mode: 0; // 0: Base64, 1: Base64 URL-safe, 2: URL Percent
+    in-out property <int> b64-action: 0; // 0: Encode, 1: Decode
+    in-out property <string> b64-input: "Hello DevForge! 🚀 Direct3D 12 Native Speed.";
+    in-out property <string> b64-output: "SGVsbG8gRGV2Rm9yZ2UhIPCfmYAgRGlyZWN0M0QgMTIgTmF0aXZlIFNwZWVkLg==";
+    in-out property <string> b64-status-msg: "Ready";
+
+    // UUID & ULID State
+    in-out property <int> uuid-mode: 0; // 0: UUID v4, 1: ULID
+    in-out property <int> uuid-count: 5;
+    in-out property <bool> uuid-uppercase: false;
+    in-out property <bool> uuid-hyphens: true;
+    in-out property <[UuidItem]> uuid-list: [
+        { id-str: "a7b31e92-349f-43fc-872e-d09f7a9342ef", index-str: "01." },
+        { id-str: "591d84fa-bc72-4d10-91ea-02a831e50821", index-str: "02." },
+        { id-str: "1c83fa9b-e740-4592-b430-67c29e1fa049", index-str: "03." },
+        { id-str: "fe2491a0-15cb-4792-802c-491ea738b521", index-str: "04." },
+        { id-str: "8e920d31-419b-4392-a192-38b725c941a3", index-str: "05." },
+    ];
+
+    // JSON Formatter State
+    in-out property <string> json-input: "{\"name\":\"DevForge\",\"version\":1,\"tags\":[\"native\",\"fast\",\"rust\"],\"engine\":{\"gpu\":\"Direct3D 12\",\"fps\":120}}";
+    in-out property <string> json-output: "{\n  \"engine\": {\n    \"fps\": 120,\n    \"gpu\": \"Direct3D 12\"\n  },\n  \"name\": \"DevForge\",\n  \"tags\": [\n    \"native\",\n    \"fast\",\n    \"rust\"\n  ],\n  \"version\": 1\n}";
+    in-out property <bool> json-is-valid: true;
+    in-out property <string> json-status-msg: "Valid JSON (4 properties parsed)";
+
+    // Timestamp & DateTime State
+    in-out property <string> epoch-now-sec: "1793425200";
+    in-out property <string> epoch-now-ms: "1793425200000";
+    in-out property <string> epoch-input: "1793425200";
+    in-out property <string> iso-output: "2026-10-31T17:40:00.000Z";
+    in-out property <string> iso-input: "2026-10-31T17:40:00Z";
+    in-out property <string> epoch-output: "1793425200";
+    in-out property <string> relative-time: "Just now";
+
+    // Telemetry display
+    in-out property <string> mem-telemetry: "29.4 MB RSS";
+
+    // Callbacks to Rust engine
+    callback copy_text(string);
+    callback trigger_toast(string, string, string);
+    callback text_inspector_updated(string);
+    callback apply_case_transform(int); // 0: camel, 1: snake, 2: kebab, 3: pascal, 4: constant, 5: title
+    callback hash_input_updated(string);
+    callback hash_uppercase_toggled(bool);
+    callback compare_checksum_updated(string);
+    callback b64_execute();
+    callback b64_swap();
+    callback json_format_action(int); // 0: 2-spaces, 1: 4-spaces, 2: minify, 3: validate
+    callback uuid_generate_batch();
+    callback epoch_convert_forward(string);
+    callback epoch_convert_reverse(string);
+    callback refresh_current_epoch();
+
+    HorizontalLayout {
+        // ==========================================
+        // 1. LEFT NAVIGATION RAIL (240px)
+        // ==========================================
+        Rectangle {
+            width: 240px;
+            background: Palette.bg-surface;
+            border-width: 0px;
+
+            Rectangle {
+                x: parent.width - 1px;
+                y: 0px;
+                width: 1px;
+                height: parent.height;
+                background: Palette.border-subtle;
+            }
+
+            VerticalLayout {
+                padding: Spacing.space-md;
+                spacing: Spacing.space-sm;
+
+                // Brand Header
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: start;
+
+                    Rectangle {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: Spacing.radius-md;
+                        background: Palette.accent;
+
+                        Text {
+                            text: "⚡";
+                            font-size: 18px;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 1px;
+
+                        Text {
+                            text: "DevForge Studio";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-base;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                        }
+
+                        Text {
+                            text: "v1.0 Native • Zero Bloat";
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                // GPU Badge
+                Rectangle {
+                    height: 24px;
+                    border-radius: Spacing.radius-sm;
+                    background: Palette.dark-mode ? #0f172a : #f1f5f9;
+
+                    HorizontalLayout {
+                        padding-left: Spacing.space-sm;
+                        padding-right: Spacing.space-sm;
+                        alignment: space-between;
+
+                        Text {
+                            text: "GPU Acceleration";
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "120 FPS Direct3D";
+                            font-family: "Consolas, monospace";
+                            font-size: 11px;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.success;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                Divider {}
+
+                // Tool Navigation Tabs
+                ScrollView {
+                    horizontal-stretch: 1;
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        spacing: 4px;
+
+                        NavTabItem {
+                            icon-text: "🔤";
+                            title: "Text & Case";
+                            subtitle: "Telemetry & Casing";
+                            is-active: root.active-tool == 0;
+                            clicked => { root.active-tool = 0; }
+                        }
+
+                        NavTabItem {
+                            icon-text: "🛡️";
+                            title: "Multi-Hash";
+                            subtitle: "SHA, MD5, CRC32";
+                            is-active: root.active-tool == 1;
+                            clicked => { root.active-tool = 1; }
+                        }
+
+                        NavTabItem {
+                            icon-text: "🔄";
+                            title: "Base64 & URL";
+                            subtitle: "Encoders & Decoders";
+                            is-active: root.active-tool == 2;
+                            clicked => { root.active-tool = 2; }
+                        }
+
+                        NavTabItem {
+                            icon-text: "🏷️";
+                            title: "UUID & ULID";
+                            subtitle: "Batch Generator";
+                            is-active: root.active-tool == 3;
+                            clicked => { root.active-tool = 3; }
+                        }
+
+                        NavTabItem {
+                            icon-text: "📋";
+                            title: "JSON Formatter";
+                            subtitle: "Prettify, Minify, Lint";
+                            is-active: root.active-tool == 4;
+                            clicked => { root.active-tool = 4; }
+                        }
+
+                        NavTabItem {
+                            icon-text: "⏱️";
+                            title: "Epoch & DateTime";
+                            subtitle: "Timestamp Converter";
+                            is-active: root.active-tool == 5;
+                            clicked => { root.active-tool = 5; }
+                        }
+                    }
+                }
+
+                Divider {}
+
+                // Sidebar Footer Diagnostics
+                Rectangle {
+                    border-radius: Spacing.radius-md;
+                    background: Palette.dark-mode ? #0f172a : #f8fafc;
+                    min-height: 48px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+                        padding: Spacing.space-sm;
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 1px;
+
+                            Text {
+                                text: "Heap Working Set";
+                                font-family: Typography.font-family;
+                                font-size: 11px;
+                                color: Palette.text-secondary;
+                            }
+
+                            Text {
+                                text: root.mem-telemetry;
+                                font-family: "Consolas, monospace";
+                                font-size: 12px;
+                                font-weight: Typography.weight-semibold;
+                                color: Palette.accent;
+                            }
+                        }
+
+                        // Theme Toggle
+                        Button {
+                            text: Palette.dark-mode ? "☀️ Light" : "🌙 Dark";
+                            variant: "ghost";
+                            clicked => {
+                                Palette.dark-mode = !Palette.dark-mode;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // 2. RIGHT WORKSPACE CANVAS
+        // ==========================================
+        Rectangle {
+            horizontal-stretch: 1;
+            background: Palette.bg-canvas;
+
+            VerticalLayout {
+                padding: Spacing.space-lg;
+                spacing: Spacing.space-md;
+
+                // WORKSPACE HEADER
+                HorizontalLayout {
+                    alignment: space-between;
+                    min-height: 44px;
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 2px;
+
+                        Text {
+                            text: root.active-tool == 0 ? "Text Inspector & Multi-Case Converter" :
+                                  root.active-tool == 1 ? "Cryptographic Multi-Hash Generator & Checksum Verifier" :
+                                  root.active-tool == 2 ? "Base64 & URL Percent-Encoding Transformer" :
+                                  root.active-tool == 3 ? "UUID v4 & ULID Batch Key Generator" :
+                                  root.active-tool == 4 ? "JSON Formatter, Compact Minifier & Syntax Linter" :
+                                  "Unix Epoch Timestamp & ISO-8601 DateTime Converter";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-lg;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                        }
+
+                        Text {
+                            text: root.active-tool == 0 ? "Sub-millisecond character metrics and 1-click naming case transformations." :
+                                  root.active-tool == 1 ? "Instant simultaneous SHA-256, SHA-512, SHA-1, MD5, and CRC32 computation." :
+                                  root.active-tool == 2 ? "RFC 4648 compliant Base64 (Standard & URL-safe) and URL query encoding." :
+                                  root.active-tool == 3 ? "Zero-allocation bulk generation of standard v4 UUIDs and timestamped ULIDs." :
+                                  root.active-tool == 4 ? "Instant AST syntax validation with 2-space / 4-space formatting and minification." :
+                                  "Real-time epoch counter with bi-directional human ISO-8601 UTC and local conversions.";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                Divider {}
+
+                // ====================================================
+                // TOOL 0: TEXT INSPECTOR & MULTI-CASE CONVERTER
+                // ====================================================
+                if root.active-tool == 0: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // 4 Stat Cards
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+
+                        StatCard { label: "CHARACTERS"; value: "\{root.text-char-count}"; }
+                        StatCard { label: "WORDS"; value: "\{root.text-word-count}"; }
+                        StatCard { label: "LINES"; value: "\{root.text-line-count}"; }
+                        StatCard { label: "BYTES (UTF-8)"; value: "\{root.text-byte-count}"; unit: "B"; }
+                    }
+
+                    // Input Text Area
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.bg-surface;
+                        min-height: 120px;
+                        horizontal-stretch: 1;
+
+                        ScrollView {
+                            VerticalLayout {
+                                padding: Spacing.space-md;
+
+                                TextInput {
+                                    text <=> root.text-input;
+                                    wrap: word-wrap;
+                                    single-line: false;
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-base;
+                                    color: Palette.text-primary;
+                                    edited => {
+                                        root.text_inspector_updated(self.text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Transformation Title
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        Text {
+                            text: "Transform Cases (Click to Apply or Copy)";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.text-primary;
+                        }
+
+                        Button {
+                            text: "Clear Input";
+                            variant: "ghost";
+                            clicked => {
+                                root.text-input = "";
+                                root.text_inspector_updated("");
+                            }
+                        }
+                    }
+
+                    // Case Conversion Rows
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+
+                            // camelCase
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "camelCase"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-camel; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(0); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-camel); } }
+                                }
+                            }
+
+                            // snake_case
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "snake_case"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-snake; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(1); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-snake); } }
+                                }
+                            }
+
+                            // kebab-case
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "kebab-case"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-kebab; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(2); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-kebab); } }
+                                }
+                            }
+
+                            // PascalCase
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "PascalCase"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-pascal; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(3); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-pascal); } }
+                                }
+                            }
+
+                            // CONSTANT_CASE
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "CONSTANT_CASE"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-constant; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(4); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-constant); } }
+                                }
+                            }
+
+                            // Title Case
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                height: 44px;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: center;
+
+                                    Text { width: 120px; text: "Title Case"; font-size: 12px; font-weight: Typography.weight-bold; color: Palette.accent; }
+                                    Text { horizontal-stretch: 1; text: root.text-title; font-family: "Consolas, monospace"; font-size: 13px; color: Palette.text-primary; wrap: word-wrap; }
+                                    Button { text: "Apply"; variant: "ghost"; clicked => { root.apply_case_transform(5); } }
+                                    Button { text: "Copy"; variant: "secondary"; clicked => { root.copy_text(root.text-title); } }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ====================================================
+                // TOOL 1: MULTI-HASH & CRYPTOGRAPHY
+                // ====================================================
+                if root.active-tool == 1: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // Input Text
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.bg-surface;
+                        min-height: 80px;
+
+                        ScrollView {
+                            VerticalLayout {
+                                padding: Spacing.space-md;
+
+                                TextInput {
+                                    text <=> root.hash-input;
+                                    wrap: word-wrap;
+                                    single-line: false;
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-base;
+                                    color: Palette.text-primary;
+                                    edited => {
+                                        root.hash_input_updated(self.text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Hash Control Bar
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-md;
+                            alignment: center;
+
+                            Text {
+                                text: "Uppercase Hashes:";
+                                font-size: Typography.size-sm;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            ToggleSwitch {
+                                checked <=> root.hash-uppercase;
+                                toggled(val) => {
+                                    root.hash_uppercase_toggled(val);
+                                }
+                            }
+                        }
+
+                        // Checksum compare box
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+                            alignment: center;
+
+                            Text {
+                                text: "Compare Checksum:";
+                                font-size: Typography.size-sm;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                width: 280px;
+                                height: 36px;
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: root.compare-status == "match" ? Palette.success :
+                                             root.compare-status == "mismatch" ? Palette.danger :
+                                             Palette.border-subtle;
+                                background: Palette.bg-surface;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-sm;
+                                    padding-right: Spacing.space-sm;
+                                    alignment: center;
+
+                                    TextInput {
+                                        width: 100%;
+                                        text <=> root.compare-checksum;
+                                        font-family: "Consolas, monospace";
+                                        font-size: 12px;
+                                        color: Palette.text-primary;
+                                        vertical-alignment: center;
+                                        edited => {
+                                            root.compare_checksum_updated(self.text);
+                                        }
+                                    }
+                                }
+                            }
+
+                            Badge {
+                                text: root.compare-status == "match" ? "MATCH VERIFIED" :
+                                      root.compare-status == "mismatch" ? "MISMATCH" : "IDLE";
+                                variant: root.compare-status == "match" ? "success" :
+                                         root.compare-status == "mismatch" ? "danger" : "neutral";
+                            }
+                        }
+                    }
+
+                    // Hashes Output List
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+
+                            HashOutputRow {
+                                algorithm: "SHA-256";
+                                hash-value: root.hash-sha256;
+                                copy_clicked => { root.copy_text(root.hash-sha256); }
+                            }
+
+                            HashOutputRow {
+                                algorithm: "SHA-512";
+                                hash-value: root.hash-sha512;
+                                copy_clicked => { root.copy_text(root.hash-sha512); }
+                            }
+
+                            HashOutputRow {
+                                algorithm: "SHA-1";
+                                hash-value: root.hash-sha1;
+                                copy_clicked => { root.copy_text(root.hash-sha1); }
+                            }
+
+                            HashOutputRow {
+                                algorithm: "MD5";
+                                hash-value: root.hash-md5;
+                                copy_clicked => { root.copy_text(root.hash-md5); }
+                            }
+
+                            HashOutputRow {
+                                algorithm: "CRC32";
+                                hash-value: root.hash-crc32;
+                                copy_clicked => { root.copy_text(root.hash-crc32); }
+                            }
+                        }
+                    }
+                }
+
+                // ====================================================
+                // TOOL 2: BASE64 & URL ENGINE
+                // ====================================================
+                if root.active-tool == 2: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // Mode & Action Bar
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+
+                            Button {
+                                text: "Base64 Standard";
+                                variant: root.b64-mode == 0 ? "primary" : "secondary";
+                                clicked => {
+                                    root.b64-mode = 0;
+                                    root.b64_execute();
+                                }
+                            }
+
+                            Button {
+                                text: "Base64 URL-Safe";
+                                variant: root.b64-mode == 1 ? "primary" : "secondary";
+                                clicked => {
+                                    root.b64-mode = 1;
+                                    root.b64_execute();
+                                }
+                            }
+
+                            Button {
+                                text: "URL Percent-Encoding";
+                                variant: root.b64-mode == 2 ? "primary" : "secondary";
+                                clicked => {
+                                    root.b64-mode = 2;
+                                    root.b64_execute();
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+
+                            Button {
+                                text: root.b64-action == 0 ? "Mode: ENCODE" : "Mode: DECODE";
+                                variant: "ghost";
+                                clicked => {
+                                    root.b64-action = root.b64-action == 0 ? 1 : 0;
+                                    root.b64_execute();
+                                }
+                            }
+
+                            Button {
+                                text: "⇄ Swap In/Out";
+                                variant: "secondary";
+                                clicked => { root.b64_swap(); }
+                            }
+                        }
+                    }
+
+                    // Input & Output Dual Grid
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        vertical-stretch: 1;
+
+                        // Input Box
+                        VerticalLayout {
+                            spacing: Spacing.space-xs;
+                            horizontal-stretch: 1;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text { text: "INPUT STRING"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                Button { text: "Clear"; variant: "ghost"; clicked => { root.b64-input = ""; root.b64_execute(); } }
+                            }
+
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                vertical-stretch: 1;
+
+                                ScrollView {
+                                    VerticalLayout {
+                                        padding: Spacing.space-md;
+
+                                        TextInput {
+                                            text <=> root.b64-input;
+                                            wrap: word-wrap;
+                                            single-line: false;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 13px;
+                                            color: Palette.text-primary;
+                                            edited => { root.b64_execute(); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Output Box
+                        VerticalLayout {
+                            spacing: Spacing.space-xs;
+                            horizontal-stretch: 1;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text { text: "TRANSFORMED OUTPUT"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                Button { text: "Copy Result"; variant: "secondary"; clicked => { root.copy_text(root.b64-output); } }
+                            }
+
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                vertical-stretch: 1;
+
+                                ScrollView {
+                                    VerticalLayout {
+                                        padding: Spacing.space-md;
+
+                                        Text {
+                                            text: root.b64-output;
+                                            wrap: word-wrap;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 13px;
+                                            color: Palette.accent;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Status Bar
+                    Rectangle {
+                        height: 32px;
+                        border-radius: Spacing.radius-sm;
+                        background: Palette.dark-mode ? #0f172a : #f1f5f9;
+
+                        HorizontalLayout {
+                            padding-left: Spacing.space-md;
+                            padding-right: Spacing.space-md;
+                            alignment: space-between;
+
+                            Text {
+                                text: root.b64-status-msg;
+                                font-size: 12px;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                text: "RFC 4648 / UTF-8 Native";
+                                font-size: 11px;
+                                color: Palette.text-placeholder;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // ====================================================
+                // TOOL 3: UUID & ULID STUDIO
+                // ====================================================
+                if root.active-tool == 3: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // Controls Bar
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.bg-surface;
+                        min-height: 60px;
+
+                        HorizontalLayout {
+                            padding: Spacing.space-md;
+                            alignment: space-between;
+
+                            // Mode + Options
+                            HorizontalLayout {
+                                spacing: Spacing.space-lg;
+                                alignment: center;
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-sm;
+                                    Button {
+                                        text: "UUID v4 (Random)";
+                                        variant: root.uuid-mode == 0 ? "primary" : "secondary";
+                                        clicked => { root.uuid-mode = 0; root.uuid_generate_batch(); }
+                                    }
+                                    Button {
+                                        text: "ULID (Timestamped)";
+                                        variant: root.uuid-mode == 1 ? "primary" : "secondary";
+                                        clicked => { root.uuid-mode = 1; root.uuid_generate_batch(); }
+                                    }
+                                }
+
+                                // Quantity Stepper
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xs;
+                                    alignment: center;
+                                    Text { text: "Batch Count:"; font-size: 12px; color: Palette.text-secondary; vertical-alignment: center; }
+                                    Stepper {
+                                        value <=> root.uuid-count;
+                                        minimum: 1;
+                                        maximum: 50;
+                                        step: 1;
+                                        changed(val) => { root.uuid_generate_batch(); }
+                                    }
+                                }
+
+                                // Toggles
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xs;
+                                    alignment: center;
+                                    Text { text: "Uppercase:"; font-size: 12px; color: Palette.text-secondary; vertical-alignment: center; }
+                                    ToggleSwitch {
+                                        checked <=> root.uuid-uppercase;
+                                        toggled(val) => { root.uuid_generate_batch(); }
+                                    }
+                                }
+                            }
+
+                            // Trigger Button
+                            Button {
+                                text: "⚡ Regenerate Batch";
+                                variant: "primary";
+                                clicked => { root.uuid_generate_batch(); }
+                            }
+                        }
+                    }
+
+                    // Output Header
+                    HorizontalLayout {
+                        alignment: space-between;
+                        Text { text: "GENERATED IDENTIFIERS (\{root.uuid-list.length} ITEMS)"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                        Button {
+                            text: "Copy All to Clipboard";
+                            variant: "secondary";
+                            clicked => {
+                                // Handled in Rust via copy callback
+                                root.uuid_generate_batch();
+                            }
+                        }
+                    }
+
+                    // List of UUIDs
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.bg-surface;
+                        vertical-stretch: 1;
+
+                        ScrollView {
+                            VerticalLayout {
+                                padding: Spacing.space-md;
+                                spacing: 6px;
+
+                                for item in root.uuid-list: Rectangle {
+                                    height: 40px;
+                                    border-radius: Spacing.radius-sm;
+                                    background: Palette.dark-mode ? #0f172a : #f8fafc;
+
+                                    HorizontalLayout {
+                                        padding-left: Spacing.space-md;
+                                        padding-right: Spacing.space-md;
+                                        spacing: Spacing.space-md;
+                                        alignment: center;
+
+                                        Text {
+                                            width: 32px;
+                                            text: item.index-str;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 12px;
+                                            color: Palette.text-secondary;
+                                        }
+
+                                        Text {
+                                            horizontal-stretch: 1;
+                                            text: item.id-str;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 14px;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.accent;
+                                            wrap: word-wrap;
+                                        }
+
+                                        Button {
+                                            text: "Copy";
+                                            variant: "ghost";
+                                            clicked => { root.copy_text(item.id-str); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ====================================================
+                // TOOL 4: JSON FORMATTER & LINT
+                // ====================================================
+                if root.active-tool == 4: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // Action Controls
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+
+                            Button {
+                                text: "Prettify (2 Spaces)";
+                                variant: "primary";
+                                clicked => { root.json_format_action(0); }
+                            }
+
+                            Button {
+                                text: "Prettify (4 Spaces)";
+                                variant: "secondary";
+                                clicked => { root.json_format_action(1); }
+                            }
+
+                            Button {
+                                text: "Minify (Compact)";
+                                variant: "secondary";
+                                clicked => { root.json_format_action(2); }
+                            }
+
+                            Button {
+                                text: "Validate Syntax";
+                                variant: "ghost";
+                                clicked => { root.json_format_action(3); }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+
+                            Badge {
+                                text: root.json-is-valid ? "✓ VALID JSON" : "✕ SYNTAX ERROR";
+                                variant: root.json-is-valid ? "success" : "danger";
+                            }
+
+                            Button {
+                                text: "Copy Formatted";
+                                variant: "secondary";
+                                clicked => { root.copy_text(root.json-output); }
+                            }
+                        }
+                    }
+
+                    // Dual JSON Workspaces
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        vertical-stretch: 1;
+
+                        // Input Raw
+                        VerticalLayout {
+                            spacing: Spacing.space-xs;
+                            horizontal-stretch: 1;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text { text: "RAW JSON INPUT"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                Button { text: "Clear"; variant: "ghost"; clicked => { root.json-input = ""; root.json_format_action(3); } }
+                            }
+
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                vertical-stretch: 1;
+
+                                ScrollView {
+                                    VerticalLayout {
+                                        padding: Spacing.space-md;
+
+                                        TextInput {
+                                            text <=> root.json-input;
+                                            wrap: word-wrap;
+                                            single-line: false;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 12px;
+                                            color: Palette.text-primary;
+                                            edited => { root.json_format_action(0); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Formatted Output
+                        VerticalLayout {
+                            spacing: Spacing.space-xs;
+                            horizontal-stretch: 1;
+
+                            Text { text: "FORMATTED OUTPUT"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+
+                            Rectangle {
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.bg-surface;
+                                vertical-stretch: 1;
+
+                                ScrollView {
+                                    VerticalLayout {
+                                        padding: Spacing.space-md;
+
+                                        TextInput {
+                                            text <=> root.json-output;
+                                            wrap: word-wrap;
+                                            single-line: false;
+                                            font-family: "Consolas, monospace";
+                                            font-size: 12px;
+                                            color: Palette.text-primary;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Diagnostic status message
+                    Rectangle {
+                        height: 34px;
+                        border-radius: Spacing.radius-sm;
+                        border-width: 1px;
+                        border-color: root.json-is-valid ? Palette.border-subtle : #ef444466;
+                        background: root.json-is-valid ? (Palette.dark-mode ? #0f172a : #f1f5f9) : #ef444415;
+
+                        HorizontalLayout {
+                            padding-left: Spacing.space-md;
+                            padding-right: Spacing.space-md;
+                            alignment: space-between;
+
+                            Text {
+                                text: root.json-status-msg;
+                                font-size: 12px;
+                                font-weight: Typography.weight-semibold;
+                                color: root.json-is-valid ? Palette.text-primary : Palette.danger;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // ====================================================
+                // TOOL 5: UNIX EPOCH & ISO-8601 DATETIME
+                // ====================================================
+                if root.active-tool == 5: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    vertical-stretch: 1;
+
+                    // Real-time Epoch Card
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.bg-surface;
+
+                        HorizontalLayout {
+                            padding: Spacing.space-lg;
+                            alignment: space-between;
+
+                            VerticalLayout {
+                                spacing: Spacing.space-xs;
+
+                                Text {
+                                    text: "CURRENT LIVE UNIX EPOCH";
+                                    font-size: 11px;
+                                    font-weight: Typography.weight-bold;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-lg;
+                                    alignment: start;
+
+                                    Text {
+                                        text: root.epoch-now-sec;
+                                        font-family: "Consolas, monospace";
+                                        font-size: 28px;
+                                        font-weight: Typography.weight-bold;
+                                        color: Palette.accent;
+                                    }
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Text { text: "seconds"; font-size: 12px; color: Palette.text-secondary; }
+                                    }
+
+                                    Text {
+                                        text: root.epoch-now-ms;
+                                        font-family: "Consolas, monospace";
+                                        font-size: 18px;
+                                        color: Palette.text-secondary;
+                                        vertical-alignment: center;
+                                    }
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Text { text: "ms"; font-size: 11px; color: Palette.text-placeholder; }
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: Spacing.space-sm;
+                                alignment: center;
+
+                                Button {
+                                    text: "Copy Seconds";
+                                    variant: "secondary";
+                                    clicked => { root.copy_text(root.epoch-now-sec); }
+                                }
+
+                                Button {
+                                    text: "🔄 Refresh Now";
+                                    variant: "primary";
+                                    clicked => { root.refresh_current_epoch(); }
+                                }
+                            }
+                        }
+                    }
+
+                    // Bi-directional Converters
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+
+                        // Converter 1: Epoch -> ISO
+                        Rectangle {
+                            border-radius: Spacing.radius-md;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            background: Palette.bg-surface;
+                            horizontal-stretch: 1;
+
+                            VerticalLayout {
+                                padding: Spacing.space-lg;
+                                spacing: Spacing.space-md;
+
+                                Text {
+                                    text: "Convert Unix Epoch ➔ ISO-8601";
+                                    font-size: Typography.size-base;
+                                    font-weight: Typography.weight-bold;
+                                    color: Palette.text-primary;
+                                }
+
+                                VerticalLayout {
+                                    spacing: 4px;
+                                    Text { text: "Unix Timestamp (Seconds or Milliseconds):"; font-size: 12px; color: Palette.text-secondary; }
+                                    TextInputField {
+                                        text <=> root.epoch-input;
+                                        edited(val) => { root.epoch_convert_forward(val); }
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: 4px;
+                                    Text { text: "ISO-8601 UTC Result:"; font-size: 12px; color: Palette.text-secondary; }
+                                    Rectangle {
+                                        height: 40px;
+                                        border-radius: Spacing.radius-md;
+                                        background: Palette.dark-mode ? #0f172a : #f8fafc;
+
+                                        HorizontalLayout {
+                                            padding-left: Spacing.space-md;
+                                            padding-right: Spacing.space-md;
+                                            alignment: space-between;
+                                            Text {
+                                                text: root.iso-output;
+                                                font-family: "Consolas, monospace";
+                                                font-size: 13px;
+                                                color: Palette.accent;
+                                                vertical-alignment: center;
+                                            }
+                                            Button {
+                                                text: "Copy";
+                                                variant: "ghost";
+                                                clicked => { root.copy_text(root.iso-output); }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Converter 2: ISO -> Epoch
+                        Rectangle {
+                            border-radius: Spacing.radius-md;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            background: Palette.bg-surface;
+                            horizontal-stretch: 1;
+
+                            VerticalLayout {
+                                padding: Spacing.space-lg;
+                                spacing: Spacing.space-md;
+
+                                Text {
+                                    text: "Convert ISO-8601 ➔ Unix Epoch";
+                                    font-size: Typography.size-base;
+                                    font-weight: Typography.weight-bold;
+                                    color: Palette.text-primary;
+                                }
+
+                                VerticalLayout {
+                                    spacing: 4px;
+                                    Text { text: "ISO-8601 String (e.g., 2026-10-31T17:40:00Z):"; font-size: 12px; color: Palette.text-secondary; }
+                                    TextInputField {
+                                        text <=> root.iso-input;
+                                        edited(val) => { root.epoch_convert_reverse(val); }
+                                    }
+                                }
+
+                                VerticalLayout {
+                                    spacing: 4px;
+                                    Text { text: "Unix Epoch Seconds Result:"; font-size: 12px; color: Palette.text-secondary; }
+                                    Rectangle {
+                                        height: 40px;
+                                        border-radius: Spacing.radius-md;
+                                        background: Palette.dark-mode ? #0f172a : #f8fafc;
+
+                                        HorizontalLayout {
+                                            padding-left: Spacing.space-md;
+                                            padding-right: Spacing.space-md;
+                                            alignment: space-between;
+                                            Text {
+                                                text: root.epoch-output;
+                                                font-family: "Consolas, monospace";
+                                                font-size: 13px;
+                                                color: Palette.accent;
+                                                vertical-alignment: center;
+                                            }
+                                            Button {
+                                                text: "Copy";
+                                                variant: "ghost";
+                                                clicked => { root.copy_text(root.epoch-output); }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // FLOATING TOAST NOTIFICATION
+            if root.toast-open: ToastNotification {
+                x: parent.width - self.width - 24px;
+                y: parent.height - self.height - 24px;
+                title: root.toast-title;
+                message: root.toast-msg;
+                status: root.toast-status;
+                is-open: true;
+                closed => { root.toast-open = false; }
+            }
+        }
+    }
+}
