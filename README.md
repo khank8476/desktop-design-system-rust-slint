@@ -53,7 +53,10 @@ ui/
 │   ├── breadcrumbs.slint  # Hierarchical navigation trail with vector chevrons
 │   ├── datepicker.slint   # Interactive calendar month grid popover
 │   ├── timepicker.slint   # Precision 24H/12H hour-minute time stepper
-│   └── treeview.slint     # Collapsible file & folder tree with active node inspector
+│   ├── treeview.slint     # Collapsible file & folder tree with active node inspector
+│   ├── form_field.slint   # Enterprise input wrapper with label, validation states & error notes
+│   ├── context_menu.slint # Contextual PopupWindow action menu with accelerator shortcut hints
+│   └── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── crud_modal.slint   # Interactive modal form for SQLite record creation
@@ -199,6 +202,12 @@ To demonstrate real-world integration in diverse business domains without bloati
   A high-frequency desktop cryptocurrency matrix featuring sub-millisecond UI latency, 120 FPS Direct3D/Metal swapchains, configurable price sampling intervals (1.0s ultra-fast, 3.0s standard, 10.0s eco), live top-asset cards, and instant alert toasts:
   ```powershell
   cargo run --example crypto_tracker
+  ```
+
+- **Available Demo 2: Enterprise Retail & Point-of-Sale (POS) Terminal 🛒**
+  An offline-first, high-speed retail checkout counter terminal powered by bundled SQLite WAL mode. Features tactile category pills, instant product search (`FormField`), active ticket quantity steppers, right-click discount action popovers (`ContextMenu`), cash/card/QR checkout modal with real-time change calculation, and generated thermal receipt printing canvas (`ReceiptCanvas`):
+  ```powershell
+  cargo run --example pos_terminal
   ```
 
 ---

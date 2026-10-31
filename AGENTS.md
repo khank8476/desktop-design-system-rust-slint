@@ -63,7 +63,10 @@ c/
 │   │   ├── breadcrumbs.slint  # Multi-level hierarchical path trail
 │   │   ├── datepicker.slint   # Interactive calendar month grid popover
 │   │   ├── timepicker.slint   # Precision 24H/12H hour-minute time stepper
-│   │   └── treeview.slint     # Collapsible file tree with folder expansion & inspector
+│   │   ├── treeview.slint     # Collapsible file tree with folder expansion & inspector
+│   │   ├── form_field.slint   # Enterprise input wrapper with label, validation states & error notes
+│   │   ├── context_menu.slint # Contextual PopupWindow action menu with accelerator shortcut hints
+│   │   └── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
 │   └── organisms/             # High-level desktop modules
 │       ├── modal.slint        # Centered backdrop dialog
 │       ├── crud_modal.slint   # Data entry & edit modal form for SQLite records
@@ -75,7 +78,9 @@ c/
 │
 └── examples/                  # Isolated Domain Showcase Applications (Zero Bloat)
     ├── crypto_tracker.rs      # High-speed live Crypto Price Tracker binary
-    └── crypto_tracker.slint   # Domain-specific trading UI utilizing design tokens
+    ├── crypto_tracker.slint   # Domain-specific trading UI utilizing design tokens
+    ├── pos_terminal.rs        # Enterprise Retail & Point-of-Sale Terminal binary with SQLite WAL
+    └── pos_terminal.slint     # High-speed touch & barcode POS UI with checkout and receipt preview
 ```
 
 ---
@@ -122,9 +127,13 @@ cargo run
 cargo test
 ```
 
-### Running the Isolated Demo Application
+### Running the Isolated Demo Applications
 ```powershell
+# Run the 120 FPS CryptoStream Matrix
 cargo run --example crypto_tracker
+
+# Run the Enterprise Point of Sale (POS) & Retail Terminal
+cargo run --example pos_terminal
 ```
 
 ### Compiling Optimized Production Binary (< 10 MB)
@@ -162,9 +171,11 @@ cargo clean
   - ✅ **DatePicker & TimePicker Molecules:** Interactive calendar popover with month navigation & 24H/12H precision time stepper.
   - ✅ **TreeView & File Explorer Engine:** Collapsible file tree with internal `ScrollView`, column-aligned badges, node inspector, native folder picker dialog (`rfd`), manual path navigation, and in-process directory scanner.
   - ✅ **Native Desktop Shortcut Generator:** 1-line in-process `.lnk` and `.desktop` builder with custom app icons, smart deduplication, and 5-barrier safe removal.
+  - ✅ **FormField, ContextMenu & ReceiptCanvas Molecules:** Production form validation wrapper with required asterisks and error states, floating action popover with accelerator shortcuts, and industrial thermal document renderer.
+  - ✅ **Demo 2 (Enterprise POS Terminal):** High-speed 120 FPS retail counter terminal with catalog search, ticket stepper, context menu discounts, cash/card/QR checkout modal with real-time change calculation, receipt canvas, and transactional SQLite WAL ledger (`examples/pos_terminal.rs`).
   - ✅ **Crates.io Publication:** `v0.2.1` live and indexed.
 - **Next Planned Deliverables:**
-  - 🔜 **Demo 2:** Native Local Audio/Media Player or Markdown Document Studio.
+  - 🔜 **Demo 3:** Native Local Audio/Media Player or Markdown Document Studio.
 
 ---
 

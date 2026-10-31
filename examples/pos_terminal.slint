@@ -1,0 +1,942 @@
+import { ScrollView } from "std-widgets.slint";
+import { 
+    Palette, 
+    Typography, 
+    Spacing, 
+    Button, 
+    Badge, 
+    Stepper, 
+    Divider, 
+    SegmentedTabs, 
+    ModalDialog, 
+    ToastNotification, 
+    FormField, 
+    ContextMenu, 
+    ContextMenuItem, 
+    ReceiptCanvas, 
+    ReceiptItem 
+} from "../ui/index.slint";
+
+export { Palette }
+
+export struct PosProduct {
+    id: int,
+    sku: string,
+    name: string,
+    category: string,
+    price-display: string,
+    price-cents: int,
+    stock-qty: int,
+    is-low-stock: bool,
+}
+
+export struct PosCartRow {
+    product-id: int,
+    sku: string,
+    name: string,
+    unit-price-display: string,
+    unit-price-cents: int,
+    qty: int,
+    discount-pct: int,
+    line-total-display: string,
+    line-total-cents: int,
+}
+
+export component PosTerminalWindow inherits Window {
+    title: "Native Retail POS & Commerce Terminal (120 FPS Direct3D)";
+    icon: @image-url("../assets/app-icon.png");
+    min-width: 1080px;
+    min-height: 720px;
+    preferred-width: 1240px;
+    preferred-height: 820px;
+    background: Palette.bg-canvas;
+
+    // --- State Properties ---
+    in-out property <string> search-query: "";
+    in-out property <int> selected-category-idx: 0;
+    in property <[PosProduct]> products: [];
+    in property <[PosCartRow]> cart-rows: [];
+
+    // Financial totals
+    in property <string> subtotal-display: "$0.00";
+    in property <string> tax-display: "$0.00";
+    in property <string> discount-display: "$0.00";
+    in property <string> total-display: "$0.00";
+    in property <int> cart-items-count: 0;
+    in property <string> order-number: "ORD-1001";
+
+    // Context Menu State
+    in-out property <int> context-cart-idx: -1;
+    in property <[ContextMenuItem]> cart-context-items: [
+        { id: "disc-10", label: "Apply 10% Discount", shortcut: "Ctrl+1", icon: "check", is-danger: false, is-divider: false, enabled: true },
+        { id: "disc-20", label: "Apply 20% Discount", shortcut: "Ctrl+2", icon: "check", is-danger: false, is-divider: false, enabled: true },
+        { id: "div1", label: "", shortcut: "", icon: "", is-danger: false, is-divider: true, enabled: true },
+        { id: "remove", label: "Remove from Ticket", shortcut: "Del", icon: "close", is-danger: true, is-divider: false, enabled: true }
+    ];
+
+    // Checkout Modal State
+    in-out property <bool> show-checkout-modal: false;
+    in-out property <int> selected-payment-tab: 0; // 0: Cash, 1: Card, 2: QR
+    in-out property <string> cash-tendered-input: "";
+    in property <string> change-due-display: "$0.00";
+    in property <bool> is-tender-sufficient: false;
+    in property <bool> tender-has-error: false;
+    in property <string> tender-error-text: "";
+
+    // Receipt View State
+    in-out property <bool> show-receipt-modal: false;
+    in property <[ReceiptItem]> receipt-items: [];
+    in property <string> receipt-tendered: "$0.00";
+    in property <string> receipt-change: "$0.00";
+    in property <string> receipt-payment-method: "CASH";
+
+    // Toast Notifications
+    in-out property <bool> toast-open: false;
+    in-out property <string> toast-status: "success";
+    in-out property <string> toast-title: "";
+    in-out property <string> toast-message: "";
+
+    public function trigger-toast(status: string, title: string, msg: string) {
+        root.toast-status = status;
+        root.toast-title = title;
+        root.toast-message = msg;
+        root.toast-open = true;
+    }
+
+    // Callbacks to Rust Backend
+    callback add-to-cart(int); // product_id
+    callback update-cart-qty(int, int); // (product_id, new_qty)
+    callback remove-from-cart(int); // product_id
+    callback apply-line-discount(int, int); // (product_id, discount_pct)
+    callback clear-cart();
+    callback search-changed(string);
+    callback category-selected(int);
+    callback set-quick-tender(int); // cents
+    callback tender-input-changed(string);
+    callback finalize-checkout(string); // payment_method
+    callback start-new-order();
+
+    // ========================================================
+    // ROOT SHELL LAYOUT
+    // ========================================================
+    VerticalLayout {
+        padding: 0px;
+        spacing: 0px;
+
+        // 1. TOP STATUS & BRANDING BAR
+        Rectangle {
+            height: 56px;
+            background: Palette.dark-mode ? #0f172a : #ffffff;
+
+            // Bottom border line
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: Palette.border-subtle;
+            }
+
+            HorizontalLayout {
+                padding-left: Spacing.space-lg;
+                padding-right: Spacing.space-lg;
+                alignment: space-between;
+
+                // Left: Logo & Identity
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: Spacing.radius-md;
+                        background: Palette.accent;
+
+                        Image {
+                            source: @image-url("../assets/icons/components.svg");
+                            width: 18px;
+                            height: 18px;
+                            colorize: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 1px;
+                        alignment: center;
+
+                        Text {
+                            text: "NATIVE COMMERCE POS";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                            letter-spacing: 0.5px;
+                        }
+                        Text {
+                            text: "Direct3D 12 Hardware V-Sync • 120 FPS Native";
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                // Center: System Readiness Badges
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: center;
+
+                    Badge {
+                        text: "100% Offline Ready";
+                        variant: "success";
+                        has-dot: true;
+                    }
+
+                    Badge {
+                        text: "SQLite WAL Engine";
+                        variant: "neutral";
+                        has-dot: false;
+                    }
+                }
+
+                // Right: Staff & Theme Controls
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    Text {
+                        text: "Staff: Alex M. (Admin)";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        width: 1px;
+                        height: 20px;
+                        background: Palette.border-subtle;
+                    }
+
+                    Button {
+                        text: Palette.dark-mode ? "Light Mode" : "Dark Mode";
+                        variant: "ghost";
+                        clicked => {
+                            Palette.dark-mode = !Palette.dark-mode;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. MAIN WORKSPACE (Split Catalog Left & Ticket Right)
+        HorizontalLayout {
+            padding: Spacing.space-lg;
+            spacing: Spacing.space-lg;
+            horizontal-stretch: 1;
+
+            // ----------------------------------------------------
+            // LEFT COLUMN: PRODUCT CATALOG & QUICK SEARCH (62%)
+            // ----------------------------------------------------
+            Rectangle {
+                horizontal-stretch: 62;
+                border-radius: Spacing.radius-lg;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-lg;
+                    spacing: Spacing.space-md;
+
+                    // Row A: Search Input with FormField Molecule
+                    FormField {
+                        label: "Live Product Lookup & Barcode Scanner";
+                        placeholder: "Type name or scan barcode (e.g. BEV-01, Croissant)... [F1]";
+                        prefix-text: "🔍";
+                        text <=> root.search-query;
+                        edited(q) => {
+                            root.search-changed(q);
+                        }
+                        accepted => {
+                            // If enter pressed, trigger add if single match
+                        }
+                    }
+
+                    // Row B: Category Segment Filter Pills
+                    SegmentedTabs {
+                        tabs: [
+                            "All Items",
+                            "Beverages",
+                            "Bakery & Food",
+                            "Hardware & Tech",
+                            "Merchandise"
+                        ];
+                        active-tab <=> root.selected-category-idx;
+                    }
+
+                    // Row C: Product Grid (Scrollable)
+                    ScrollView {
+                        horizontal-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+
+                            // Procedural product card rows
+                            for prod in root.products: Rectangle {
+                                height: 68px;
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: card-touch.has-hover ? Palette.accent : Palette.border-subtle;
+                                background: card-touch.has-hover ? (Palette.dark-mode ? #1e293b : #f8fafc) : (Palette.dark-mode ? #111827 : #ffffff);
+
+                                animate border-color { duration: 100ms; }
+                                animate background { duration: 100ms; }
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-md;
+                                    padding-right: Spacing.space-md;
+                                    spacing: Spacing.space-md;
+                                    alignment: space-between;
+
+                                    // Category color indicator bar
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                            width: 4px;
+                                            height: 38px;
+                                            border-radius: 2px;
+                                            background: prod.category == "Beverages" ? #3b82f6 :
+                                                        prod.category == "Bakery & Food" ? #f59e0b :
+                                                        prod.category == "Hardware & Tech" ? #10b981 :
+                                                        #8b5cf6;
+                                        }
+                                    }
+
+                                    // Product details
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            Text {
+                                                text: prod.name;
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-base;
+                                                font-weight: Typography.weight-semibold;
+                                                color: Palette.text-primary;
+                                                overflow: elide;
+                                            }
+
+                                            Badge {
+                                                text: prod.sku;
+                                                variant: "neutral";
+                                            }
+                                        }
+
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            Text {
+                                                text: prod.category;
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                            }
+
+                                            Text {
+                                                text: "• In Stock: " + prod.stock-qty + " units";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                color: prod.is-low-stock ? Palette.danger : Palette.text-secondary;
+                                                font-weight: prod.is-low-stock ? 700 : 400;
+                                            }
+                                        }
+                                    }
+
+                                    // Right: Price & Tap Action
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-md;
+                                        alignment: center;
+
+                                        Text {
+                                            text: prod.price-display;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-lg;
+                                            font-weight: Typography.weight-bold;
+                                            color: Palette.text-primary;
+                                            vertical-alignment: center;
+                                        }
+
+                                        Button {
+                                            text: "+ Add";
+                                            variant: "primary";
+                                            clicked => {
+                                                root.add-to-cart(prod.id);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                card-touch := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        root.add-to-cart(prod.id);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ----------------------------------------------------
+            // RIGHT COLUMN: ACTIVE ORDER TICKET & CART (38%)
+            // ----------------------------------------------------
+            Rectangle {
+                horizontal-stretch: 38;
+                border-radius: Spacing.radius-lg;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+                background: Palette.bg-surface;
+
+                VerticalLayout {
+                    padding: Spacing.space-lg;
+                    spacing: Spacing.space-md;
+
+                    // 1. Ticket Header Bar
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+                            alignment: center;
+
+                            Text {
+                                text: root.order-number;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                            }
+
+                            Badge {
+                                text: root.cart-items-count + " Items";
+                                variant: "accent";
+                            }
+                        }
+
+                        Button {
+                            text: "Clear Ticket [F2]";
+                            variant: "ghost";
+                            clicked => {
+                                root.clear-cart();
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                    // 2. Cart Items Table
+                    ScrollView {
+                        horizontal-stretch: 1;
+
+                        VerticalLayout {
+                            spacing: Spacing.space-sm;
+
+                            if root.cart-rows.length == 0: VerticalLayout {
+                                height: 260px;
+                                alignment: center;
+                                spacing: Spacing.space-sm;
+
+                                Image {
+                                    source: @image-url("../assets/icons/components.svg");
+                                    width: 32px;
+                                    height: 32px;
+                                    colorize: Palette.text-placeholder;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: "Current Ticket is Empty";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-base;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-secondary;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: "Tap any product or scan a barcode to begin sale.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-placeholder;
+                                    horizontal-alignment: center;
+                                }
+                            }
+
+                            for row in root.cart-rows: Rectangle {
+                                min-height: 52px;
+                                border-radius: Spacing.radius-md;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+                                background: Palette.dark-mode ? #111827 : #ffffff;
+
+                                HorizontalLayout {
+                                    padding-left: Spacing.space-sm;
+                                    padding-right: Spacing.space-sm;
+                                    spacing: Spacing.space-sm;
+                                    alignment: space-between;
+
+                                    // Item Name & Discount info
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        horizontal-stretch: 1;
+                                        alignment: center;
+
+                                        Text {
+                                            text: row.name;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-sm;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                            overflow: elide;
+                                        }
+
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            Text {
+                                                text: row.unit-price-display + " each";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                color: Palette.text-secondary;
+                                            }
+
+                                            if row.discount-pct > 0: Badge {
+                                                text: "-" + row.discount-pct + "% OFF";
+                                                variant: "success";
+                                            }
+                                        }
+                                    }
+
+                                    // Precision Stepper Quantity control
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-sm;
+                                        alignment: center;
+
+                                        Stepper {
+                                            width: 110px;
+                                            value: row.qty;
+                                            minimum: 1;
+                                            maximum: 99;
+                                            changed(new-val) => {
+                                                root.update-cart-qty(row.product-id, new-val);
+                                            }
+                                        }
+
+                                        Text {
+                                            text: row.line-total-display;
+                                            font-family: Typography.font-family;
+                                            font-size: Typography.size-base;
+                                            font-weight: Typography.weight-bold;
+                                            color: Palette.text-primary;
+                                            min-width: 60px;
+                                            horizontal-alignment: end;
+                                            vertical-alignment: center;
+                                        }
+
+                                        // Action Menu Trigger
+                                        action-btn := Rectangle {
+                                            width: 28px;
+                                            height: 28px;
+                                            border-radius: Spacing.radius-sm;
+                                            background: action-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                                            Image {
+                                                source: @image-url("../assets/icons/settings.svg");
+                                                width: 14px;
+                                                height: 14px;
+                                                colorize: Palette.text-secondary;
+                                                horizontal-alignment: center;
+                                                vertical-alignment: center;
+                                            }
+
+                                            action-touch := TouchArea {
+                                                mouse-cursor: pointer;
+                                                clicked => {
+                                                    root.context-cart-idx = row.product-id;
+                                                    item-menu.show();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                    // 3. Financial Calculation Breakdown
+                    VerticalLayout {
+                        spacing: 6px;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Subtotal:"; font-size: Typography.size-sm; color: Palette.text-secondary; }
+                            Text { text: root.subtotal-display; font-size: Typography.size-sm; color: Palette.text-primary; }
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Sales Tax (8.25%):"; font-size: Typography.size-sm; color: Palette.text-secondary; }
+                            Text { text: root.tax-display; font-size: Typography.size-sm; color: Palette.text-primary; }
+                        }
+
+                        if root.discount-display != "$0.00": HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Discounts Applied:"; font-size: Typography.size-sm; color: Palette.success; }
+                            Text { text: "-" + root.discount-display; font-size: Typography.size-sm; font-weight: 700; color: Palette.success; }
+                        }
+
+                        Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: "TOTAL DUE:";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                            }
+                            Text {
+                                text: root.total-display;
+                                font-family: Typography.font-family;
+                                font-size: 26px;
+                                font-weight: 800;
+                                color: Palette.accent;
+                            }
+                        }
+                    }
+
+                    // 4. Large Primary Checkout Trigger
+                    Button {
+                        height: 52px;
+                        text: "CHARGE / CHECKOUT (" + root.total-display + ") [F9]";
+                        variant: "primary";
+                        clicked => {
+                            if root.cart-items-count > 0 {
+                                root.cash-tendered-input = "";
+                                root.show-checkout-modal = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Context Menu for Cart Item actions
+    item-menu := ContextMenu {
+        items: root.cart-context-items;
+        item-selected(action-id) => {
+            if action-id == "disc-10" {
+                root.apply-line-discount(root.context-cart-idx, 10);
+            } else if action-id == "disc-20" {
+                root.apply-line-discount(root.context-cart-idx, 20);
+            } else if action-id == "remove" {
+                root.remove-from-cart(root.context-cart-idx);
+            }
+        }
+    }
+
+    // ========================================================
+    // CHECKOUT MODAL DIALOG
+    // ========================================================
+    if root.show-checkout-modal: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #00000077; // Scrim backdrop
+
+        TouchArea {
+            clicked => {
+                root.show-checkout-modal = false;
+            }
+        }
+
+        // 520px Solid Modal Card
+        checkout-card := Rectangle {
+            width: 520px;
+            height: checkout-card-layout.preferred-height;
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-strong;
+            background: Palette.dark-mode ? #1e293b : #ffffff;
+            drop-shadow-blur: 32px;
+            drop-shadow-color: #00000099;
+            drop-shadow-offset-y: 8px;
+
+            TouchArea {} // Prevent card click dismissal
+
+            checkout-card-layout := VerticalLayout {
+                padding: Spacing.space-lg;
+                spacing: Spacing.space-md;
+
+                // Title Header
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: "Process Customer Payment (" + root.total-display + ")";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-lg;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                        }
+                        Text {
+                            text: "Select payment method and enter tendered amount.";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            color: Palette.text-secondary;
+                        }
+                    }
+
+                    Rectangle {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: Spacing.radius-sm;
+                        background: close-modal-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Image {
+                            source: @image-url("../assets/icons/close.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: Palette.text-secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        close-modal-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => { root.show-checkout-modal = false; }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                SegmentedTabs {
+                    tabs: ["Cash Payment", "Credit / Debit Card", "Mobile QR / NFC"];
+                    active-tab <=> root.selected-payment-tab;
+                }
+
+                if root.selected-payment-tab == 0: VerticalLayout {
+                    spacing: Spacing.space-sm;
+
+                    // Cash Tender Form Field
+                    FormField {
+                        label: "Cash Amount Tendered";
+                        required: true;
+                        prefix-text: "$";
+                        placeholder: "e.g. 50.00";
+                        text <=> root.cash-tendered-input;
+                        has-error: root.tender-has-error;
+                        error-text: root.tender-error-text;
+                        is-valid: root.is-tender-sufficient;
+                        edited(val) => {
+                            root.tender-input-changed(val);
+                        }
+                    }
+
+                    // Quick Bills Row
+                    HorizontalLayout {
+                        spacing: Spacing.space-sm;
+
+                        Button {
+                            text: "Exact Total";
+                            variant: "secondary";
+                            clicked => { root.set-quick-tender(0); }
+                        }
+                        Button {
+                            text: "$20 Bill";
+                            variant: "secondary";
+                            clicked => { root.set-quick-tender(2000); }
+                        }
+                        Button {
+                            text: "$50 Bill";
+                            variant: "secondary";
+                            clicked => { root.set-quick-tender(5000); }
+                        }
+                        Button {
+                            text: "$100 Bill";
+                            variant: "secondary";
+                            clicked => { root.set-quick-tender(10000); }
+                        }
+                    }
+
+                    // Real-time Change Returned Calculation
+                    Rectangle {
+                        height: 54px;
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: root.is-tender-sufficient ? #10b98188 : Palette.border-subtle;
+                        background: root.is-tender-sufficient ? (Palette.dark-mode ? #064e3b : #ecfdf5) : (Palette.dark-mode ? #1e293b : #f8fafc);
+
+                        HorizontalLayout {
+                            padding-left: Spacing.space-md;
+                            padding-right: Spacing.space-md;
+                            alignment: space-between;
+
+                            Text {
+                                text: "Change Returned Due:";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                font-weight: Typography.weight-semibold;
+                                color: root.is-tender-sufficient ? Palette.success : Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                text: root.change-due-display;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-xl;
+                                font-weight: Typography.weight-bold;
+                                color: root.is-tender-sufficient ? Palette.success : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                if root.selected-payment-tab == 1: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+                    height: 120px;
+
+                    Text {
+                        text: "Card Terminal Ready: Insert, Swipe, or Tap chip.";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        horizontal-alignment: center;
+                    }
+
+                    Badge {
+                        text: "EMV Chip & PIN Connected";
+                        variant: "success";
+                        has-dot: true;
+                    }
+                }
+
+                if root.selected-payment-tab == 2: VerticalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+                    height: 120px;
+
+                    Text {
+                        text: "Customer QR Scanner Active: Present Apple Pay or Google Wallet.";
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        horizontal-alignment: center;
+                    }
+
+                    Badge {
+                        text: "NFC Reader Online";
+                        variant: "accent";
+                        has-dot: true;
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                // Actions Footer
+                HorizontalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: end;
+
+                    Button {
+                        text: "Cancel [Esc]";
+                        variant: "ghost";
+                        clicked => { root.show-checkout-modal = false; }
+                    }
+
+                    Button {
+                        text: "Finalize Sale & Print Receipt";
+                        variant: "primary";
+                        enabled: root.selected-payment-tab != 0 || root.is-tender-sufficient;
+                        clicked => {
+                            let method = root.selected-payment-tab == 0 ? "Cash" :
+                                         root.selected-payment-tab == 1 ? "Credit Card" : "Mobile QR";
+                            root.finalize-checkout(method);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ========================================================
+    // RECEIPT PREVIEW MODAL
+    // ========================================================
+    if root.show-receipt-modal: Rectangle {
+        background: #00000088;
+
+        VerticalLayout {
+            alignment: center;
+
+            HorizontalLayout {
+                alignment: center;
+
+                VerticalLayout {
+                    spacing: Spacing.space-md;
+                    alignment: center;
+
+                    ReceiptCanvas {
+                        order-number: root.order-number;
+                        items: root.receipt-items;
+                        subtotal: root.subtotal-display;
+                        tax: root.tax-display;
+                        discount: root.discount-display;
+                        total: root.total-display;
+                        payment-method: root.receipt-payment-method;
+                        tendered: root.receipt-tendered;
+                        change: root.receipt-change;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Spacing.space-md;
+                        alignment: center;
+
+                        Button {
+                            text: "Start New Order [Space / Enter]";
+                            variant: "primary";
+                            clicked => {
+                                root.start-new-order();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Anchored Floating Toast Notification
+    toast := ToastNotification {
+        x: root.width - self.width - 24px;
+        y: root.height - self.height - 24px;
+        is-open <=> root.toast-open;
+        title: root.toast-title;
+        message: root.toast-message;
+        status: root.toast-status;
+    }
+}
+
