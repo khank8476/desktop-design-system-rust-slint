@@ -1,0 +1,182 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+
+export component Pagination {
+    in-out property <int> current-page: 1;
+    in property <int> total-pages: 10;
+    in property <int> total-items: 100;
+    in property <int> page-size: 10;
+    in property <bool> enabled: true;
+
+    callback page-changed(int);
+
+    min-height: 40px;
+
+    HorizontalLayout {
+        alignment: space-between;
+        spacing: Spacing.space-md;
+
+        // Left: Summary Text
+        VerticalLayout {
+            alignment: center;
+
+            Text {
+                text: "Showing " + (((root.current-page - 1) * root.page-size) + 1) + "-" + Math.min(root.current-page * root.page-size, root.total-items) + " of " + root.total-items + " items";
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                color: Palette.text-secondary;
+            }
+        }
+
+        // Right: Navigation Controls
+        HorizontalLayout {
+            spacing: 4px;
+            alignment: center;
+
+            // First Page «
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: Spacing.radius-md;
+                background: first-touch.has-hover && root.current-page > 1 ? Palette.bg-surface-hover : transparent;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+
+                Text {
+                    text: "«";
+                    font-size: 14px;
+                    font-weight: Typography.weight-bold;
+                    color: root.current-page > 1 ? Palette.text-primary : Palette.text-placeholder;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                first-touch := TouchArea {
+                    mouse-cursor: root.current-page > 1 ? pointer : default;
+                    clicked => {
+                        if root.enabled && root.current-page > 1 {
+                            root.current-page = 1;
+                            root.page-changed(1);
+                        }
+                    }
+                }
+            }
+
+            // Previous Page ‹
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: Spacing.radius-md;
+                background: prev-touch.has-hover && root.current-page > 1 ? Palette.bg-surface-hover : transparent;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+
+                Text {
+                    text: "‹";
+                    font-size: 16px;
+                    font-weight: Typography.weight-bold;
+                    color: root.current-page > 1 ? Palette.text-primary : Palette.text-placeholder;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                prev-touch := TouchArea {
+                    mouse-cursor: root.current-page > 1 ? pointer : default;
+                    clicked => {
+                        if root.enabled && root.current-page > 1 {
+                            root.current-page = root.current-page - 1;
+                            root.page-changed(root.current-page);
+                        }
+                    }
+                }
+            }
+
+            // Active Page Pill Display
+            Rectangle {
+                min-width: 80px;
+                height: 32px;
+                border-radius: Spacing.radius-md;
+                background: Palette.bg-surface;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+
+                HorizontalLayout {
+                    padding-left: 8px;
+                    padding-right: 8px;
+                    alignment: center;
+                    spacing: 4px;
+
+                    Text {
+                        text: "Page " + root.current-page + " of " + root.total-pages;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Next Page ›
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: Spacing.radius-md;
+                background: next-touch.has-hover && root.current-page < root.total-pages ? Palette.bg-surface-hover : transparent;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+
+                Text {
+                    text: "›";
+                    font-size: 16px;
+                    font-weight: Typography.weight-bold;
+                    color: root.current-page < root.total-pages ? Palette.text-primary : Palette.text-placeholder;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                next-touch := TouchArea {
+                    mouse-cursor: root.current-page < root.total-pages ? pointer : default;
+                    clicked => {
+                        if root.enabled && root.current-page < root.total-pages {
+                            root.current-page = root.current-page + 1;
+                            root.page-changed(root.current-page);
+                        }
+                    }
+                }
+            }
+
+            // Last Page »
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: Spacing.radius-md;
+                background: last-touch.has-hover && root.current-page < root.total-pages ? Palette.bg-surface-hover : transparent;
+                border-width: 1px;
+                border-color: Palette.border-subtle;
+
+                Text {
+                    text: "»";
+                    font-size: 14px;
+                    font-weight: Typography.weight-bold;
+                    color: root.current-page < root.total-pages ? Palette.text-primary : Palette.text-placeholder;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                last-touch := TouchArea {
+                    mouse-cursor: root.current-page < root.total-pages ? pointer : default;
+                    clicked => {
+                        if root.enabled && root.current-page < root.total-pages {
+                            root.current-page = root.total-pages;
+                            root.page-changed(root.total-pages);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

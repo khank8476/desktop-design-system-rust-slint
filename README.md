@@ -44,7 +44,9 @@ ui/
 │   ├── radio.slint        # Mutually exclusive selection with descriptions
 │   ├── spinner.slint      # Vector activity indicator loader
 │   ├── stepper.slint      # Precision numeric input with +/- buttons
-│   └── divider.slint      # Reusable layout separator with optional text
+│   ├── divider.slint      # Reusable layout separator with optional text
+│   ├── avatar.slint       # User initials, images, and presence dots (online/busy/away/offline)
+│   └── skeleton.slint     # Shimmer placeholder loading blocks (text/circular/rectangular)
 ├── molecules/
 │   ├── accordion.slint    # GPU-clipped collapsible height animation
 │   ├── alert.slint        # Status banners with vector icons and dismiss
@@ -56,7 +58,10 @@ ui/
 │   ├── treeview.slint     # Collapsible file & folder tree with active node inspector
 │   ├── form_field.slint   # Enterprise input wrapper with label, validation states & error notes
 │   ├── context_menu.slint # Contextual PopupWindow action menu with accelerator shortcut hints
-│   └── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
+│   ├── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
+│   ├── chip.slint         # Interactive tag pills with variants, selected states & remove triggers
+│   ├── pagination.slint   # High-density data pagination with first/prev/next/last & count summary
+│   └── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── crud_modal.slint   # Interactive modal form for SQLite record creation
@@ -64,7 +69,9 @@ ui/
 │   ├── feed.slint         # Live streaming telemetry event feed
 │   ├── sidebar.slint      # Collapsible desktop master-detail navigation sidebar
 │   ├── toast.slint        # Floating auto-dismissing toast notification
-│   └── table.slint        # High-density desktop data grid with badges & selection
+│   ├── table.slint        # High-density desktop data grid with badges & selection
+│   ├── statusbar.slint    # Window footer with VCS branch, 120 FPS Direct3D & memory telemetry
+│   └── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
 └── app.slint              # Interactive component showcase window
 ```
 
@@ -291,7 +298,7 @@ cargo run --release --example benchmark
 ## 🏰 Our Novel MOAT
 
 1. **Hardware-Compiled Direct-GPU (Anti-Electron):** While modern desktop tools bundle 300MB+ Chromium runtimes that eat 500MB of RAM, this application compiles directly to DirectX 12 / Metal / Vulkan surfaces with sub-25MB memory consumption and cold-starts in under 60 milliseconds.
-2. **Full-Stack Desktop Starter:** Unlike web UI libraries (Tailwind, Radix) which leave the backend to you, and unlike raw Rust UI toolkits (Iced, egui) which lack design tokens, this crate delivers an end-to-end native desktop framework (Tokens + 30 Components + Local SQLite + Thread-safe CRUD).
+2. **Full-Stack Desktop Starter:** Unlike web UI libraries (Tailwind, Radix) which leave the backend to you, and unlike raw Rust UI toolkits (Iced, egui) which lack design tokens, this crate delivers an end-to-end native desktop framework (Tokens + 36 Components + Local SQLite + Thread-safe CRUD).
 3. **Air-Gapped Zero-Web Security:** Zero JavaScript, zero DOM, zero npm vulnerabilities, and complete immunity to browser-based local exploits.
 
 ---

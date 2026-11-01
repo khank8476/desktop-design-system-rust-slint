@@ -1,0 +1,145 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component StatusBar {
+    in property <string> status-text: "Ready";
+    in property <string> status-level: "success"; // "success" | "info" | "warning" | "danger"
+    in property <string> branch-name: "main";
+    in property <string> encoding: "UTF-8";
+    in property <string> engine-info: "Direct3D 12 • 120 FPS";
+    in property <string> memory-info: "28.5 MB RSS";
+
+    callback status-clicked();
+    callback branch-clicked();
+
+    height: 28px;
+
+    Rectangle {
+        background: Palette.dark-mode ? #090d16 : #f1f5f9;
+
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: 100%;
+            height: 1px;
+            background: Palette.border-subtle;
+        }
+
+        HorizontalLayout {
+            padding-left: Spacing.space-md;
+            padding-right: Spacing.space-md;
+            alignment: space-between;
+
+        // Left Section: Status & Git Branch
+        HorizontalLayout {
+            spacing: Spacing.space-md;
+            alignment: center;
+
+            // Status Indicator (Dot + Label)
+            Rectangle {
+                background: status-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
+                border-radius: Spacing.radius-sm;
+
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    spacing: 6px;
+                    alignment: center;
+
+                    // Pulsing Dot
+                    Rectangle {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 4px;
+                        background: root.status-level == "success" ? Palette.success :
+                                    root.status-level == "warning" ? #f59e0b :
+                                    root.status-level == "danger" ? Palette.danger :
+                                    Palette.accent;
+                    }
+
+                    Text {
+                        text: root.status-text;
+                        font-family: Typography.font-family;
+                        font-size: 11px;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                status-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.status-clicked(); }
+                }
+            }
+
+            // Git Branch Pill
+            Rectangle {
+                background: branch-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
+                border-radius: Spacing.radius-sm;
+
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    spacing: 4px;
+                    alignment: center;
+
+                    Text {
+                        text: "";
+                        font-size: 11px;
+                        color: Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: root.branch-name;
+                        font-family: "Consolas, monospace";
+                        font-size: 11px;
+                        color: Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                branch-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.branch-clicked(); }
+                }
+            }
+        }
+
+        // Right Section: Telemetry, Encoding, Engine
+        HorizontalLayout {
+            spacing: Spacing.space-md;
+            alignment: center;
+
+            // Engine & 120 FPS
+            Text {
+                text: root.engine-info;
+                font-family: "Consolas, monospace";
+                font-size: 11px;
+                color: Palette.success;
+                vertical-alignment: center;
+            }
+
+            // Memory telemetry
+            Text {
+                text: root.memory-info;
+                font-family: "Consolas, monospace";
+                font-size: 11px;
+                color: Palette.accent;
+                vertical-alignment: center;
+            }
+
+            // Encoding
+            Text {
+                text: root.encoding;
+                font-family: Typography.font-family;
+                font-size: 11px;
+                color: Palette.text-secondary;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+}

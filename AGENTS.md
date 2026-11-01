@@ -54,7 +54,9 @@ c/
 │   │   ├── radio.slint        # Mutually exclusive radio selector
 │   │   ├── spinner.slint      # Pure vector SVG-path activity spinner
 │   │   ├── stepper.slint      # Precision numeric stepper with +/- triggers
-│   │   └── divider.slint      # Structural section divider with optional text
+│   │   ├── divider.slint      # Structural section divider with optional text
+│   │   ├── avatar.slint       # User initials, images & presence dots (online/busy/away/offline)
+│   │   └── skeleton.slint     # Shimmer placeholder loading blocks (text/circular/rectangular)
 │   ├── molecules/             # Composite UI structures
 │   │   ├── accordion.slint    # Smooth collapsible disclosure panel
 │   │   ├── alert.slint        # Dismissible banner cards with status icons
@@ -66,7 +68,10 @@ c/
 │   │   ├── treeview.slint     # Collapsible file tree with folder expansion & inspector
 │   │   ├── form_field.slint   # Enterprise input wrapper with label, validation states & error notes
 │   │   ├── context_menu.slint # Contextual PopupWindow action menu with accelerator shortcut hints
-│   │   └── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
+│   │   ├── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
+│   │   ├── chip.slint         # Interactive tag pills with variants, active states & remove triggers
+│   │   ├── pagination.slint   # High-density data table pagination with first/prev/next/last & count
+│   │   └── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
 │   └── organisms/             # High-level desktop modules
 │       ├── modal.slint        # Centered backdrop dialog
 │       ├── crud_modal.slint   # Data entry & edit modal form for SQLite records
@@ -74,7 +79,9 @@ c/
 │       ├── feed.slint         # High-frequency event ticker list
 │       ├── sidebar.slint      # Collapsible navigation rail (250px full <-> 68px icon rail)
 │       ├── toast.slint        # Floating auto-dismiss corner notifications
-│       └── table.slint        # High-density desktop data table with row selection
+│       ├── table.slint        # High-density desktop data table with row selection
+│       ├── statusbar.slint    # Window footer with VCS branch, 120 FPS Direct3D & memory telemetry
+│       └── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
 │
 └── examples/                  # Isolated Domain Showcase Applications (Zero Bloat)
     ├── crypto_tracker.rs      # High-speed live Crypto Price Tracker binary
@@ -172,7 +179,7 @@ cargo clean
 ## 5. Current State & Immediate Roadmap
 
 - **Completed Phases:**
-  - ✅ **Tier 1, 2 & 3 Component Library:** 30+ production desktop components with dedicated 3-tier sub-tab navigation (`Tier 1: Atomic Primitives`, `Tier 2: Interactive Molecules`, `Tier 3: Desktop Organisms & Tools`).
+  - ✅ **Tier 1, 2 & 3 Component Library:** 36 production desktop components with dedicated 3-tier sub-tab navigation (`Tier 1: Atomic Primitives`, `Tier 2: Interactive Molecules`, `Tier 3: Desktop Organisms & Tools`).
   - ✅ **Design Token Engine:** Reactive Dark Mode & Light Mode tokens.
   - ✅ **Bundled SQLite CRUD & Preferences Engine:** WAL mode, transaction safety, full modal editing & deletion, plus persistent UI key-value preferences (e.g., sidebar collapse state and Dark/Light display mode theme across app restarts).
   - ✅ **360° System & GPU Diagnostics:** Sub-millisecond direct in-process hardware telemetry.
@@ -183,6 +190,7 @@ cargo clean
   - ✅ **FormField, ContextMenu & ReceiptCanvas Molecules:** Production form validation wrapper with required asterisks and error states, floating action popover with accelerator shortcuts, and industrial thermal document renderer.
   - ✅ **Demo 2 (Enterprise POS Terminal):** High-speed 120 FPS retail counter terminal with catalog search, ticket stepper, context menu discounts, cash/card/QR checkout modal with real-time change calculation, receipt canvas, and transactional SQLite WAL ledger (`examples/pos_terminal.rs`).
   - ✅ **Demo 3 (DevForge Developer Utility Studio):** High-speed **8.09 MB** Swiss Army Knife for software engineers (`examples/dev_forge.rs`). Features Text & Multi-Case telemetry, Cryptographic Multi-Hash (SHA-256, SHA-512, SHA-1, MD5, CRC32) with live checksum verification, Base64 & URL percent encode/decode with 1-click swap, UUID v4 & ULID batch generator, JSON 2-space/4-space formatter & minifier with AST syntax linter, and live Unix Epoch <-> ISO-8601 UTC converter.
+  - ✅ **Exhaustive Component Expansion:** Added 7 new components: `Avatar` & `Skeleton` (Atoms), `Chip`, `Pagination`, & `ColorPicker` (Molecules), `StatusBar` & `CommandPalette` (Organisms), bringing the total to an unrivaled 36 production-grade native desktop components.
   - ✅ **Crates.io Publication:** `v0.2.1` live and indexed.
 - **Next Planned Deliverables:**
   - 🔜 **Demo 4:** Native Local Audio/Media Player or Markdown Document Studio.

@@ -31,8 +31,15 @@ import { DesktopSidebar } from "organisms/sidebar.slint";
 import { ToastNotification } from "organisms/toast.slint";
 import { DataTable, TableRowData } from "organisms/table.slint";
 import { CrudModal } from "organisms/crud_modal.slint";
+import { Avatar } from "atoms/avatar.slint";
+import { Skeleton } from "atoms/skeleton.slint";
+import { Chip } from "molecules/chip.slint";
+import { Pagination } from "molecules/pagination.slint";
+import { ColorPicker, ColorSwatchItem } from "molecules/color_picker.slint";
+import { StatusBar } from "organisms/statusbar.slint";
+import { CommandPalette, CommandItem } from "organisms/command_palette.slint";
 
-export { Palette, FeedItem, TableRowData, TreeNodeData }
+export { Palette, FeedItem, TableRowData, TreeNodeData, CommandItem, ColorSwatchItem }
 
 export component AppWindow inherits Window {
     title: "Native Desktop Design System";
@@ -76,6 +83,19 @@ export component AppWindow inherits Window {
         { id: "divider", label: "", shortcut: "", icon: "", is-danger: false, is-divider: true, enabled: true },
         { id: "delete", label: "Delete Line Item", shortcut: "Del", icon: "close", is-danger: true, is-divider: false, enabled: true }
     ];
+
+    // New Tier 1, 2, 3 Interactive Demo Properties
+    in-out property <bool> demo-skeleton-animated: true;
+    in-out property <int> demo-page: 1;
+    in-out property <color> demo-color: #3b82f6;
+    in-out property <string> demo-color-hex: "#3b82f6";
+    in-out property <bool> demo-chip-1: true;
+    in-out property <bool> demo-chip-2: true;
+    in-out property <bool> demo-chip-3: true;
+    in-out property <bool> demo-chip-4: true;
+    in-out property <bool> demo-chip-5: true;
+    in-out property <bool> show-command-palette: false;
+    callback command-palette-action(string);
 
     // TreeView & File Explorer Properties
     in-out property <[TreeNodeData]> tree-items: [
@@ -159,9 +179,12 @@ export component AppWindow inherits Window {
     callback refresh-hardware-diagnostics();
 
     // Master Desktop Layout: Sidebar on Left + Content on Right
-    HorizontalLayout {
-        // 1. Collapsible Desktop Sidebar
-        sidebar := DesktopSidebar {
+    VerticalLayout {
+        HorizontalLayout {
+            vertical-stretch: 1;
+
+            // 1. Collapsible Desktop Sidebar
+            sidebar := DesktopSidebar {
             active-index <=> root.selected-tab;
             collapsed <=> root.sidebar-collapsed;
             toggle-collapse => {
@@ -183,7 +206,7 @@ export component AppWindow inherits Window {
                 HorizontalLayout {
                     padding-left: Spacing.space-xl;
                     padding-right: Spacing.space-xl;
-                    alignment: start;
+                    alignment: space-between;
 
                     // Active Section Title & Breadcrumb
                     VerticalLayout {
@@ -205,6 +228,69 @@ export component AppWindow inherits Window {
                             font-family: Typography.font-family;
                             font-size: Typography.size-xs;
                             color: Palette.text-secondary;
+                        }
+                    }
+
+                    // Quick Command Palette Spotlight Trigger
+                    HorizontalLayout {
+                        alignment: center;
+
+                        Rectangle {
+                            height: 36px;
+                            border-radius: Spacing.radius-md;
+                            background: cmd-quick-touch.has-hover ? Palette.bg-surface-hover : (Palette.dark-mode ? #0f172a : #f1f5f9);
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+
+                            HorizontalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                spacing: 8px;
+                                alignment: center;
+
+                                Text {
+                                    text: "🔍";
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+
+                                Text {
+                                    text: "Command Palette";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    font-weight: Typography.weight-medium;
+                                    color: Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+
+                                Rectangle {
+                                    height: 20px;
+                                    border-radius: 4px;
+                                    background: Palette.dark-mode ? #1e293b : #e2e8f0;
+
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        padding-right: 6px;
+                                        alignment: center;
+
+                                        Text {
+                                            text: "Ctrl+K";
+                                            font-family: "Consolas, monospace";
+                                            font-size: 10px;
+                                            font-weight: Typography.weight-semibold;
+                                            color: Palette.text-primary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            cmd-quick-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    root.show-command-palette = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -625,6 +711,155 @@ export component AppWindow inherits Window {
                                     }
                                 }
                             }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 8. User Profile Avatars & Presence States (Tier 1 Atoms)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "User Profile Avatars & Presence Indicators (Tier 1 Atoms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Compact profile representations with initials, custom sizing, and real-time presence indicators (online, busy, away, offline).";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-lg;
+                                    alignment: start;
+
+                                    HorizontalLayout {
+                                        spacing: Spacing.space-md;
+                                        alignment: center;
+
+                                        Avatar {
+                                            initials: "JD";
+                                            size: 28px;
+                                            status: "online";
+                                            clicked => {
+                                                root.trigger-sample-toast("success", "Avatar Selected", "John Doe (Online) - 28px");
+                                            }
+                                        }
+
+                                        Avatar {
+                                            initials: "AK";
+                                            size: 36px;
+                                            status: "busy";
+                                            background-color: Palette.dark-mode ? #1e3a8a : #dbeafe;
+                                            text-color: #3b82f6;
+                                            clicked => {
+                                                root.trigger-sample-toast("danger", "Avatar Selected", "Alice Kim (Busy) - 36px");
+                                            }
+                                        }
+
+                                        Avatar {
+                                            initials: "TS";
+                                            size: 44px;
+                                            status: "away";
+                                            background-color: Palette.dark-mode ? #78350f : #fef3c7;
+                                            text-color: #d97706;
+                                            clicked => {
+                                                root.trigger-sample-toast("warning", "Avatar Selected", "Thomas Scott (Away) - 44px");
+                                            }
+                                        }
+
+                                        Avatar {
+                                            initials: "RL";
+                                            size: 54px;
+                                            status: "offline";
+                                            background-color: Palette.dark-mode ? #064e3b : #d1fae5;
+                                            text-color: #059669;
+                                            clicked => {
+                                                root.trigger-sample-toast("info", "Avatar Selected", "Rachel Lee (Offline) - 54px");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 9. Skeleton & Shimmer Placeholders (Tier 1 Atoms)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Skeleton & Shimmer Content Loaders (Tier 1 Atoms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Lightweight placeholders that mimic layout shapes during async data fetching with zero UI freezing.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-xl;
+
+                                    // Circular & Line Skeleton Card
+                                    Rectangle {
+                                        border-radius: Spacing.radius-md;
+                                        background: Palette.bg-surface;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+
+                                        HorizontalLayout {
+                                            padding: Spacing.space-md;
+                                            spacing: Spacing.space-md;
+                                            alignment: center;
+
+                                            Skeleton {
+                                                variant: "circular";
+                                                skeleton-height: 48px;
+                                            }
+
+                                            VerticalLayout {
+                                                spacing: 8px;
+                                                Skeleton {
+                                                    variant: "text";
+                                                    skeleton-height: 16px;
+                                                }
+                                                Skeleton {
+                                                    variant: "text";
+                                                    skeleton-height: 12px;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Rectangular Skeleton Card
+                                    Rectangle {
+                                        border-radius: Spacing.radius-md;
+                                        background: Palette.bg-surface;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+
+                                        VerticalLayout {
+                                            padding: Spacing.space-md;
+                                            spacing: 8px;
+
+                                            Skeleton {
+                                                variant: "rectangular";
+                                                skeleton-height: 42px;
+                                            }
+                                            Skeleton {
+                                                variant: "text";
+                                                skeleton-height: 12px;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // ----------------------------------------------------
@@ -915,6 +1150,188 @@ export component AppWindow inherits Window {
                                             item-selected(action-id) => {
                                                 root.trigger-sample-toast("info", "Context Action Triggered", "Executed menu action: " + action-id);
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 5. Interactive Chips & Filter Pills (Tier 2 Molecules)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Interactive Chips & Filter Pills (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Compact selection and filter tags with variant styles, icons, active states, and removable dismissal.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    if root.demo-chip-1: Chip {
+                                        text: "Rust 2021";
+                                        icon-text: "🦀";
+                                        variant: "default";
+                                        removable: true;
+                                        clicked => {
+                                            root.trigger-sample-toast("info", "Chip Clicked", "Selected tag: Rust 2021");
+                                        }
+                                        removed => {
+                                            root.demo-chip-1 = false;
+                                            root.trigger-sample-toast("warning", "Tag Removed", "Removed 'Rust 2021' chip.");
+                                        }
+                                    }
+
+                                    if root.demo-chip-2: Chip {
+                                        text: "Direct3D 12";
+                                        icon-text: "⚡";
+                                        variant: "primary";
+                                        selected: true;
+                                        removable: true;
+                                        clicked => {
+                                            root.trigger-sample-toast("info", "Chip Clicked", "Selected tag: Direct3D 12");
+                                        }
+                                        removed => {
+                                            root.demo-chip-2 = false;
+                                            root.trigger-sample-toast("warning", "Tag Removed", "Removed 'Direct3D 12' chip.");
+                                        }
+                                    }
+
+                                    if root.demo-chip-3: Chip {
+                                        text: "SQLite WAL Active";
+                                        icon-text: "💾";
+                                        variant: "success";
+                                        removable: true;
+                                        clicked => {
+                                            root.trigger-sample-toast("info", "Chip Clicked", "Selected tag: SQLite WAL Active");
+                                        }
+                                        removed => {
+                                            root.demo-chip-3 = false;
+                                            root.trigger-sample-toast("warning", "Tag Removed", "Removed 'SQLite WAL Active' chip.");
+                                        }
+                                    }
+
+                                    if root.demo-chip-4: Chip {
+                                        text: "120 FPS Target";
+                                        icon-text: "🎯";
+                                        variant: "warning";
+                                        removable: true;
+                                        clicked => {
+                                            root.trigger-sample-toast("info", "Chip Clicked", "Selected tag: 120 FPS Target");
+                                        }
+                                        removed => {
+                                            root.demo-chip-4 = false;
+                                            root.trigger-sample-toast("warning", "Tag Removed", "Removed '120 FPS Target' chip.");
+                                        }
+                                    }
+
+                                    if root.demo-chip-5: Chip {
+                                        text: "Zero Bloat";
+                                        icon-text: "🛡️";
+                                        variant: "danger";
+                                        removable: true;
+                                        clicked => {
+                                            root.trigger-sample-toast("info", "Chip Clicked", "Selected tag: Zero Bloat");
+                                        }
+                                        removed => {
+                                            root.demo-chip-5 = false;
+                                            root.trigger-sample-toast("warning", "Tag Removed", "Removed 'Zero Bloat' chip.");
+                                        }
+                                    }
+
+                                    if !root.demo-chip-1 || !root.demo-chip-2 || !root.demo-chip-3 || !root.demo-chip-4 || !root.demo-chip-5: Button {
+                                        text: "Reset All Tags";
+                                        variant: "ghost";
+                                        clicked => {
+                                            root.demo-chip-1 = true;
+                                            root.demo-chip-2 = true;
+                                            root.demo-chip-3 = true;
+                                            root.demo-chip-4 = true;
+                                            root.demo-chip-5 = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 6. Data Table Pagination (Tier 2 Molecules)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Data Table Pagination & Stepper (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "High-density navigation controls with first, previous, next, last triggers and item counter display.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                Rectangle {
+                                    border-radius: Spacing.radius-md;
+                                    background: Palette.bg-surface;
+                                    border-width: 1px;
+                                    border-color: Palette.border-subtle;
+
+                                    VerticalLayout {
+                                        padding: Spacing.space-md;
+
+                                        Pagination {
+                                            current-page <=> root.demo-page;
+                                            total-pages: 12;
+                                            total-items: 120;
+                                            page-size: 10;
+                                            page-changed(p) => {
+                                                root.trigger-sample-toast("info", "Page Navigated", "Current page index set to: " + p);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 7. Color Swatch Picker (Tier 2 Molecules)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Color Picker & Palette Swatches (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Curated design token swatches with hex preview and active checkmark feedback.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    alignment: start;
+
+                                    ColorPicker {
+                                        label: "Theme Accent Swatch";
+                                        selected-color <=> root.demo-color;
+                                        selected-hex <=> root.demo-color-hex;
+                                        color-selected(col, hex-val) => {
+                                            root.trigger-sample-toast("success", "Color Selected", "Accent set to: " + hex-val);
                                         }
                                     }
                                 }
@@ -1444,6 +1861,47 @@ export component AppWindow inherits Window {
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 5. Command Palette & Spotlight Launcher (Tier 3 Organisms)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Command Palette & Spotlight Launcher (Tier 3 Organisms)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Keyboard-driven spotlight launcher with quick action dispatch, search query filtering, and category grouping.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-md;
+                                    alignment: start;
+
+                                    Button {
+                                        text: "Open Spotlight Command Palette (Ctrl+K)";
+                                        variant: "primary";
+                                        clicked => {
+                                            root.show-command-palette = true;
+                                        }
+                                    }
+
+                                    Button {
+                                        text: "Toggle Theme via Action";
+                                        variant: "secondary";
+                                        clicked => {
+                                            root.command-palette-action("toggle-theme");
                                         }
                                     }
                                 }
@@ -2250,6 +2708,23 @@ export component AppWindow inherits Window {
         }
     }
 
+    // 3. Native Desktop Status Bar (Window Footer)
+    StatusBar {
+        status-text: "All Systems Operational";
+        status-level: "success";
+        branch-name: "main";
+        encoding: "UTF-8";
+        engine-info: root.hw-graphics-backend + " • 120 FPS";
+        memory-info: root.hw-app-memory + " RSS";
+        status-clicked => {
+            root.trigger-sample-toast("info", "Engine Status", "Direct3D 12 Hardware V-Sync 120 FPS active.");
+        }
+        branch-clicked => {
+            root.trigger-sample-toast("info", "VCS Branch", "Connected to Git repository on main branch.");
+        }
+    }
+}
+
     // Modal Dialog Overlay
     ModalDialog {
         is-open <=> root.show-modal;
@@ -2265,11 +2740,19 @@ export component AppWindow inherits Window {
     // Floating Toast Notification (Anchored to bottom-right corner)
     toast := ToastNotification {
         x: root.width - self.width - 24px;
-        y: root.height - self.height - 24px;
+        y: root.height - self.height - 38px;
         is-open <=> root.toast-open;
         title: root.toast-title;
         message: root.toast-message;
         status: root.toast-status;
+    }
+
+    // Command Palette Spotlight Launcher Overlay
+    CommandPalette {
+        is-open <=> root.show-command-palette;
+        command-selected(id) => {
+            root.command-palette-action(id);
+        }
     }
 
     // CRUD Add/Edit Record Modal

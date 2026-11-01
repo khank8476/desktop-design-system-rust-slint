@@ -1,0 +1,65 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Avatar {
+    in property <string> initials: "JD";
+    in property <image> image-source;
+    in property <bool> has-image: false;
+    in property <length> size: 36px;
+    in property <color> background-color: Palette.dark-mode ? #1e293b : #e2e8f0;
+    in property <color> text-color: Palette.accent;
+    // Status dot indicator: "none" | "online" | "busy" | "away" | "offline"
+    in property <string> status: "none";
+    callback clicked();
+
+    width: root.size;
+    height: root.size;
+
+    container := Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: root.size / 2;
+        background: root.background-color;
+        border-width: 1.5px;
+        border-color: Palette.border-subtle;
+        clip: true;
+
+        if !root.has-image: Text {
+            text: root.initials;
+            font-family: Typography.font-family;
+            font-size: root.size * 0.40;
+            font-weight: Typography.weight-bold;
+            color: root.text-color;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+
+        if root.has-image: Image {
+            source: root.image-source;
+            width: 100%;
+            height: 100%;
+        }
+
+        touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.clicked(); }
+        }
+    }
+
+    // Status Indicator Dot (Bottom-Right)
+    if root.status != "none": Rectangle {
+        width: Math.max(8px, root.size * 0.28);
+        height: Math.max(8px, root.size * 0.28);
+        border-radius: self.width / 2;
+        border-width: 1.5px;
+        border-color: Palette.bg-surface;
+        x: root.size - self.width + 1px;
+        y: root.size - self.height + 1px;
+        background: root.status == "online" ? Palette.success :
+                    root.status == "busy" ? Palette.danger :
+                    root.status == "away" ? #f59e0b :
+                    Palette.text-placeholder;
+    }
+}
+

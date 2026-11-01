@@ -1,0 +1,147 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export struct ColorSwatchItem {
+    hex: string,
+    color-val: color,
+    name: string,
+}
+
+component SwatchCell {
+    in property <color> swatch-color: #3b82f6;
+    in property <bool> is-selected: false;
+    callback clicked();
+
+    width: 28px;
+    height: 28px;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: Spacing.radius-sm;
+        background: root.swatch-color;
+        border-width: root.is-selected ? 2px : 1px;
+        border-color: root.is-selected ? Palette.text-primary : Palette.border-subtle;
+
+        if root.is-selected: Text {
+            text: "✓";
+            font-size: 12px;
+            font-weight: Typography.weight-bold;
+            color: #ffffff;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+        }
+
+        touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => { root.clicked(); }
+        }
+    }
+}
+
+export component ColorPicker {
+    in-out property <color> selected-color: #3b82f6;
+    in-out property <string> selected-hex: "#3b82f6";
+    in property <string> label: "Accent Color";
+
+    callback color-selected(color, string);
+
+    // Standard curated preset palette
+    in property <[ColorSwatchItem]> swatches: [
+        { hex: "#3b82f6", color-val: #3b82f6, name: "Blue" },
+        { hex: "#2563eb", color-val: #2563eb, name: "Royal" },
+        { hex: "#6366f1", color-val: #6366f1, name: "Indigo" },
+        { hex: "#8b5cf6", color-val: #8b5cf6, name: "Purple" },
+        { hex: "#ec4899", color-val: #ec4899, name: "Pink" },
+        { hex: "#ef4444", color-val: #ef4444, name: "Red" },
+        { hex: "#f97316", color-val: #f97316, name: "Orange" },
+        { hex: "#f59e0b", color-val: #f59e0b, name: "Amber" },
+        { hex: "#10b981", color-val: #10b981, name: "Emerald" },
+        { hex: "#06b6d4", color-val: #06b6d4, name: "Cyan" },
+        { hex: "#64748b", color-val: #64748b, name: "Slate" },
+        { hex: "#0f172a", color-val: #0f172a, name: "Navy" },
+    ];
+
+    Rectangle {
+        border-radius: Spacing.radius-md;
+        border-width: 1px;
+        border-color: Palette.border-subtle;
+        background: Palette.bg-surface;
+
+        VerticalLayout {
+            padding: Spacing.space-md;
+            spacing: Spacing.space-sm;
+
+            // Header with Preview Box + HEX value
+            HorizontalLayout {
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: center;
+
+                    // Color Preview Square
+                    Rectangle {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: Spacing.radius-sm;
+                        background: root.selected-color;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                    }
+
+                    Text {
+                        text: root.label;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-sm;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.text-primary;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // HEX Tag
+                Rectangle {
+                    height: 24px;
+                    border-radius: Spacing.radius-sm;
+                    background: Palette.dark-mode ? #0f172a : #f1f5f9;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        alignment: center;
+
+                        Text {
+                            text: root.selected-hex;
+                            font-family: "Consolas, monospace";
+                            font-size: 11px;
+                            font-weight: Typography.weight-semibold;
+                            color: Palette.accent;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Swatch Grid
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+
+                for item in root.swatches: SwatchCell {
+                    swatch-color: item.color-val;
+                    is-selected: root.selected-hex == item.hex;
+                    clicked => {
+                        root.selected-color = item.color-val;
+                        root.selected-hex = item.hex;
+                        root.color-selected(item.color-val, item.hex);
+                    }
+                }
+            }
+        }
+    }
+}
+

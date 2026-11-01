@@ -782,6 +782,78 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    // 12. Connect Command Palette Spotlight Actions
+    let db_tx_cmd = db_tx.clone();
+    let app_weak_cmd = app.as_weak();
+    app.on_command_palette_action(move |action_id| {
+        if let Some(app) = app_weak_cmd.upgrade() {
+            match action_id.as_str() {
+                "toggle-theme" => {
+                    let cur_dark = app.global::<Palette>().get_dark_mode();
+                    let new_dark = !cur_dark;
+                    app.global::<Palette>().set_dark_mode(new_dark);
+                    let _ = db_tx_cmd.send(DbCmd::SetPreference {
+                        key: "theme_mode".into(),
+                        value: if new_dark { "dark".into() } else { "light".into() },
+                    });
+                    app.set_theme_mode_status(
+                        if new_dark {
+                            "Saved: Slate Dark Theme (Persistent)".into()
+                        } else {
+                            "Saved: Clean Light Theme (Persistent)".into()
+                        },
+                    );
+                    app.invoke_trigger_sample_toast(
+                        "success".into(),
+                        "Theme Mode Updated".into(),
+                        format!("Switched to {}", if new_dark { "Slate Dark" } else { "Clean Light" }).into(),
+                    );
+                }
+                "open-pos" => {
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "POS Retail Terminal".into(),
+                        "Run 'cargo run --example pos_terminal' to launch the retail matrix.".into(),
+                    );
+                }
+                "open-devforge" => {
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "DevForge Studio".into(),
+                        "Run 'cargo run --example dev_forge' to launch the developer utility studio.".into(),
+                    );
+                }
+                "open-treeview" => {
+                    app.set_selected_tab(0);
+                    app.set_selected_tier_tab(2);
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "Explorer Spotlight".into(),
+                        "Navigated to TreeView File Explorer in Tier 3 Organisms.".into(),
+                    );
+                }
+                "refresh-telemetry" => {
+                    app.invoke_refresh_hardware_diagnostics();
+                    app.invoke_trigger_sample_toast(
+                        "success".into(),
+                        "Hardware Telemetry".into(),
+                        "Direct in-process hardware telemetry refreshed.".into(),
+                    );
+                }
+                "create-shortcut" => {
+                    app.invoke_create_desktop_shortcut();
+                }
+                other => {
+                    app.invoke_trigger_sample_toast(
+                        "info".into(),
+                        "Action Dispatched".into(),
+                        format!("Executed command: {other}").into(),
+                    );
+                }
+            }
+        }
+    });
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 

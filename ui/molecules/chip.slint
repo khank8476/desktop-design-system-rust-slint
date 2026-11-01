@@ -1,0 +1,100 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Chip {
+    in property <string> text: "Tag Item";
+    in property <string> icon-text: "";
+    in property <bool> removable: false;
+    in property <bool> selected: false;
+    in property <bool> enabled: true;
+    in property <string> variant: "default"; // "default" | "primary" | "success" | "warning" | "danger"
+
+    callback clicked();
+    callback removed();
+
+    height: 28px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-full;
+        border-width: 1px;
+        border-color: root.selected ? Palette.accent :
+                     root.variant == "primary" ? Palette.accent.with-alpha(0.5) :
+                     root.variant == "success" ? Palette.success.with-alpha(0.5) :
+                     root.variant == "warning" ? #f59e0b88 :
+                     root.variant == "danger" ? Palette.danger.with-alpha(0.5) :
+                     Palette.border-subtle;
+
+        background: root.selected ? (Palette.accent.with-alpha(0.20)) :
+                    touch.has-hover ? Palette.bg-surface-hover :
+                    root.variant == "primary" ? (Palette.dark-mode ? #1e3a8a33 : #eff6ff) :
+                    root.variant == "success" ? (Palette.dark-mode ? #064e3b33 : #ecfdf5) :
+                    root.variant == "warning" ? (Palette.dark-mode ? #78350f33 : #fffbeb) :
+                    root.variant == "danger"  ? (Palette.dark-mode ? #7f1d1d33 : #fef2f2) :
+                    Palette.bg-surface;
+
+        animate background { duration: 100ms; }
+        animate border-color { duration: 100ms; }
+
+        HorizontalLayout {
+            padding-left: root.icon-text != "" ? 8px : 12px;
+            padding-right: root.removable ? 8px : 12px;
+            spacing: 6px;
+            alignment: center;
+
+            // Optional Icon / Emoji Prefix
+            if root.icon-text != "": Text {
+                text: root.icon-text;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+
+            // Chip Label
+            Text {
+                text: root.text;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                font-weight: root.selected ? Typography.weight-semibold : Typography.weight-medium;
+                color: root.selected ? Palette.accent :
+                       root.variant == "primary" ? Palette.accent :
+                       root.variant == "success" ? Palette.success :
+                       root.variant == "danger" ? Palette.danger :
+                       Palette.text-primary;
+                vertical-alignment: center;
+            }
+
+            // Optional Remove Button (✕)
+            if root.removable: Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                background: remove-touch.has-hover ? (Palette.dark-mode ? #475569 : #cbd5e1) : transparent;
+
+                Text {
+                    text: "✕";
+                    font-size: 9px;
+                    font-weight: Typography.weight-bold;
+                    color: Palette.text-secondary;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+
+                remove-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => { root.removed(); }
+                }
+            }
+        }
+
+        touch := TouchArea {
+            mouse-cursor: root.enabled ? pointer : default;
+            clicked => {
+                if root.enabled {
+                    root.clicked();
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,29 @@
+import { Palette } from "../tokens/colors.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component Skeleton {
+    // "text" | "circular" | "rectangular"
+    in property <string> variant: "text";
+    in property <length> skeleton-height: root.variant == "text" ? 16px : root.variant == "circular" ? 40px : 120px;
+    in property <length> custom-radius: root.variant == "circular" ? (root.skeleton-height / 2) :
+                                        root.variant == "text" ? Spacing.radius-sm : Spacing.radius-md;
+    in property <bool> animated: true;
+
+    height: root.skeleton-height;
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: root.custom-radius;
+        background: Palette.dark-mode ? #1e293b : #e2e8f0;
+
+        // Subtle shimmer overlay
+        shimmer := Rectangle {
+            width: 100%;
+            height: 100%;
+            border-radius: parent.border-radius;
+            background: Palette.dark-mode ? #33415544 : #ffffff66;
+            opacity: 0.6;
+        }
+    }
+}
