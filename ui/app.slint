@@ -49,6 +49,7 @@ export component AppWindow inherits Window {
     preferred-width: 1080px;
     preferred-height: 760px;
     background: Palette.bg-canvas;
+    forward-focus: root-focus;
 
     in-out property <bool> show-modal: false;
     in-out property <int> selected-tab: 0;
@@ -96,6 +97,7 @@ export component AppWindow inherits Window {
     in-out property <bool> demo-chip-5: true;
     in-out property <bool> show-command-palette: false;
     callback command-palette-action(string);
+    callback accent-color-changed(string);
 
     // TreeView & File Explorer Properties
     in-out property <[TreeNodeData]> tree-items: [
@@ -178,12 +180,43 @@ export component AppWindow inherits Window {
     in-out property <string> hw-graphics-backend: "Direct3D 12";
     callback refresh-hardware-diagnostics();
 
-    // Master Desktop Layout: Sidebar on Left + Content on Right
-    VerticalLayout {
-        HorizontalLayout {
-            vertical-stretch: 1;
+    // Master Desktop Layout: Keyboard Focus Scope + Sidebar on Left + Content on Right
+    root-focus := FocusScope {
+        key-pressed(event) => {
+            if event.modifiers.control && (event.text == "k" || event.text == "K") {
+                root.show-command-palette = !root.show-command-palette;
+                return accept;
+            }
+            if event.modifiers.control && (event.text == "t" || event.text == "T") {
+                root.command-palette-action("toggle-theme");
+                return accept;
+            }
+            if event.text == Key.Escape {
+                if root.show-command-palette {
+                    root.show-command-palette = false;
+                    return accept;
+                }
+                if root.show-modal {
+                    root.show-modal = false;
+                    return accept;
+                }
+                if root.show-crud-modal {
+                    root.show-crud-modal = false;
+                    return accept;
+                }
+                if root.show-delete-confirm {
+                    root.show-delete-confirm = false;
+                    return accept;
+                }
+            }
+            return reject;
+        }
 
-            // 1. Collapsible Desktop Sidebar
+        VerticalLayout {
+            HorizontalLayout {
+                vertical-stretch: 1;
+
+                // 1. Collapsible Desktop Sidebar
             sidebar := DesktopSidebar {
             active-index <=> root.selected-tab;
             collapsed <=> root.sidebar-collapsed;
@@ -248,9 +281,11 @@ export component AppWindow inherits Window {
                                 spacing: 8px;
                                 alignment: center;
 
-                                Text {
-                                    text: "🔍";
-                                    font-size: 12px;
+                                Image {
+                                    source: @image-url("../assets/icons/search.svg");
+                                    width: 14px;
+                                    height: 14px;
+                                    colorize: Palette.text-secondary;
                                     vertical-alignment: center;
                                 }
 
@@ -1180,7 +1215,8 @@ export component AppWindow inherits Window {
 
                                     if root.demo-chip-1: Chip {
                                         text: "Rust 2021";
-                                        icon-text: "🦀";
+                                        has-icon: true;
+                                        icon-image: @image-url("../assets/icons/code.svg");
                                         variant: "default";
                                         removable: true;
                                         clicked => {
@@ -1194,7 +1230,8 @@ export component AppWindow inherits Window {
 
                                     if root.demo-chip-2: Chip {
                                         text: "Direct3D 12";
-                                        icon-text: "⚡";
+                                        has-icon: true;
+                                        icon-image: @image-url("../assets/icons/zap.svg");
                                         variant: "primary";
                                         selected: true;
                                         removable: true;
@@ -1209,7 +1246,8 @@ export component AppWindow inherits Window {
 
                                     if root.demo-chip-3: Chip {
                                         text: "SQLite WAL Active";
-                                        icon-text: "💾";
+                                        has-icon: true;
+                                        icon-image: @image-url("../assets/icons/database.svg");
                                         variant: "success";
                                         removable: true;
                                         clicked => {
@@ -1223,7 +1261,8 @@ export component AppWindow inherits Window {
 
                                     if root.demo-chip-4: Chip {
                                         text: "120 FPS Target";
-                                        icon-text: "🎯";
+                                        has-icon: true;
+                                        icon-image: @image-url("../assets/icons/target.svg");
                                         variant: "warning";
                                         removable: true;
                                         clicked => {
@@ -1237,7 +1276,8 @@ export component AppWindow inherits Window {
 
                                     if root.demo-chip-5: Chip {
                                         text: "Zero Bloat";
-                                        icon-text: "🛡️";
+                                        has-icon: true;
+                                        icon-image: @image-url("../assets/icons/shield.svg");
                                         variant: "danger";
                                         removable: true;
                                         clicked => {
@@ -1331,7 +1371,9 @@ export component AppWindow inherits Window {
                                         selected-color <=> root.demo-color;
                                         selected-hex <=> root.demo-color-hex;
                                         color-selected(col, hex-val) => {
-                                            root.trigger-sample-toast("success", "Color Selected", "Accent set to: " + hex-val);
+                                            Palette.accent = col;
+                                            root.accent-color-changed(hex-val);
+                                            root.trigger-sample-toast("success", "App Palette Updated", "Applied " + hex-val + " across all design tokens and saved to SQLite.");
                                         }
                                     }
                                 }
@@ -2723,6 +2765,7 @@ export component AppWindow inherits Window {
             root.trigger-sample-toast("info", "VCS Branch", "Connected to Git repository on main branch.");
         }
     }
+}
 }
 
     // Modal Dialog Overlay

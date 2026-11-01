@@ -38,6 +38,7 @@ export component StatusBar {
 
             // Status Indicator (Dot + Label)
             Rectangle {
+                height: 20px;
                 background: status-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
                 border-radius: Spacing.radius-sm;
 
@@ -47,15 +48,18 @@ export component StatusBar {
                     spacing: 6px;
                     alignment: center;
 
-                    // Pulsing Dot
-                    Rectangle {
-                        width: 7px;
-                        height: 7px;
-                        border-radius: 4px;
-                        background: root.status-level == "success" ? Palette.success :
-                                    root.status-level == "warning" ? #f59e0b :
-                                    root.status-level == "danger" ? Palette.danger :
-                                    Palette.accent;
+                    // Centered Pulsing Dot
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 7px;
+                            height: 7px;
+                            border-radius: 3.5px;
+                            background: root.status-level == "success" ? Palette.success :
+                                        root.status-level == "warning" ? #f59e0b :
+                                        root.status-level == "danger" ? Palette.danger :
+                                        Palette.accent;
+                        }
                     }
 
                     Text {
@@ -76,19 +80,21 @@ export component StatusBar {
 
             // Git Branch Pill
             Rectangle {
+                height: 20px;
                 background: branch-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
                 border-radius: Spacing.radius-sm;
 
                 HorizontalLayout {
                     padding-left: 6px;
                     padding-right: 6px;
-                    spacing: 4px;
+                    spacing: 6px;
                     alignment: center;
 
-                    Text {
-                        text: "";
-                        font-size: 11px;
-                        color: Palette.text-secondary;
+                    Image {
+                        source: @image-url("../../assets/icons/git-branch.svg");
+                        width: 12px;
+                        height: 12px;
+                        colorize: Palette.text-secondary;
                         vertical-alignment: center;
                     }
 

@@ -4,7 +4,8 @@ import { Spacing } from "../tokens/spacing.slint";
 
 export component Chip {
     in property <string> text: "Tag Item";
-    in property <string> icon-text: "";
+    in property <image> icon-image;
+    in property <bool> has-icon: false;
     in property <bool> removable: false;
     in property <bool> selected: false;
     in property <bool> enabled: true;
@@ -38,15 +39,22 @@ export component Chip {
         animate border-color { duration: 100ms; }
 
         HorizontalLayout {
-            padding-left: root.icon-text != "" ? 8px : 12px;
+            padding-left: root.has-icon ? 8px : 12px;
             padding-right: root.removable ? 8px : 12px;
             spacing: 6px;
             alignment: center;
 
-            // Optional Icon / Emoji Prefix
-            if root.icon-text != "": Text {
-                text: root.icon-text;
-                font-size: 12px;
+            // Optional Vector Icon Prefix
+            if root.has-icon: Image {
+                source: root.icon-image;
+                width: 12px;
+                height: 12px;
+                colorize: root.selected ? Palette.accent :
+                          root.variant == "primary" ? Palette.accent :
+                          root.variant == "success" ? Palette.success :
+                          root.variant == "warning" ? #f59e0b :
+                          root.variant == "danger" ? Palette.danger :
+                          Palette.text-secondary;
                 vertical-alignment: center;
             }
 
@@ -64,18 +72,18 @@ export component Chip {
                 vertical-alignment: center;
             }
 
-            // Optional Remove Button (✕)
+            // Optional Remove Button (Vector SVG Close Icon)
             if root.removable: Rectangle {
                 width: 16px;
                 height: 16px;
                 border-radius: 8px;
                 background: remove-touch.has-hover ? (Palette.dark-mode ? #475569 : #cbd5e1) : transparent;
 
-                Text {
-                    text: "✕";
-                    font-size: 9px;
-                    font-weight: Typography.weight-bold;
-                    color: Palette.text-secondary;
+                Image {
+                    source: @image-url("../../assets/icons/close.svg");
+                    width: 8px;
+                    height: 8px;
+                    colorize: Palette.text-secondary;
                     x: (parent.width - self.width) / 2;
                     y: (parent.height - self.height) / 2;
                 }
@@ -97,4 +105,3 @@ export component Chip {
         }
     }
 }
-

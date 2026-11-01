@@ -76,6 +76,17 @@ fn main() -> Result<(), slint::PlatformError> {
     app.global::<Palette>().set_dark_mode(is_dark);
     app.set_theme_mode_status(theme_pref_desc.clone().into());
 
+    // Restore persistent accent color palette if saved in SQLite
+    if let Ok(db_init) = DatabaseManager::new("desktop_crud.db") {
+        if let Ok(Some(saved_accent)) = db_init.get_preference("accent_color") {
+            if let Some(col) = parse_hex_color(&saved_accent) {
+                app.global::<Palette>().set_accent(col);
+                app.set_demo_color(col);
+                app.set_demo_color_hex(saved_accent.into());
+            }
+        }
+    }
+
     // 3. Setup Live Feed Telemetry System
     let feed_items = Rc::new(slint::VecModel::<FeedItem>::default());
 
@@ -854,11 +865,41 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    // 13. Connect Accent Color Palette Persistence
+    let db_tx_accent = db_tx.clone();
+    let app_weak_accent = app.as_weak();
+    app.on_accent_color_changed(move |hex_slint| {
+        let hex_str = hex_slint.to_string();
+        if let Some(col) = parse_hex_color(&hex_str) {
+            if let Some(app) = app_weak_accent.upgrade() {
+                app.global::<Palette>().set_accent(col);
+                app.set_demo_color(col);
+                app.set_demo_color_hex(hex_str.clone().into());
+            }
+        }
+        let _ = db_tx_accent.send(DbCmd::SetPreference {
+            key: "accent_color".into(),
+            value: hex_str,
+        });
+    });
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 
-    // 12. Start the native desktop event loop
+    // 14. Start the native desktop event loop
     app.run()
+}
+
+fn parse_hex_color(hex: &str) -> Option<slint::Color> {
+    let hex = hex.trim().trim_start_matches('#');
+    if hex.len() == 6 {
+        let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+        let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+        let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+        Some(slint::Color::from_argb_u8(255, r, g, b))
+    } else {
+        None
+    }
 }
 
 fn map_file_nodes(nodes: &[FileNode]) -> Vec<TreeNodeData> {

@@ -9,21 +9,37 @@ export component Skeleton {
                                         root.variant == "text" ? Spacing.radius-sm : Spacing.radius-md;
     in property <bool> animated: true;
 
+    // Continuous GPU-driven animation cycle (0.0 -> 1.0)
+    property <float> phase: root.animated ? mod(animation-tick() / 1.5s, 1.0) : 0.0;
+    property <float> pulse-opacity: root.animated ? (0.45 + 0.35 * sin(root.phase * 360deg)) : 0.5;
+
     height: root.skeleton-height;
 
-    Rectangle {
+    container := Rectangle {
         width: 100%;
         height: 100%;
         border-radius: root.custom-radius;
         background: Palette.dark-mode ? #1e293b : #e2e8f0;
+        clip: true;
 
-        // Subtle shimmer overlay
-        shimmer := Rectangle {
+        // Base pulsing shimmer
+        shimmer-base := Rectangle {
             width: 100%;
             height: 100%;
-            border-radius: parent.border-radius;
-            background: Palette.dark-mode ? #33415544 : #ffffff66;
-            opacity: 0.6;
+            background: Palette.dark-mode ? #334155 : #cbd5e1;
+            opacity: root.pulse-opacity;
+        }
+
+        // Sweeping light band across the skeleton surface
+        if root.animated: Rectangle {
+            width: parent.width * 0.5 + 40px;
+            height: 100%;
+            x: -self.width + (parent.width + self.width * 2) * root.phase;
+            background: @linear-gradient(90deg,
+                transparent 0%,
+                (Palette.dark-mode ? #ffffff22 : #ffffffaa) 50%,
+                transparent 100%
+            );
         }
     }
 }

@@ -10,7 +10,7 @@ export global Palette {
     // Borders & Dividers
     out property <color> border-subtle: dark-mode ? #334155 : #e2e8f0;
     out property <color> border-strong: dark-mode ? #475569 : #cbd5e1;
-    out property <color> border-focus: #3b82f6;
+    out property <color> border-focus: accent;
 
     // Typography
     out property <color> text-primary: dark-mode ? #f8fafc : #0f172a;
@@ -18,10 +18,10 @@ export global Palette {
     out property <color> text-placeholder: dark-mode ? #64748b : #94a3b8;
     out property <color> text-on-accent: #ffffff;
 
-    // Accent / Brand Colors (Blue)
-    out property <color> accent: #3b82f6;
-    out property <color> accent-hover: #2563eb;
-    out property <color> accent-pressed: #1d4ed8;
+    // Accent / Brand Colors (Reactive)
+    in-out property <color> accent: #3b82f6;
+    out property <color> accent-hover: accent.darker(15%);
+    out property <color> accent-pressed: accent.darker(25%);
 
     // Danger / Destructive (Red)
     out property <color> danger: #ef4444;
