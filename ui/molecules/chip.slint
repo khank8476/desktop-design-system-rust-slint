@@ -28,7 +28,7 @@ export component Chip {
                      Palette.border-subtle;
 
         background: root.selected ? (Palette.accent.with-alpha(0.20)) :
-                    touch.has-hover ? Palette.bg-surface-hover :
+                    body-touch.has-hover ? Palette.bg-surface-hover :
                     root.variant == "primary" ? (Palette.dark-mode ? #1e3a8a33 : #eff6ff) :
                     root.variant == "success" ? (Palette.dark-mode ? #064e3b33 : #ecfdf5) :
                     root.variant == "warning" ? (Palette.dark-mode ? #78350f33 : #fffbeb) :
@@ -40,66 +40,83 @@ export component Chip {
 
         HorizontalLayout {
             padding-left: root.has-icon ? 8px : 12px;
-            padding-right: root.removable ? 8px : 12px;
+            padding-right: root.removable ? 6px : 12px;
             spacing: 6px;
             alignment: center;
 
-            // Optional Vector Icon Prefix
-            if root.has-icon: Image {
-                source: root.icon-image;
-                width: 12px;
-                height: 12px;
-                colorize: root.selected ? Palette.accent :
-                          root.variant == "primary" ? Palette.accent :
-                          root.variant == "success" ? Palette.success :
-                          root.variant == "warning" ? #f59e0b :
-                          root.variant == "danger" ? Palette.danger :
-                          Palette.text-secondary;
-                vertical-alignment: center;
-            }
+            // Clickable pill body: Icon + Label
+            pill-body := Rectangle {
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: center;
 
-            // Chip Label
-            Text {
-                text: root.text;
-                font-family: Typography.font-family;
-                font-size: Typography.size-xs;
-                font-weight: root.selected ? Typography.weight-semibold : Typography.weight-medium;
-                color: root.selected ? Palette.accent :
-                       root.variant == "primary" ? Palette.accent :
-                       root.variant == "success" ? Palette.success :
-                       root.variant == "danger" ? Palette.danger :
-                       Palette.text-primary;
-                vertical-alignment: center;
-            }
+                    // Vertically Centered Vector Icon Prefix
+                    if root.has-icon: VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: root.icon-image;
+                            width: 12px;
+                            height: 12px;
+                            colorize: root.selected ? Palette.accent :
+                                      root.variant == "primary" ? Palette.accent :
+                                      root.variant == "success" ? Palette.success :
+                                      root.variant == "warning" ? #f59e0b :
+                                      root.variant == "danger" ? Palette.danger :
+                                      Palette.text-secondary;
+                        }
+                    }
 
-            // Optional Remove Button (Vector SVG Close Icon)
-            if root.removable: Rectangle {
-                width: 16px;
-                height: 16px;
-                border-radius: 8px;
-                background: remove-touch.has-hover ? (Palette.dark-mode ? #475569 : #cbd5e1) : transparent;
-
-                Image {
-                    source: @image-url("../../assets/icons/close.svg");
-                    width: 8px;
-                    height: 8px;
-                    colorize: Palette.text-secondary;
-                    x: (parent.width - self.width) / 2;
-                    y: (parent.height - self.height) / 2;
+                    // Vertically Centered Chip Label
+                    Text {
+                        text: root.text;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: root.selected ? Typography.weight-semibold : Typography.weight-medium;
+                        color: root.selected ? Palette.accent :
+                               root.variant == "primary" ? Palette.accent :
+                               root.variant == "success" ? Palette.success :
+                               root.variant == "danger" ? Palette.danger :
+                               Palette.text-primary;
+                        vertical-alignment: center;
+                    }
                 }
 
-                remove-touch := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => { root.removed(); }
+                body-touch := TouchArea {
+                    mouse-cursor: root.enabled ? pointer : default;
+                    clicked => {
+                        if root.enabled {
+                            root.clicked();
+                        }
+                    }
                 }
             }
-        }
 
-        touch := TouchArea {
-            mouse-cursor: root.enabled ? pointer : default;
-            clicked => {
-                if root.enabled {
-                    root.clicked();
+            // Vertically Centered Dedicated Remove Button (✕)
+            if root.removable: VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 8px;
+                    background: remove-touch.has-hover ? (Palette.dark-mode ? #475569 : #cbd5e1) : transparent;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: @image-url("../../assets/icons/close.svg");
+                            width: 8px;
+                            height: 8px;
+                            colorize: Palette.text-secondary;
+                            horizontal-alignment: center;
+                        }
+                    }
+
+                    remove-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.removed();
+                        }
+                    }
                 }
             }
         }

@@ -36,26 +36,28 @@ component PaletteRow {
                 spacing: Spacing.space-sm;
                 alignment: center;
 
-                // Vector Icon Box (Zero Tofu, Zero Emoji)
+                // Vector Icon Box (Vertically Centered)
                 Rectangle {
                     width: 28px;
                     height: 28px;
                     border-radius: Spacing.radius-sm;
                     background: Palette.dark-mode ? #1e293b : #f1f5f9;
 
-                    Image {
-                        source: root.item.icon == "theme" ? @image-url("../../assets/icons/sun-moon.svg") :
-                                root.item.icon == "pos" ? @image-url("../../assets/icons/cart.svg") :
-                                root.item.icon == "devforge" ? @image-url("../../assets/icons/zap.svg") :
-                                root.item.icon == "explorer" ? @image-url("../../assets/icons/folder.svg") :
-                                root.item.icon == "telemetry" ? @image-url("../../assets/icons/cpu.svg") :
-                                root.item.icon == "shortcut" ? @image-url("../../assets/icons/link.svg") :
-                                @image-url("../../assets/icons/settings.svg");
-                        width: 14px;
-                        height: 14px;
-                        colorize: root.is-selected ? Palette.accent : Palette.text-secondary;
-                        x: (parent.width - self.width) / 2;
-                        y: (parent.height - self.height) / 2;
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: root.item.icon == "theme" ? @image-url("../../assets/icons/sun-moon.svg") :
+                                    root.item.icon == "pos" ? @image-url("../../assets/icons/cart.svg") :
+                                    root.item.icon == "devforge" ? @image-url("../../assets/icons/zap.svg") :
+                                    root.item.icon == "explorer" ? @image-url("../../assets/icons/folder.svg") :
+                                    root.item.icon == "telemetry" ? @image-url("../../assets/icons/cpu.svg") :
+                                    root.item.icon == "shortcut" ? @image-url("../../assets/icons/link.svg") :
+                                    @image-url("../../assets/icons/settings.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: root.is-selected ? Palette.accent : Palette.text-secondary;
+                            horizontal-alignment: center;
+                        }
                     }
                 }
 
@@ -80,10 +82,9 @@ component PaletteRow {
                 }
             }
 
-            // Keyboard Shortcut Badge
-            if root.item.shortcut != "": HorizontalLayout {
+            // Keyboard Shortcut Badge (Vertically Centered)
+            if root.item.shortcut != "": VerticalLayout {
                 alignment: center;
-
                 Rectangle {
                     height: 22px;
                     border-radius: Spacing.radius-sm;
@@ -130,7 +131,12 @@ export component CommandPalette {
     callback command-selected(string);
     callback closed();
 
+    width: 100%;
+    height: 100%;
+
     if root.is-open: FocusScope {
+        width: 100%;
+        height: 100%;
         forward-focus: search-input;
         key-pressed(event) => {
             if event.text == Key.Escape {
@@ -146,133 +152,175 @@ export component CommandPalette {
             height: 100%;
             background: #000000bb; // High-contrast solid dark backdrop
 
-        // Click outside the modal card to dismiss
-        backdrop-touch := TouchArea {
-            clicked => {
-                root.is-open = false;
-                root.closed();
-            }
-        }
-
-        // Floating Centered Command Box (100% Solid & Opaque)
-        card := Rectangle {
-            width: 600px;
-            height: 380px;
-            border-radius: Spacing.radius-lg;
-            border-width: 1.5px;
-            border-color: Palette.accent;
-            background: Palette.dark-mode ? #0f172a : #ffffff;
-            drop-shadow-blur: 32px;
-            drop-shadow-color: #000000dd;
-            drop-shadow-offset-y: 8px;
-
-            // Centered on screen
-            x: (parent.width - self.width) / 2;
-            y: parent.height * 0.15;
-
-            // Absorbs clicks inside card so backdrop-touch does not close
-            card-touch := TouchArea {
-                // Prevent falling through to backdrop
+            // Click outside the modal card to dismiss
+            backdrop-touch := TouchArea {
+                clicked => {
+                    root.is-open = false;
+                    root.closed();
+                }
             }
 
-            VerticalLayout {
-                padding: Spacing.space-md;
-                spacing: Spacing.space-sm;
+            // Floating Centered Command Box (100% Solid & Opaque, Centered Like Modal)
+            card := Rectangle {
+                width: 600px;
+                height: 380px;
+                border-radius: Spacing.radius-lg;
+                border-width: 1.5px;
+                border-color: Palette.accent;
+                background: Palette.dark-mode ? #0f172a : #ffffff;
+                drop-shadow-blur: 32px;
+                drop-shadow-color: #000000dd;
+                drop-shadow-offset-y: 8px;
 
-                // Search Bar Input
-                Rectangle {
-                    height: 44px;
-                    border-radius: Spacing.radius-md;
-                    border-width: 1.5px;
-                    border-color: Palette.border-subtle;
-                    background: Palette.dark-mode ? #1e293b : #f8fafc;
+                // Centered exactly in the middle of the window
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
 
-                    HorizontalLayout {
-                        padding-left: Spacing.space-md;
-                        padding-right: Spacing.space-md;
-                        spacing: Spacing.space-sm;
-                        alignment: center;
+                // Absorbs clicks inside card so backdrop-touch does not close
+                card-touch := TouchArea {
+                    // Prevent falling through to backdrop
+                }
 
-                        Image {
-                            source: @image-url("../../assets/icons/search.svg");
-                            width: 16px;
-                            height: 16px;
-                            colorize: Palette.text-secondary;
-                            vertical-alignment: center;
-                        }
+                VerticalLayout {
+                    padding: Spacing.space-md;
+                    spacing: Spacing.space-sm;
 
-                        search-input := TextInput {
-                            width: 100%;
-                            text <=> root.search-query;
-                            font-family: Typography.font-family;
-                            font-size: Typography.size-base;
-                            color: Palette.text-primary;
-                            vertical-alignment: center;
+                    // Search Bar Input Header
+                    Rectangle {
+                        height: 44px;
+                        border-radius: Spacing.radius-md;
+                        border-width: 1.5px;
+                        border-color: Palette.border-subtle;
+                        background: Palette.dark-mode ? #1e293b : #f8fafc;
 
-                            key-pressed(event) => {
-                                if event.text == Key.Escape {
-                                    root.is-open = false;
-                                    root.closed();
-                                    return accept;
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            padding-right: 8px;
+                            spacing: 8px;
+                            alignment: center;
+
+                            // Vertically Centered Search Icon
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/search.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: Palette.text-secondary;
                                 }
-                                if event.modifiers.control && (event.text == "t" || event.text == "T") {
-                                    root.command-selected("toggle-theme");
-                                    root.is-open = false;
-                                    root.closed();
-                                    return accept;
-                                }
-                                if event.text == Key.Return {
-                                    if root.commands.length > 0 {
-                                        root.command-selected(root.commands[0].id);
+                            }
+
+                            // Text Input Expands to fill available space (Never overflows!)
+                            search-input := TextInput {
+                                horizontal-stretch: 1;
+                                text <=> root.search-query;
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-base;
+                                color: Palette.text-primary;
+                                vertical-alignment: center;
+
+                                key-pressed(event) => {
+                                    if event.text == Key.Escape {
                                         root.is-open = false;
                                         root.closed();
                                         return accept;
                                     }
+                                    if event.modifiers.control && (event.text == "t" || event.text == "T") {
+                                        root.command-selected("toggle-theme");
+                                        root.is-open = false;
+                                        root.closed();
+                                        return accept;
+                                    }
+                                    if event.text == Key.Return {
+                                        if root.commands.length > 0 {
+                                            root.command-selected(root.commands[0].id);
+                                            root.is-open = false;
+                                            root.closed();
+                                            return accept;
+                                        }
+                                    }
+                                    return reject;
                                 }
-                                return reject;
                             }
-                        }
 
-                        Rectangle {
-                            height: 20px;
-                            border-radius: Spacing.radius-sm;
-                            background: Palette.dark-mode ? #0f172a : #e2e8f0;
-
-                            HorizontalLayout {
-                                padding-left: 6px;
-                                padding-right: 6px;
+                            // Vertically Centered "ESC to close" badge
+                            VerticalLayout {
                                 alignment: center;
+                                Rectangle {
+                                    height: 22px;
+                                    border-radius: Spacing.radius-sm;
+                                    background: Palette.dark-mode ? #0f172a : #e2e8f0;
+                                    border-width: 1px;
+                                    border-color: Palette.border-subtle;
 
-                                Text {
-                                    text: "ESC to close";
-                                    font-size: 10px;
-                                    color: Palette.text-secondary;
-                                    vertical-alignment: center;
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        padding-right: 6px;
+                                        alignment: center;
+
+                                        Text {
+                                            text: "ESC to close";
+                                            font-family: Typography.font-family;
+                                            font-size: 10px;
+                                            color: Palette.text-secondary;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Dedicated Cancel / Close (✕) Button
+                            VerticalLayout {
+                                alignment: center;
+                                close-btn := Rectangle {
+                                    width: 26px;
+                                    height: 26px;
+                                    border-radius: Spacing.radius-sm;
+                                    background: close-palette-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Image {
+                                            source: @image-url("../../assets/icons/close.svg");
+                                            width: 12px;
+                                            height: 12px;
+                                            colorize: close-palette-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                                            horizontal-alignment: center;
+                                        }
+                                    }
+
+                                    close-palette-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            root.is-open = false;
+                                            root.closed();
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // Divider
-                Rectangle {
-                    height: 1px;
-                    background: Palette.border-subtle;
-                }
+                    // Divider
+                    Rectangle {
+                        height: 1px;
+                        background: Palette.border-subtle;
+                    }
 
-                // Command List
-                ScrollView {
-                    vertical-stretch: 1;
+                    // Command List
+                    ScrollView {
+                        vertical-stretch: 1;
 
-                    VerticalLayout {
-                        spacing: 4px;
+                        VerticalLayout {
+                            spacing: 4px;
 
-                        for item in root.commands: PaletteRow {
-                            item: item;
-                            clicked => {
-                                root.command-selected(item.id);
-                                root.is-open = false;
-                                root.closed();
+                            for item in root.commands: PaletteRow {
+                                item: item;
+                                clicked => {
+                                    root.command-selected(item.id);
+                                    root.is-open = false;
+                                    root.closed();
+                                }
                             }
                         }
                     }
@@ -280,5 +328,4 @@ export component CommandPalette {
             }
         }
     }
-}
 }
