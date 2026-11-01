@@ -44,13 +44,37 @@ fn main() -> Result<(), slint::PlatformError> {
     // 1. Create the native App Window
     let app = AppWindow::new()?;
 
-    // 2. Auto-detect OS Dark / Light mode (Windows, macOS, Linux)
+    // 2. Initialize Display Mode: Check SQLite Preferences first, fallback to OS auto-detection
     let is_dark_os = match dark_light::detect() {
         dark_light::Mode::Dark => true,
         dark_light::Mode::Light => false,
         dark_light::Mode::Default => false,
     };
-    app.global::<Palette>().set_dark_mode(is_dark_os);
+
+    let mut is_dark = is_dark_os;
+    let mut theme_pref_desc = "Auto-detected from OS theme".to_string();
+
+    if let Ok(db_init) = DatabaseManager::new("desktop_crud.db") {
+        if let Ok(Some(saved_theme)) = db_init.get_preference("theme_mode") {
+            match saved_theme.as_str() {
+                "dark" => {
+                    is_dark = true;
+                    theme_pref_desc = "Restored from SQLite preferences (Slate Dark)".to_string();
+                }
+                "light" => {
+                    is_dark = false;
+                    theme_pref_desc = "Restored from SQLite preferences (Clean Light)".to_string();
+                }
+                _ => {
+                    is_dark = is_dark_os;
+                    theme_pref_desc = "Synced with OS system theme (Default)".to_string();
+                }
+            }
+        }
+    }
+
+    app.global::<Palette>().set_dark_mode(is_dark);
+    app.set_theme_mode_status(theme_pref_desc.clone().into());
 
     // 3. Setup Live Feed Telemetry System
     let feed_items = Rc::new(slint::VecModel::<FeedItem>::default());
@@ -67,10 +91,11 @@ fn main() -> Result<(), slint::PlatformError> {
         id: "ev-init-2".into(),
         timestamp: "18:54:01".into(),
         level: "success".into(),
-        title: "Theme Synchronized with OS".into(),
+        title: "Theme Mode Synchronized".into(),
         message: format!(
-            "Windows Theme detected successfully. Active mode: {}.",
-            if is_dark_os { "Dark Mode" } else { "Light Mode" }
+            "Active: {}. ({})",
+            if is_dark { "Slate Dark" } else { "Clean Light" },
+            theme_pref_desc
         )
         .into(),
     });
@@ -441,6 +466,44 @@ fn main() -> Result<(), slint::PlatformError> {
             key: "sidebar_collapsed".into(),
             value: collapsed.to_string(),
         });
+    });
+
+    let db_tx_theme = db_tx.clone();
+    let app_weak_theme = app.as_weak();
+    app.on_theme_toggle_dark_mode(move |is_dark| {
+        let _ = db_tx_theme.send(DbCmd::SetPreference {
+            key: "theme_mode".into(),
+            value: if is_dark { "dark".into() } else { "light".into() },
+        });
+        if let Some(app) = app_weak_theme.upgrade() {
+            app.set_theme_mode_status(
+                if is_dark {
+                    "Saved: Slate Dark Theme (Persistent)".into()
+                } else {
+                    "Saved: Clean Light Theme (Persistent)".into()
+                }
+            );
+        }
+    });
+
+    let db_tx_reset = db_tx.clone();
+    let app_weak_reset = app.as_weak();
+    app.on_theme_reset_os(move || {
+        let os_dark = match dark_light::detect() {
+            dark_light::Mode::Dark => true,
+            dark_light::Mode::Light => false,
+            dark_light::Mode::Default => false,
+        };
+        let _ = db_tx_reset.send(DbCmd::SetPreference {
+            key: "theme_mode".into(),
+            value: "system".into(),
+        });
+        if let Some(app) = app_weak_reset.upgrade() {
+            app.global::<Palette>().set_dark_mode(os_dark);
+            app.set_theme_mode_status(
+                format!("Reset to OS Auto-detection ({})", if os_dark { "Dark" } else { "Light" }).into(),
+            );
+        }
     });
 
     // 10. Sample 360° Hardware Diagnostics & GPU Telemetry

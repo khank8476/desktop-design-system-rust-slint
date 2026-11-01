@@ -250,5 +250,14 @@ mod tests {
         // Update preference
         db.set_preference("sidebar_collapsed", "false").unwrap();
         assert_eq!(db.get_preference("sidebar_collapsed").unwrap(), Some("false".to_string()));
+
+        // Display mode (theme) preference persistence
+        assert_eq!(db.get_preference("theme_mode").unwrap(), None);
+        db.set_preference("theme_mode", "dark").unwrap();
+        assert_eq!(db.get_preference("theme_mode").unwrap(), Some("dark".to_string()));
+        db.set_preference("theme_mode", "light").unwrap();
+        assert_eq!(db.get_preference("theme_mode").unwrap(), Some("light".to_string()));
+        db.set_preference("theme_mode", "system").unwrap();
+        assert_eq!(db.get_preference("theme_mode").unwrap(), Some("system".to_string()));
     }
 }
