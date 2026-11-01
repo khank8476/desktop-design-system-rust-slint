@@ -115,6 +115,10 @@ When modifying this repository, strictly adhere to these architectural rules:
 1. **Crates.io Releases are Immutable:** Once a version is published, it cannot be replaced or modified. Every release requires bumping `version` in `Cargo.toml` and updating `README.md`.
 2. **Local Security:** All `.db`, `.env`, `credentials.json`, `publish.ps1`, and release tokens are strictly ignored by `.gitignore`. **Never commit local databases or release scripts.**
 
+### F. Windows Native Executable Application Icon Embedding
+1. **Never rely solely on Slint Window `icon:` for Windows Explorer:** Slint's `icon: @image-url(...)` sets the window titlebar and running taskbar icon. However, Windows File Explorer, Desktop shortcuts, and Task Manager read the icon from the Win32 PE resource table directly from disk without running the application.
+2. **Resource Compiler Pipeline in `build.rs`:** `build.rs` automatically scans for the Windows SDK Resource Compiler (`rc.exe`), compiles `app.rc` with `1 ICON "assets/app-icon.ico"`, and passes the compiled `app.res` to `cargo:rustc-link-arg-bins` and `cargo:rustc-link-arg-examples`. This embeds the native application logo directly into `.exe` binaries with zero runtime overhead.
+
 ---
 
 ## 4. Standard Developer & Agent Workflows
