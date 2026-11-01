@@ -16,7 +16,7 @@ component PaletteRow {
     in property <bool> is-selected: false;
     callback clicked();
 
-    height: 44px;
+    height: 48px;
 
     Rectangle {
         border-radius: Spacing.radius-md;
@@ -29,22 +29,25 @@ component PaletteRow {
             padding-left: Spacing.space-md;
             padding-right: Spacing.space-md;
             spacing: Spacing.space-md;
-            alignment: space-between;
 
-            // Icon + Title + Category
+            // Left Section: Icon Box + Title + Category
             HorizontalLayout {
-                spacing: Spacing.space-sm;
-                alignment: center;
+                horizontal-stretch: 1;
+                spacing: Spacing.space-md;
 
-                // Vector Icon Box (Vertically Centered)
-                Rectangle {
-                    width: 28px;
-                    height: 28px;
-                    border-radius: Spacing.radius-sm;
-                    background: Palette.dark-mode ? #1e293b : #f1f5f9;
+                // 32x32px Icon Box (Vertically Centered in 48px Row)
+                VerticalLayout {
+                    alignment: center;
 
-                    VerticalLayout {
-                        alignment: center;
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: Spacing.radius-sm;
+                        background: Palette.dark-mode ? #1e293b : #f1f5f9;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+
+                        // Vector SVG Icon is 100% centered in both X and Y
                         Image {
                             source: root.item.icon == "theme" ? @image-url("../../assets/icons/sun-moon.svg") :
                                     root.item.icon == "pos" ? @image-url("../../assets/icons/cart.svg") :
@@ -53,17 +56,19 @@ component PaletteRow {
                                     root.item.icon == "telemetry" ? @image-url("../../assets/icons/cpu.svg") :
                                     root.item.icon == "shortcut" ? @image-url("../../assets/icons/link.svg") :
                                     @image-url("../../assets/icons/settings.svg");
-                            width: 14px;
-                            height: 14px;
+                            width: 16px;
+                            height: 16px;
                             colorize: root.is-selected ? Palette.accent : Palette.text-secondary;
-                            horizontal-alignment: center;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
                         }
                     }
                 }
 
+                // Text Block (Vertically Centered in 48px Row)
                 VerticalLayout {
                     alignment: center;
-                    spacing: 1px;
+                    spacing: 2px;
 
                     Text {
                         text: root.item.title;
@@ -82,9 +87,10 @@ component PaletteRow {
                 }
             }
 
-            // Keyboard Shortcut Badge (Vertically Centered)
+            // Right Section: Shortcut Badge (Vertically Centered in 48px Row)
             if root.item.shortcut != "": VerticalLayout {
                 alignment: center;
+
                 Rectangle {
                     height: 22px;
                     border-radius: Spacing.radius-sm;
@@ -93,14 +99,15 @@ component PaletteRow {
                     border-color: Palette.border-subtle;
 
                     HorizontalLayout {
-                        padding-left: 6px;
-                        padding-right: 6px;
+                        padding-left: 7px;
+                        padding-right: 7px;
                         alignment: center;
 
                         Text {
                             text: root.item.shortcut;
                             font-family: "Consolas, monospace";
                             font-size: 10px;
+                            font-weight: Typography.weight-medium;
                             color: Palette.text-secondary;
                             vertical-alignment: center;
                         }
@@ -129,6 +136,7 @@ export component CommandPalette {
     ];
 
     callback command-selected(string);
+    callback search-changed(string);
     callback closed();
 
     width: 100%;
@@ -138,6 +146,7 @@ export component CommandPalette {
         width: 100%;
         height: 100%;
         forward-focus: search-input;
+
         key-pressed(event) => {
             if event.text == Key.Escape {
                 root.is-open = false;
@@ -162,8 +171,8 @@ export component CommandPalette {
 
             // Floating Centered Command Box (100% Solid & Opaque, Centered Like Modal)
             card := Rectangle {
-                width: 600px;
-                height: 380px;
+                width: 620px;
+                height: 400px;
                 border-radius: Spacing.radius-lg;
                 border-width: 1.5px;
                 border-color: Palette.accent;
@@ -185,21 +194,20 @@ export component CommandPalette {
                     padding: Spacing.space-md;
                     spacing: Spacing.space-sm;
 
-                    // Search Bar Input Header
+                    // Full-Width Search Bar Header (Height 48px)
                     Rectangle {
-                        height: 44px;
+                        height: 48px;
                         border-radius: Spacing.radius-md;
                         border-width: 1.5px;
                         border-color: Palette.border-subtle;
                         background: Palette.dark-mode ? #1e293b : #f8fafc;
 
                         HorizontalLayout {
-                            padding-left: 12px;
-                            padding-right: 8px;
-                            spacing: 8px;
-                            alignment: center;
+                            padding-left: 14px;
+                            padding-right: 10px;
+                            spacing: 10px;
 
-                            // Vertically Centered Search Icon
+                            // Left: Search Icon (Vertically Centered)
                             VerticalLayout {
                                 alignment: center;
                                 Image {
@@ -210,7 +218,7 @@ export component CommandPalette {
                                 }
                             }
 
-                            // Text Input Expands to fill available space (Never overflows!)
+                            // Middle: Wide Search Text Input
                             search-input := TextInput {
                                 horizontal-stretch: 1;
                                 text <=> root.search-query;
@@ -218,6 +226,10 @@ export component CommandPalette {
                                 font-size: Typography.size-base;
                                 color: Palette.text-primary;
                                 vertical-alignment: center;
+
+                                edited => {
+                                    root.search-changed(self.text);
+                                }
 
                                 key-pressed(event) => {
                                     if event.text == Key.Escape {
@@ -243,57 +255,60 @@ export component CommandPalette {
                                 }
                             }
 
-                            // Vertically Centered "ESC to close" badge
-                            VerticalLayout {
-                                alignment: center;
-                                Rectangle {
-                                    height: 22px;
-                                    border-radius: Spacing.radius-sm;
-                                    background: Palette.dark-mode ? #0f172a : #e2e8f0;
-                                    border-width: 1px;
-                                    border-color: Palette.border-subtle;
+                            // Right Controls: ESC Badge + Cancel (✕) Button
+                            HorizontalLayout {
+                                spacing: 6px;
 
-                                    HorizontalLayout {
-                                        padding-left: 6px;
-                                        padding-right: 6px;
-                                        alignment: center;
+                                // Vertically Centered ESC Badge
+                                VerticalLayout {
+                                    alignment: center;
+                                    Rectangle {
+                                        height: 22px;
+                                        border-radius: Spacing.radius-sm;
+                                        background: Palette.dark-mode ? #0f172a : #e2e8f0;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
 
-                                        Text {
-                                            text: "ESC to close";
-                                            font-family: Typography.font-family;
-                                            font-size: 10px;
-                                            color: Palette.text-secondary;
-                                            vertical-alignment: center;
+                                        HorizontalLayout {
+                                            padding-left: 6px;
+                                            padding-right: 6px;
+                                            alignment: center;
+
+                                            Text {
+                                                text: "ESC to close";
+                                                font-family: Typography.font-family;
+                                                font-size: 10px;
+                                                color: Palette.text-secondary;
+                                                vertical-alignment: center;
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            // Dedicated Cancel / Close (✕) Button
-                            VerticalLayout {
-                                alignment: center;
-                                close-btn := Rectangle {
-                                    width: 26px;
-                                    height: 26px;
-                                    border-radius: Spacing.radius-sm;
-                                    background: close-palette-touch.has-hover ? Palette.bg-surface-hover : transparent;
+                                // Vertically Centered Close (✕) Button
+                                VerticalLayout {
+                                    alignment: center;
+                                    close-btn := Rectangle {
+                                        width: 26px;
+                                        height: 26px;
+                                        border-radius: Spacing.radius-sm;
+                                        background: close-palette-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
-                                    VerticalLayout {
-                                        alignment: center;
                                         Image {
                                             source: @image-url("../../assets/icons/close.svg");
                                             width: 12px;
                                             height: 12px;
                                             colorize: close-palette-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
-                                            horizontal-alignment: center;
+                                            x: (parent.width - self.width) / 2;
+                                            y: (parent.height - self.height) / 2;
                                         }
-                                    }
 
-                                    close-palette-touch := TouchArea {
-                                        mouse-cursor: pointer;
-                                        clicked => {
-                                            root.is-open = false;
-                                            root.closed();
+                                        close-palette-touch := TouchArea {
+                                            mouse-cursor: pointer;
+                                            clicked => {
+                                                root.is-open = false;
+                                                root.closed();
+                                            }
                                         }
                                     }
                                 }
@@ -307,7 +322,7 @@ export component CommandPalette {
                         background: Palette.border-subtle;
                     }
 
-                    // Command List
+                    // Command List with Empty State Support
                     ScrollView {
                         vertical-stretch: 1;
 
@@ -320,6 +335,30 @@ export component CommandPalette {
                                     root.command-selected(item.id);
                                     root.is-open = false;
                                     root.closed();
+                                }
+                            }
+
+                            // Empty Search State
+                            if root.commands.length == 0: VerticalLayout {
+                                alignment: center;
+                                padding: 36px;
+                                spacing: 8px;
+
+                                Text {
+                                    text: "No matching commands found";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-sm;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: "Try searching for 'theme', 'pos', 'devforge', 'explorer', or 'system'";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-placeholder;
+                                    horizontal-alignment: center;
                                 }
                             }
                         }

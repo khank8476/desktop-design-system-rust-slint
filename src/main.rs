@@ -883,6 +883,41 @@ fn main() -> Result<(), slint::PlatformError> {
         });
     });
 
+    // 14. Connect Live Command Palette Search Filter
+    let all_commands = vec![
+        CommandItem { id: "toggle-theme".into(), title: "Toggle Dark / Light Theme".into(), category: "Preferences".into(), shortcut: "Ctrl+T".into(), icon: "theme".into() },
+        CommandItem { id: "open-pos".into(), title: "Launch POS Retail Terminal".into(), category: "Examples".into(), shortcut: "F8".into(), icon: "pos".into() },
+        CommandItem { id: "open-devforge".into(), title: "Launch DevForge Developer Studio".into(), category: "Examples".into(), shortcut: "F9".into(), icon: "devforge".into() },
+        CommandItem { id: "open-treeview".into(), title: "Scan Local Workspace Filesystem".into(), category: "Explorer".into(), shortcut: "Ctrl+E".into(), icon: "explorer".into() },
+        CommandItem { id: "refresh-telemetry".into(), title: "Refresh 360° Hardware Telemetry".into(), category: "System".into(), shortcut: "F5".into(), icon: "telemetry".into() },
+        CommandItem { id: "create-shortcut".into(), title: "Create Native Desktop Shortcut".into(), category: "System".into(), shortcut: "".into(), icon: "shortcut".into() },
+    ];
+
+    let app_weak_search = app.as_weak();
+    let commands_ref = all_commands.clone();
+    app.on_command_palette_search(move |query_slint| {
+        let q = query_slint.trim().to_lowercase();
+        let filtered: Vec<CommandItem> = if q.is_empty() {
+            commands_ref.clone()
+        } else {
+            commands_ref
+                .iter()
+                .filter(|c| {
+                    c.title.to_lowercase().contains(&q)
+                        || c.category.to_lowercase().contains(&q)
+                        || c.shortcut.to_lowercase().contains(&q)
+                        || c.id.to_lowercase().contains(&q)
+                })
+                .cloned()
+                .collect()
+        };
+
+        if let Some(app) = app_weak_search.upgrade() {
+            let model = Rc::new(slint::VecModel::from(filtered));
+            app.set_palette_commands(model.into());
+        }
+    });
+
     // Keep active timers alive for application lifespan
     let _timer_ref = (&timer, &toast_timer);
 

@@ -96,7 +96,16 @@ export component AppWindow inherits Window {
     in-out property <bool> demo-chip-4: true;
     in-out property <bool> demo-chip-5: true;
     in-out property <bool> show-command-palette: false;
+    in-out property <[CommandItem]> palette-commands: [
+        { id: "toggle-theme", title: "Toggle Dark / Light Theme", category: "Preferences", shortcut: "Ctrl+T", icon: "theme" },
+        { id: "open-pos", title: "Launch POS Retail Terminal", category: "Examples", shortcut: "F8", icon: "pos" },
+        { id: "open-devforge", title: "Launch DevForge Developer Studio", category: "Examples", shortcut: "F9", icon: "devforge" },
+        { id: "open-treeview", title: "Scan Local Workspace Filesystem", category: "Explorer", shortcut: "Ctrl+E", icon: "explorer" },
+        { id: "refresh-telemetry", title: "Refresh 360° Hardware Telemetry", category: "System", shortcut: "F5", icon: "telemetry" },
+        { id: "create-shortcut", title: "Create Native Desktop Shortcut", category: "System", shortcut: "", icon: "shortcut" },
+    ];
     callback command-palette-action(string);
+    callback command-palette-search(string);
     callback accent-color-changed(string);
 
     // TreeView & File Explorer Properties
@@ -264,8 +273,8 @@ export component AppWindow inherits Window {
                         }
                     }
 
-                    // Quick Command Palette Spotlight Trigger
-                    HorizontalLayout {
+                    // Quick Command Palette Spotlight Trigger (Vertically Centered in 64px Header)
+                    VerticalLayout {
                         alignment: center;
 
                         Rectangle {
@@ -2802,8 +2811,15 @@ export component AppWindow inherits Window {
         width: 100%;
         height: 100%;
         is-open <=> root.show-command-palette;
+        commands: root.palette-commands;
+        search-changed(q) => {
+            root.command-palette-search(q);
+        }
         command-selected(id) => {
             root.command-palette-action(id);
+        }
+        closed => {
+            root.command-palette-search("");
         }
     }
 
