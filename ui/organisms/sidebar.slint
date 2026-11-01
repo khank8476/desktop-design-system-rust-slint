@@ -14,7 +14,7 @@ export component DesktopSidebar {
 
     Rectangle {
         clip: true; // Keeps elements neatly inside during width animation
-        background: Palette.dark-mode ? #090d16 : #f1f5f9;
+        background: Palette.sepia-mode ? #ece1cb : (Palette.dark-mode ? #090d16 : #f1f5f9);
         border-width: 1px;
         border-color: Palette.border-subtle;
 
@@ -75,8 +75,8 @@ export component DesktopSidebar {
                 nav-0 := Rectangle {
                     height: 44px;
                     border-radius: Spacing.radius-md;
-                    background: root.active-index == 0 ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                                touch-0.has-hover ? (Palette.dark-mode ? #1e293b88 : #e2e8f0) : transparent;
+                    background: root.active-index == 0 ? (Palette.sepia-mode ? #fbf7ee : (Palette.dark-mode ? #1e293b : #ffffff)) :
+                                touch-0.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b88 : #e2e8f0)) : transparent;
                     drop-shadow-blur: root.active-index == 0 ? 6px : 0px;
                     drop-shadow-color: #0000001f;
                     drop-shadow-offset-y: root.active-index == 0 ? 1px : 0px;
@@ -125,8 +125,8 @@ export component DesktopSidebar {
                 nav-1 := Rectangle {
                     height: 44px;
                     border-radius: Spacing.radius-md;
-                    background: root.active-index == 1 ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                                touch-1.has-hover ? (Palette.dark-mode ? #1e293b88 : #e2e8f0) : transparent;
+                    background: root.active-index == 1 ? (Palette.sepia-mode ? #fbf7ee : (Palette.dark-mode ? #1e293b : #ffffff)) :
+                                touch-1.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b88 : #e2e8f0)) : transparent;
                     drop-shadow-blur: root.active-index == 1 ? 6px : 0px;
                     drop-shadow-color: #0000001f;
                     drop-shadow-offset-y: root.active-index == 1 ? 1px : 0px;
@@ -175,8 +175,8 @@ export component DesktopSidebar {
                 nav-2 := Rectangle {
                     height: 44px;
                     border-radius: Spacing.radius-md;
-                    background: root.active-index == 2 ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                                touch-2.has-hover ? (Palette.dark-mode ? #1e293b88 : #e2e8f0) : transparent;
+                    background: root.active-index == 2 ? (Palette.sepia-mode ? #fbf7ee : (Palette.dark-mode ? #1e293b : #ffffff)) :
+                                touch-2.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b88 : #e2e8f0)) : transparent;
                     drop-shadow-blur: root.active-index == 2 ? 6px : 0px;
                     drop-shadow-color: #0000001f;
                     drop-shadow-offset-y: root.active-index == 2 ? 1px : 0px;
@@ -225,8 +225,8 @@ export component DesktopSidebar {
                 nav-3 := Rectangle {
                     height: 44px;
                     border-radius: Spacing.radius-md;
-                    background: root.active-index == 3 ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                                touch-3.has-hover ? (Palette.dark-mode ? #1e293b88 : #e2e8f0) : transparent;
+                    background: root.active-index == 3 ? (Palette.sepia-mode ? #fbf7ee : (Palette.dark-mode ? #1e293b : #ffffff)) :
+                                touch-3.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b88 : #e2e8f0)) : transparent;
                     drop-shadow-blur: root.active-index == 3 ? 6px : 0px;
                     drop-shadow-color: #0000001f;
                     drop-shadow-offset-y: root.active-index == 3 ? 1px : 0px;

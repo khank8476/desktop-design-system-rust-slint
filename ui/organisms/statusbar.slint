@@ -16,7 +16,7 @@ export component StatusBar {
     height: 28px;
 
     Rectangle {
-        background: Palette.dark-mode ? #090d16 : #f1f5f9;
+        background: Palette.sepia-mode ? #ece1cb : (Palette.dark-mode ? #090d16 : #f1f5f9);
 
         Rectangle {
             x: 0;
@@ -39,7 +39,7 @@ export component StatusBar {
             // Status Indicator (Dot + Label)
             Rectangle {
                 height: 20px;
-                background: status-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
+                background: status-touch.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b : #e2e8f0)) : transparent;
                 border-radius: Spacing.radius-sm;
 
                 HorizontalLayout {
@@ -81,7 +81,7 @@ export component StatusBar {
             // Git Branch Pill
             Rectangle {
                 height: 20px;
-                background: branch-touch.has-hover ? (Palette.dark-mode ? #1e293b : #e2e8f0) : transparent;
+                background: branch-touch.has-hover ? (Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b : #e2e8f0)) : transparent;
                 border-radius: Spacing.radius-sm;
 
                 HorizontalLayout {

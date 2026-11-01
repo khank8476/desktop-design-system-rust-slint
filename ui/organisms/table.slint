@@ -2,6 +2,7 @@ import { Palette } from "../tokens/colors.slint";
 import { Typography } from "../tokens/typography.slint";
 import { Spacing } from "../tokens/spacing.slint";
 import { Badge } from "../atoms/badge.slint";
+import { Checkbox } from "../atoms/checkbox.slint";
 
 export struct TableRowData {
     id: string,
@@ -9,19 +10,25 @@ export struct TableRowData {
     runtime: string,
     status: string,     // "Active" | "Warning" | "Standby" | "Offline"
     latency: string,
+    selected: bool,
 }
 
 export component DataTable {
     in property <[string]> headers: ["Service / Pipeline", "Runtime Architecture", "Cluster Status", "Latency"];
     in-out property <[TableRowData]> rows: [
-        { id: "row-1", service: "Direct3D Render Pipeline", runtime: "DirectX 12 / HLSL", status: "Active", latency: "1.1 ms" },
-        { id: "row-2", service: "Metal Swapchain Engine", runtime: "Apple Metal 3.0", status: "Active", latency: "0.8 ms" },
-        { id: "row-3", service: "Vulkan Surface Compositor", runtime: "SPIR-V Cross-Platform", status: "Standby", latency: "2.4 ms" },
-        { id: "row-4", service: "Audio Subsystem Streamer", runtime: "WASAPI / CoreAudio", status: "Warning", latency: "12.8 ms" },
-        { id: "row-5", service: "Telemetry Event Ingestion", runtime: "Async Native Rust Channel", status: "Active", latency: "0.4 ms" }
+        { id: "row-1", service: "Direct3D Render Pipeline", runtime: "DirectX 12 / HLSL", status: "Active", latency: "1.1 ms", selected: false },
+        { id: "row-2", service: "Metal Swapchain Engine", runtime: "Apple Metal 3.0", status: "Active", latency: "0.8 ms", selected: false },
+        { id: "row-3", service: "Vulkan Surface Compositor", runtime: "SPIR-V Cross-Platform", status: "Standby", latency: "2.4 ms", selected: false },
+        { id: "row-4", service: "Audio Subsystem Streamer", runtime: "WASAPI / CoreAudio", status: "Warning", latency: "12.8 ms", selected: false },
+        { id: "row-5", service: "Telemetry Event Ingestion", runtime: "Async Native Rust Channel", status: "Active", latency: "0.4 ms", selected: false }
     ];
     in-out property <int> selected-row: 0;
+    in-out property <int> selected-count: 0;
+    in property <bool> multi-select-enabled: true;
+
     callback row-selected(int, string);
+    callback row-toggle-selected(int, bool);
+    callback select-all(bool);
 
     horizontal-stretch: 1;
 
@@ -37,12 +44,28 @@ export component DataTable {
             Rectangle {
                 height: 38px;
                 vertical-stretch: 0;
-                background: Palette.dark-mode ? #090d16 : #f1f5f9;
+                background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #090d16 : #f1f5f9);
 
                 HorizontalLayout {
                     padding-left: Spacing.space-md;
                     padding-right: Spacing.space-md;
                     spacing: Spacing.space-sm;
+
+                    // Col 0: Multi-Select Master Checkbox
+                    if root.multi-select-enabled: HorizontalLayout {
+                        width: 32px;
+                        alignment: center;
+                        VerticalLayout {
+                            alignment: center;
+                            Checkbox {
+                                checked: root.selected-count == root.rows.length && root.rows.length > 0;
+                                indeterminate: root.selected-count > 0 && root.selected-count < root.rows.length;
+                                toggled(c) => {
+                                    root.select-all(c);
+                                }
+                            }
+                        }
+                    }
 
                     // Col 1: Service (35% width)
                     HorizontalLayout {
@@ -116,14 +139,16 @@ export component DataTable {
                     height: 44px;
                     vertical-stretch: 0;
 
-                    // Row background with zebra striping and instant hover/select states
-                    background: root.selected-row == idx ? (Palette.dark-mode ? #1e293b : #eff6ff) :
-                                row-touch.has-hover ? (Palette.dark-mode ? #1e293b88 : #f8fafc) :
-                                (Math.mod(idx, 2) == 1) ? (Palette.dark-mode ? #121927 : #fbfcfe) :
-                                Palette.bg-surface;
+                    // Row background with zebra striping and multi-selection highlights across themes
+                    background: row.selected ? 
+                                (Palette.sepia-mode ? #eddac1 : (Palette.dark-mode ? #1e3a8a33 : #eff6ff)) :
+                                (root.selected-row == idx ? (Palette.sepia-mode ? #f1e4d0 : (Palette.dark-mode ? #1e293b : #eff6ff)) :
+                                row-touch.has-hover ? (Palette.sepia-mode ? #f4e8d3 : (Palette.dark-mode ? #1e293b88 : #f8fafc)) :
+                                (Math.mod(idx, 2) == 1) ? (Palette.sepia-mode ? #f7efe2 : (Palette.dark-mode ? #121927 : #fbfcfe)) :
+                                Palette.bg-surface);
 
-                    // Left accent indicator for selected row
-                    if root.selected-row == idx: Rectangle {
+                    // Left accent indicator for selected row or multi-selected rows
+                    if row.selected || root.selected-row == idx: Rectangle {
                         width: 3px;
                         height: 100%;
                         x: 0px;
@@ -135,6 +160,21 @@ export component DataTable {
                         padding-right: Spacing.space-md;
                         spacing: Spacing.space-sm;
 
+                        // Col 0: Row Checkbox
+                        if root.multi-select-enabled: HorizontalLayout {
+                            width: 32px;
+                            alignment: center;
+                            VerticalLayout {
+                                alignment: center;
+                                Checkbox {
+                                    checked: row.selected;
+                                    toggled(c) => {
+                                        root.row-toggle-selected(idx, c);
+                                    }
+                                }
+                            }
+                        }
+
                         // Col 1: Service Name
                         HorizontalLayout {
                             horizontal-stretch: 35;
@@ -144,7 +184,7 @@ export component DataTable {
                                 font-family: Typography.font-family;
                                 font-size: Typography.size-sm;
                                 font-weight: Typography.weight-medium;
-                                color: root.selected-row == idx ? Palette.accent : Palette.text-primary;
+                                color: (row.selected || root.selected-row == idx) ? Palette.accent : Palette.text-primary;
                                 vertical-alignment: center;
                             }
                         }
@@ -205,6 +245,9 @@ export component DataTable {
                         clicked => {
                             root.selected-row = idx;
                             root.row-selected(idx, row.id);
+                            if root.multi-select-enabled {
+                                root.row-toggle-selected(idx, !row.selected);
+                            }
                         }
                     }
                 }

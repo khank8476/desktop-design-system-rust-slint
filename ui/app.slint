@@ -31,6 +31,7 @@ import { DesktopSidebar } from "organisms/sidebar.slint";
 import { ToastNotification } from "organisms/toast.slint";
 import { DataTable, TableRowData } from "organisms/table.slint";
 import { CrudModal } from "organisms/crud_modal.slint";
+import { BatchEditModal } from "organisms/batch_edit_modal.slint";
 import { Avatar } from "atoms/avatar.slint";
 import { Skeleton } from "atoms/skeleton.slint";
 import { Chip } from "molecules/chip.slint";
@@ -58,6 +59,7 @@ export component AppWindow inherits Window {
     callback sidebar-toggle-collapsed(bool);
     in-out property <string> theme-mode-status: "Auto-synced with SQLite database";
     callback theme-toggle-dark-mode(bool);
+    callback theme-set-mode(string);
     callback theme-reset-os();
 
     // Tier 1 Interactive Demo Properties
@@ -97,7 +99,12 @@ export component AppWindow inherits Window {
     in-out property <bool> demo-chip-5: true;
     in-out property <bool> show-command-palette: false;
     in-out property <[CommandItem]> palette-commands: [
-        { id: "toggle-theme", title: "Toggle Dark / Light Theme", category: "Preferences", shortcut: "Ctrl+T", icon: "theme" },
+        { id: "toggle-theme", title: "Cycle Theme (Slate / Light / Sepia)", category: "Preferences", shortcut: "Ctrl+T", icon: "theme" },
+        { id: "set-theme-sepia", title: "Switch to Vintage Sepia Theme", category: "Preferences", shortcut: "", icon: "theme" },
+        { id: "set-theme-dark", title: "Switch to Slate Dark Theme", category: "Preferences", shortcut: "", icon: "theme" },
+        { id: "set-theme-light", title: "Switch to Clean Light Theme", category: "Preferences", shortcut: "", icon: "theme" },
+        { id: "table-select-all", title: "Batch Select All Services", category: "Table", shortcut: "", icon: "system" },
+        { id: "table-deselect-all", title: "Deselect All Services", category: "Table", shortcut: "", icon: "system" },
         { id: "open-pos", title: "Launch POS Retail Terminal", category: "Examples", shortcut: "F8", icon: "pos" },
         { id: "open-devforge", title: "Launch DevForge Developer Studio", category: "Examples", shortcut: "F9", icon: "devforge" },
         { id: "open-treeview", title: "Scan Local Workspace Filesystem", category: "Explorer", shortcut: "Ctrl+E", icon: "explorer" },
@@ -151,8 +158,11 @@ export component AppWindow inherits Window {
     // Local SQLite CRUD properties & callbacks
     in-out property <[TableRowData]> db-records: [];
     in-out property <int> selected-record-idx: 0;
+    in-out property <int> db-selected-count: 0;
     in-out property <bool> show-crud-modal: false;
     in-out property <bool> show-delete-confirm: false;
+    in-out property <bool> show-batch-edit-modal: false;
+    in-out property <bool> show-batch-delete-confirm: false;
     in-out property <bool> is-editing-record: false;
     in-out property <string> edit-record-id: "";
     in-out property <string> form-service: "";
@@ -163,6 +173,11 @@ export component AppWindow inherits Window {
     callback db-update-record(string, string, string, string, string);
     callback db-delete-selected(int);
     callback db-refresh();
+    callback db-toggle-row-selected(int);
+    callback db-select-all(bool);
+    callback db-batch-delete();
+    callback db-batch-set-status(string);
+    callback db-batch-update(bool, string, bool, string, bool, string);
 
     // Toast Notification properties & callbacks
     in-out property <bool> toast-open: false;
@@ -215,6 +230,14 @@ export component AppWindow inherits Window {
                 }
                 if root.show-delete-confirm {
                     root.show-delete-confirm = false;
+                    return accept;
+                }
+                if root.show-batch-edit-modal {
+                    root.show-batch-edit-modal = false;
+                    return accept;
+                }
+                if root.show-batch-delete-confirm {
+                    root.show-batch-delete-confirm = false;
                     return accept;
                 }
             }
@@ -280,7 +303,7 @@ export component AppWindow inherits Window {
                         Rectangle {
                             height: 36px;
                             border-radius: Spacing.radius-md;
-                            background: cmd-quick-touch.has-hover ? Palette.bg-surface-hover : (Palette.dark-mode ? #0f172a : #f1f5f9);
+                            background: cmd-quick-touch.has-hover ? Palette.bg-surface-hover : (Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #0f172a : #f1f5f9));
                             border-width: 1px;
                             border-color: Palette.border-subtle;
 
@@ -316,7 +339,7 @@ export component AppWindow inherits Window {
                                     Rectangle {
                                         height: 20px;
                                         border-radius: 4px;
-                                        background: Palette.dark-mode ? #1e293b : #e2e8f0;
+                                        background: Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b : #e2e8f0);
 
                                         HorizontalLayout {
                                             padding-left: 6px;
@@ -1699,11 +1722,13 @@ export component AppWindow inherits Window {
                                         }
 
                                         Button {
-                                            text: "Edit Selected";
+                                            text: root.db-selected-count > 1 ? ("Batch Edit (" + root.db-selected-count + ")") : "Edit Selected";
                                             variant: "secondary";
                                             enabled: root.db-records.length > 0;
                                             clicked => {
-                                                if root.selected-record-idx >= 0 && root.selected-record-idx < root.db-records.length {
+                                                if root.db-selected-count > 1 {
+                                                    root.show-batch-edit-modal = true;
+                                                } else if root.selected-record-idx >= 0 && root.selected-record-idx < root.db-records.length {
                                                     root.form-service = root.db-records[root.selected-record-idx].service;
                                                     root.form-runtime = root.db-records[root.selected-record-idx].runtime;
                                                     root.form-status = root.db-records[root.selected-record-idx].status;
@@ -1716,11 +1741,15 @@ export component AppWindow inherits Window {
                                         }
 
                                         Button {
-                                            text: "Delete Selected";
+                                            text: root.db-selected-count > 1 ? ("Delete (" + root.db-selected-count + ")") : "Delete Selected";
                                             variant: "danger";
                                             enabled: root.db-records.length > 0;
                                             clicked => {
-                                                root.show-delete-confirm = true;
+                                                if root.db-selected-count > 1 {
+                                                    root.show-batch-delete-confirm = true;
+                                                } else {
+                                                    root.show-delete-confirm = true;
+                                                }
                                             }
                                         }
 
@@ -1734,10 +1763,106 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
+                                // Batch Selection Quick-Action Bar
+                                if root.db-selected-count > 0: Rectangle {
+                                    height: 44px;
+                                    border-radius: Spacing.radius-md;
+                                    border-width: 1px;
+                                    border-color: Palette.accent;
+                                    background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #1e3a8a25 : #eff6ff);
+
+                                    HorizontalLayout {
+                                        padding-left: Spacing.space-md;
+                                        padding-right: Spacing.space-md;
+                                        alignment: space-between;
+
+                                        // Left: Count and Quick Status Pills
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-md;
+                                            alignment: center;
+
+                                            Badge {
+                                                text: root.db-selected-count + " of " + root.db-records.length + " Selected";
+                                                variant: "primary";
+                                                has-dot: true;
+                                            }
+
+                                            Text {
+                                                text: "Set Status:";
+                                                font-family: Typography.font-family;
+                                                font-size: Typography.size-xs;
+                                                font-weight: Typography.weight-semibold;
+                                                color: Palette.text-secondary;
+                                                vertical-alignment: center;
+                                            }
+
+                                            for q_st in ["Active", "Standby", "Warning", "Offline"]: Rectangle {
+                                                height: 26px;
+                                                border-radius: Spacing.radius-sm;
+                                                border-width: 1px;
+                                                border-color: Palette.border-subtle;
+                                                background: qst-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                                HorizontalLayout {
+                                                    padding-left: 8px;
+                                                    padding-right: 8px;
+                                                    Text {
+                                                        text: q_st;
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        font-weight: Typography.weight-medium;
+                                                        color: q_st == "Active" ? #10b981 :
+                                                               q_st == "Warning" ? #f59e0b :
+                                                               q_st == "Offline" ? #ef4444 : Palette.text-primary;
+                                                        vertical-alignment: center;
+                                                    }
+                                                }
+
+                                                qst-touch := TouchArea {
+                                                    mouse-cursor: pointer;
+                                                    clicked => {
+                                                        root.db-batch-set-status(q_st);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Right: Batch Edit & Deselect Triggers
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            alignment: center;
+
+                                            Button {
+                                                text: "Batch Edit (" + root.db-selected-count + ")";
+                                                variant: "secondary";
+                                                clicked => {
+                                                    root.show-batch-edit-modal = true;
+                                                }
+                                            }
+
+                                            Button {
+                                                text: "Deselect All";
+                                                variant: "ghost";
+                                                clicked => {
+                                                    root.db-select-all(false);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
                                 // Desktop High-Density Data Grid Table (Bound to local SQLite database)
                                 DataTable {
                                     rows: root.db-records;
                                     selected-row <=> root.selected-record-idx;
+                                    selected-count: root.db-selected-count;
+                                    multi-select-enabled: true;
+                                    row-toggle-selected(idx, is_sel) => {
+                                        root.db-toggle-row-selected(idx);
+                                    }
+                                    select-all(c) => {
+                                        root.db-select-all(c);
+                                    }
                                     row-selected(idx, id) => {
                                         root.selected-record-idx = idx;
                                         root.trigger-sample-toast("info", "Record Selected", "Inspecting SQLite service: " + id);
@@ -2009,7 +2134,7 @@ export component AppWindow inherits Window {
                                     padding: Spacing.space-sm;
                                     alignment: space-between;
                                     Text { text: "bg-canvas"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
-                                    Text { text: Palette.dark-mode ? "#0F172A" : "#F8FAFC"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                    Text { text: Palette.sepia-mode ? "#F4ECD8" : (Palette.dark-mode ? "#0F172A" : "#F8FAFC"); font-size: Typography.size-xs; color: Palette.text-secondary; }
                                 }
                             }
 
@@ -2023,7 +2148,7 @@ export component AppWindow inherits Window {
                                     padding: Spacing.space-sm;
                                     alignment: space-between;
                                     Text { text: "bg-surface"; font-size: Typography.size-sm; color: Palette.text-primary; font-weight: Typography.weight-bold; }
-                                    Text { text: Palette.dark-mode ? "#1E293B" : "#FFFFFF"; font-size: Typography.size-xs; color: Palette.text-secondary; }
+                                    Text { text: Palette.sepia-mode ? "#FBF7EE" : (Palette.dark-mode ? "#1E293B" : "#FFFFFF"); font-size: Typography.size-xs; color: Palette.text-secondary; }
                                 }
                             }
 
@@ -2264,7 +2389,9 @@ export component AppWindow inherits Window {
                                         }
 
                                         Text {
-                                            text: Palette.dark-mode ? ("Active: Slate Dark Theme (#0F172A) • " + root.theme-mode-status) : ("Active: Clean Light Theme (#F8FAFC) • " + root.theme-mode-status);
+                                            text: Palette.sepia-mode ? ("Active: Vintage Sepia Theme (#F4ECD8) • " + root.theme-mode-status) :
+                                                  Palette.dark-mode ? ("Active: Slate Dark Theme (#0F172A) • " + root.theme-mode-status) :
+                                                  ("Active: Clean Light Theme (#F8FAFC) • " + root.theme-mode-status);
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-sm;
                                             color: Palette.text-secondary;
@@ -2272,9 +2399,9 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
-                                // Right: Actions (Auto-detect OS Button + Toggle Switch)
+                                // Right: Actions (Auto-detect OS + 3-Mode Theme Selector)
                                 HorizontalLayout {
-                                    spacing: Spacing.space-md;
+                                    spacing: Spacing.space-sm;
                                     alignment: center;
 
                                     Button {
@@ -2285,10 +2412,105 @@ export component AppWindow inherits Window {
                                         }
                                     }
 
-                                    ToggleSwitch {
-                                        checked <=> Palette.dark-mode;
-                                        toggled(is_dark) => {
-                                            root.theme-toggle-dark-mode(is_dark);
+                                    // 3-Mode Segmented Theme Switcher
+                                    Rectangle {
+                                        height: 36px;
+                                        border-radius: Spacing.radius-md;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+                                        background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #0f172a : #f1f5f9);
+
+                                        HorizontalLayout {
+                                            padding: 2px;
+                                            spacing: 2px;
+                                            alignment: center;
+
+                                            // Light Mode
+                                            Rectangle {
+                                                height: 30px;
+                                                border-radius: Spacing.radius-sm;
+                                                background: (!Palette.dark-mode && !Palette.sepia-mode) ? Palette.accent :
+                                                            light-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                                                HorizontalLayout {
+                                                    padding-left: 10px;
+                                                    padding-right: 10px;
+                                                    alignment: center;
+                                                    Text {
+                                                        text: "Clean Light";
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        font-weight: Typography.weight-semibold;
+                                                        color: (!Palette.dark-mode && !Palette.sepia-mode) ? #ffffff : Palette.text-primary;
+                                                        vertical-alignment: center;
+                                                    }
+                                                }
+
+                                                light-touch := TouchArea {
+                                                    mouse-cursor: pointer;
+                                                    clicked => {
+                                                        root.theme-set-mode("light");
+                                                    }
+                                                }
+                                            }
+
+                                            // Dark Mode
+                                            Rectangle {
+                                                height: 30px;
+                                                border-radius: Spacing.radius-sm;
+                                                background: Palette.dark-mode ? Palette.accent :
+                                                            dark-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                                                HorizontalLayout {
+                                                    padding-left: 10px;
+                                                    padding-right: 10px;
+                                                    alignment: center;
+                                                    Text {
+                                                        text: "Slate Dark";
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        font-weight: Typography.weight-semibold;
+                                                        color: Palette.dark-mode ? #ffffff : Palette.text-primary;
+                                                        vertical-alignment: center;
+                                                    }
+                                                }
+
+                                                dark-touch := TouchArea {
+                                                    mouse-cursor: pointer;
+                                                    clicked => {
+                                                        root.theme-set-mode("dark");
+                                                    }
+                                                }
+                                            }
+
+                                            // Sepia Mode
+                                            Rectangle {
+                                                height: 30px;
+                                                border-radius: Spacing.radius-sm;
+                                                background: Palette.sepia-mode ? Palette.accent :
+                                                            sepia-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                                                HorizontalLayout {
+                                                    padding-left: 10px;
+                                                    padding-right: 10px;
+                                                    alignment: center;
+                                                    Text {
+                                                        text: "Vintage Sepia";
+                                                        font-family: Typography.font-family;
+                                                        font-size: Typography.size-xs;
+                                                        font-weight: Typography.weight-semibold;
+                                                        color: Palette.sepia-mode ? #ffffff : Palette.text-primary;
+                                                        vertical-alignment: center;
+                                                    }
+                                                }
+
+                                                sepia-touch := TouchArea {
+                                                    mouse-cursor: pointer;
+                                                    clicked => {
+                                                        root.theme-set-mode("sepia");
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -2850,6 +3072,27 @@ export component AppWindow inherits Window {
         confirm-variant: "danger";
         confirmed => {
             root.db-delete-selected(root.selected-record-idx);
+        }
+    }
+
+    // Batch Edit Modal
+    BatchEditModal {
+        is-open <=> root.show-batch-edit-modal;
+        selected-count: root.db-selected-count;
+        saved(apply_run, run, apply_st, st, apply_lat, lat) => {
+            root.db-batch-update(apply_run, run, apply_st, st, apply_lat, lat);
+        }
+    }
+
+    // Batch Delete Confirmation Modal
+    ModalDialog {
+        is-open <=> root.show-batch-delete-confirm;
+        title: "Confirm Batch Deletion";
+        message: "Are you sure you want to permanently delete all " + root.db-selected-count + " selected service records from your local SQLite database? This batch operation cannot be undone.";
+        confirm-text: "Delete " + root.db-selected-count + " Records";
+        confirm-variant: "danger";
+        confirmed => {
+            root.db-batch-delete();
         }
     }
 }

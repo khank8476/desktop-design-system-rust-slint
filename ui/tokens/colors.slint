@@ -1,21 +1,48 @@
 export global Palette {
     in-out property <bool> dark-mode: false;
+    in-out property <bool> sepia-mode: false;
 
     // Window & Surfaces
-    out property <color> bg-canvas: dark-mode ? #0f172a : #f8fafc;
-    out property <color> bg-surface: dark-mode ? #1e293b : #ffffff;
-    out property <color> bg-surface-hover: dark-mode ? #334155 : #f1f5f9;
-    out property <color> bg-surface-active: dark-mode ? #475569 : #e2e8f0;
+    out property <color> bg-canvas: 
+        sepia-mode ? #f4ecd8 :
+        dark-mode ? #0f172a : #f8fafc;
+
+    out property <color> bg-surface: 
+        sepia-mode ? #fbf7ee :
+        dark-mode ? #1e293b : #ffffff;
+
+    out property <color> bg-surface-hover: 
+        sepia-mode ? #ebe0cc :
+        dark-mode ? #334155 : #f1f5f9;
+
+    out property <color> bg-surface-active: 
+        sepia-mode ? #dfd0b5 :
+        dark-mode ? #475569 : #e2e8f0;
 
     // Borders & Dividers
-    out property <color> border-subtle: dark-mode ? #334155 : #e2e8f0;
-    out property <color> border-strong: dark-mode ? #475569 : #cbd5e1;
+    out property <color> border-subtle: 
+        sepia-mode ? #e2d2b4 :
+        dark-mode ? #334155 : #e2e8f0;
+
+    out property <color> border-strong: 
+        sepia-mode ? #c4ab82 :
+        dark-mode ? #475569 : #cbd5e1;
+
     out property <color> border-focus: accent;
 
     // Typography
-    out property <color> text-primary: dark-mode ? #f8fafc : #0f172a;
-    out property <color> text-secondary: dark-mode ? #94a3b8 : #64748b;
-    out property <color> text-placeholder: dark-mode ? #64748b : #94a3b8;
+    out property <color> text-primary: 
+        sepia-mode ? #382818 :
+        dark-mode ? #f8fafc : #0f172a;
+
+    out property <color> text-secondary: 
+        sepia-mode ? #7d654a :
+        dark-mode ? #94a3b8 : #64748b;
+
+    out property <color> text-placeholder: 
+        sepia-mode ? #a8947a :
+        dark-mode ? #64748b : #94a3b8;
+
     out property <color> text-on-accent: #ffffff;
 
     // Accent / Brand Colors (Reactive)
@@ -24,10 +51,10 @@ export global Palette {
     out property <color> accent-pressed: accent.darker(25%);
 
     // Danger / Destructive (Red)
-    out property <color> danger: #ef4444;
+    out property <color> danger: sepia-mode ? #b91c1c : #ef4444;
     out property <color> danger-hover: #dc2626;
 
     // Success (Green)
-    out property <color> success: #10b981;
+    out property <color> success: sepia-mode ? #2e7d32 : #10b981;
 }
 

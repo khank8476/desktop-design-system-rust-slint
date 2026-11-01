@@ -164,6 +164,72 @@ impl DatabaseManager {
         Ok(affected > 0)
     }
 
+    /// Delete multiple records by IDs in an atomic transaction (Batch Delete)
+    pub fn delete_multiple(&self, ids: &[i64]) -> Result<usize> {
+        if ids.is_empty() {
+            return Ok(0);
+        }
+        let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+        let query = format!("DELETE FROM services WHERE id IN ({})", placeholders);
+        let params: Vec<&dyn rusqlite::ToSql> = ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+        let affected = self.conn.execute(&query, rusqlite::params_from_iter(params))?;
+        Ok(affected)
+    }
+
+    /// Update multiple records by IDs with selective field overrides (Batch Update)
+    pub fn update_multiple(
+        &self,
+        ids: &[i64],
+        service: Option<&str>,
+        runtime: Option<&str>,
+        status: Option<&str>,
+        latency: Option<&str>,
+    ) -> Result<usize> {
+        if ids.is_empty() {
+            return Ok(0);
+        }
+        let mut set_clauses = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+        if let Some(s) = service {
+            set_clauses.push(format!("service = ?{}", params.len() + 1));
+            params.push(Box::new(s.to_string()));
+        }
+        if let Some(r) = runtime {
+            set_clauses.push(format!("runtime = ?{}", params.len() + 1));
+            params.push(Box::new(r.to_string()));
+        }
+        if let Some(st) = status {
+            set_clauses.push(format!("status = ?{}", params.len() + 1));
+            params.push(Box::new(st.to_string()));
+        }
+        if let Some(l) = latency {
+            set_clauses.push(format!("latency = ?{}", params.len() + 1));
+            params.push(Box::new(l.to_string()));
+        }
+
+        if set_clauses.is_empty() {
+            return Ok(0);
+        }
+
+        let in_start = params.len() + 1;
+        let mut in_clauses = Vec::new();
+        for (i, id) in ids.iter().enumerate() {
+            in_clauses.push(format!("?{}", in_start + i));
+            params.push(Box::new(*id));
+        }
+
+        let sql = format!(
+            "UPDATE services SET {} WHERE id IN ({})",
+            set_clauses.join(", "),
+            in_clauses.join(", ")
+        );
+
+        let param_refs: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
+        let affected = self.conn.execute(&sql, rusqlite::params_from_iter(param_refs))?;
+        Ok(affected)
+    }
+
     /// Read a user preference by key
     pub fn get_preference(&self, key: &str) -> Result<Option<String>> {
         let mut stmt = self.conn.prepare("SELECT value FROM preferences WHERE key = ?1")?;
@@ -257,7 +323,46 @@ mod tests {
         assert_eq!(db.get_preference("theme_mode").unwrap(), Some("dark".to_string()));
         db.set_preference("theme_mode", "light").unwrap();
         assert_eq!(db.get_preference("theme_mode").unwrap(), Some("light".to_string()));
+        db.set_preference("theme_mode", "sepia").unwrap();
+        assert_eq!(db.get_preference("theme_mode").unwrap(), Some("sepia".to_string()));
         db.set_preference("theme_mode", "system").unwrap();
         assert_eq!(db.get_preference("theme_mode").unwrap(), Some("system".to_string()));
+    }
+
+    #[test]
+    fn test_batch_operations() {
+        let db = DatabaseManager::new_in_memory().expect("In-memory DB init failed");
+        let initial = db.get_all().expect("Query failed");
+        assert_eq!(initial.len(), 5);
+
+        let ids: Vec<i64> = initial.iter().take(3).map(|r| r.id).collect();
+        assert_eq!(ids.len(), 3);
+
+        // 1. Batch Update Status and Runtime
+        let updated_count = db.update_multiple(
+            &ids,
+            None,
+            Some("Batch Modern Runtime"),
+            Some("Offline"),
+            Some("0.1 ms"),
+        ).expect("Batch update failed");
+        assert_eq!(updated_count, 3);
+
+        let records = db.get_all().expect("Query failed");
+        for r in records.iter().filter(|r| ids.contains(&r.id)) {
+            assert_eq!(r.runtime, "Batch Modern Runtime");
+            assert_eq!(r.status, "Offline");
+            assert_eq!(r.latency, "0.1 ms");
+        }
+
+        // 2. Batch Delete
+        let deleted_count = db.delete_multiple(&ids).expect("Batch delete failed");
+        assert_eq!(deleted_count, 3);
+
+        let remaining = db.get_all().expect("Query failed");
+        assert_eq!(remaining.len(), 2);
+        for id in ids {
+            assert!(remaining.iter().all(|r| r.id != id));
+        }
     }
 }

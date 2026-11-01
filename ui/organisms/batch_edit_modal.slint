@@ -1,0 +1,313 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+import { TextInputField } from "../atoms/input.slint";
+import { Checkbox } from "../atoms/checkbox.slint";
+import { Badge } from "../atoms/badge.slint";
+
+export component BatchEditModal {
+    in-out property <bool> is-open: false;
+    in property <int> selected-count: 0;
+
+    in-out property <bool> override-status: true;
+    in-out property <string> status-val: "Active";
+
+    in-out property <bool> override-runtime: false;
+    in-out property <string> runtime-val: "SPIR-V Cross-Platform";
+
+    in-out property <bool> override-latency: false;
+    in-out property <string> latency-val: "1.0 ms";
+
+    callback saved(bool /* apply_runtime */, string /* runtime */, bool /* apply_status */, string /* status */, bool /* apply_latency */, string /* latency */);
+    callback cancelled();
+
+    if root.is-open: Rectangle {
+        width: 100%;
+        height: 100%;
+        z: 999;
+
+        // Modal Backdrop
+        Rectangle {
+            width: 100%;
+            height: 100%;
+            background: #00000088;
+
+            TouchArea {
+                clicked => {
+                    root.is-open = false;
+                    root.cancelled();
+                }
+            }
+        }
+
+        // Modal Dialog Card (Centered, 520px)
+        Rectangle {
+            width: 520px;
+            border-radius: Spacing.radius-lg;
+            border-width: 1px;
+            border-color: Palette.border-subtle;
+            background: Palette.sepia-mode ? #fbf7ee : (Palette.dark-mode ? #1e293b : #ffffff);
+            drop-shadow-blur: 24px;
+            drop-shadow-color: #00000055;
+            drop-shadow-offset-y: 8px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+
+            VerticalLayout {
+                padding: Spacing.space-xl;
+                spacing: Spacing.space-lg;
+
+                // 1. Header with Badge & Close Button
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    VerticalLayout {
+                        spacing: 4px;
+
+                        HorizontalLayout {
+                            spacing: Spacing.space-sm;
+                            alignment: start;
+
+                            Text {
+                                text: "Batch Edit Records";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Badge {
+                                    text: root.selected-count + " Selected";
+                                    variant: "primary";
+                                    has-dot: true;
+                                }
+                            }
+                        }
+
+                        Text {
+                            text: "Select attributes to simultaneously update across all checked rows in SQLite.";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            color: Palette.text-secondary;
+                        }
+                    }
+
+                    // Close (✕) Trigger
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: Spacing.radius-sm;
+                        background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        Image {
+                            source: @image-url("../../assets/icons/close.svg");
+                            width: 12px;
+                            height: 12px;
+                            colorize: close-touch.has-hover ? Palette.text-primary : Palette.text-secondary;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+
+                        close-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.is-open = false;
+                                root.cancelled();
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                // 2. Field Override Rows
+                VerticalLayout {
+                    spacing: Spacing.space-md;
+
+                    // Option A: Cluster Status Override
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: root.override-status ? Palette.accent : Palette.border-subtle;
+                        background: root.override-status ? 
+                                    (Palette.sepia-mode ? #f4ecd888 : (Palette.dark-mode ? #1e3a8a18 : #eff6ff88)) : 
+                                    Palette.bg-surface;
+
+                        VerticalLayout {
+                            padding: Spacing.space-md;
+                            spacing: Spacing.space-sm;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Checkbox {
+                                    checked <=> root.override-status;
+                                    text: "Batch Update Cluster Status";
+                                }
+                            }
+
+                            if root.override-status: HorizontalLayout {
+                                spacing: Spacing.space-xs;
+
+                                for st in ["Active", "Standby", "Warning", "Offline"]: Rectangle {
+                                    height: 32px;
+                                    horizontal-stretch: 1;
+                                    border-radius: Spacing.radius-sm;
+                                    border-width: 1px;
+                                    border-color: root.status-val == st ? Palette.accent : Palette.border-subtle;
+                                    background: root.status-val == st ? Palette.accent :
+                                                st-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                    Text {
+                                        text: st;
+                                        font-family: Typography.font-family;
+                                        font-size: Typography.size-xs;
+                                        font-weight: Typography.weight-semibold;
+                                        color: root.status-val == st ? #ffffff : Palette.text-primary;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+
+                                    st-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            root.status-val = st;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Option B: Runtime Architecture Override
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: root.override-runtime ? Palette.accent : Palette.border-subtle;
+                        background: root.override-runtime ? 
+                                    (Palette.sepia-mode ? #f4ecd888 : (Palette.dark-mode ? #1e3a8a18 : #eff6ff88)) : 
+                                    Palette.bg-surface;
+
+                        VerticalLayout {
+                            padding: Spacing.space-md;
+                            spacing: Spacing.space-sm;
+
+                            Checkbox {
+                                checked <=> root.override-runtime;
+                                text: "Batch Update Runtime Architecture";
+                            }
+
+                            if root.override-runtime: VerticalLayout {
+                                spacing: Spacing.space-xs;
+                                TextInputField {
+                                    text <=> root.runtime-val;
+                                    placeholder: "e.g. DirectX 12 / HLSL, SPIR-V Cross-Platform";
+                                }
+
+                                // Quick Runtime Presets
+                                HorizontalLayout {
+                                    spacing: 4px;
+                                    Text {
+                                        text: "Presets:";
+                                        font-size: 10px;
+                                        color: Palette.text-secondary;
+                                        vertical-alignment: center;
+                                    }
+
+                                    for preset in ["DirectX 12 / HLSL", "Apple Metal 3.0", "SPIR-V", "Async Rust"]: Rectangle {
+                                        height: 20px;
+                                        border-radius: 4px;
+                                        border-width: 1px;
+                                        border-color: Palette.border-subtle;
+                                        background: pr-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                        HorizontalLayout {
+                                            padding-left: 6px;
+                                            padding-right: 6px;
+                                            Text {
+                                                text: preset;
+                                                font-size: 9px;
+                                                color: Palette.text-secondary;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+
+                                        pr-touch := TouchArea {
+                                            mouse-cursor: pointer;
+                                            clicked => {
+                                                root.runtime-val = preset;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Option C: Latency Target Override
+                    Rectangle {
+                        border-radius: Spacing.radius-md;
+                        border-width: 1px;
+                        border-color: root.override-latency ? Palette.accent : Palette.border-subtle;
+                        background: root.override-latency ? 
+                                    (Palette.sepia-mode ? #f4ecd888 : (Palette.dark-mode ? #1e3a8a18 : #eff6ff88)) : 
+                                    Palette.bg-surface;
+
+                        VerticalLayout {
+                            padding: Spacing.space-md;
+                            spacing: Spacing.space-sm;
+
+                            Checkbox {
+                                checked <=> root.override-latency;
+                                text: "Batch Update Latency Benchmark";
+                            }
+
+                            if root.override-latency: TextInputField {
+                                text <=> root.latency-val;
+                                placeholder: "e.g. 0.8 ms, 1.2 ms, Sub-ms";
+                            }
+                        }
+                    }
+                }
+
+                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                // 3. Footer Buttons
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: end;
+
+                    Button {
+                        text: "Cancel";
+                        variant: "ghost";
+                        clicked => {
+                            root.is-open = false;
+                            root.cancelled();
+                        }
+                    }
+
+                    Button {
+                        text: "Apply to " + root.selected-count + " Records";
+                        variant: "primary";
+                        enabled: root.override-status || root.override-runtime || root.override-latency;
+                        clicked => {
+                            root.is-open = false;
+                            root.saved(
+                                root.override-runtime,
+                                root.runtime-val,
+                                root.override-status,
+                                root.status-val,
+                                root.override-latency,
+                                root.latency-val
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

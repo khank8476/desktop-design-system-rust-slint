@@ -31,8 +31,18 @@ enum DbCmd {
         status: String,
         latency: String,
     },
+    UpdateMultiple {
+        ids: Vec<i64>,
+        service: Option<String>,
+        runtime: Option<String>,
+        status: Option<String>,
+        latency: Option<String>,
+    },
     Delete {
         id: i64,
+    },
+    DeleteMultiple {
+        ids: Vec<i64>,
     },
     SetPreference {
         key: String,
@@ -52,6 +62,7 @@ fn main() -> Result<(), slint::PlatformError> {
     };
 
     let mut is_dark = is_dark_os;
+    let mut is_sepia = false;
     let mut theme_pref_desc = "Auto-detected from OS theme".to_string();
 
     if let Ok(db_init) = DatabaseManager::new("desktop_crud.db") {
@@ -59,14 +70,22 @@ fn main() -> Result<(), slint::PlatformError> {
             match saved_theme.as_str() {
                 "dark" => {
                     is_dark = true;
+                    is_sepia = false;
                     theme_pref_desc = "Restored from SQLite preferences (Slate Dark)".to_string();
                 }
                 "light" => {
                     is_dark = false;
+                    is_sepia = false;
                     theme_pref_desc = "Restored from SQLite preferences (Clean Light)".to_string();
+                }
+                "sepia" => {
+                    is_dark = false;
+                    is_sepia = true;
+                    theme_pref_desc = "Restored from SQLite preferences (Vintage Sepia)".to_string();
                 }
                 _ => {
                     is_dark = is_dark_os;
+                    is_sepia = false;
                     theme_pref_desc = "Synced with OS system theme (Default)".to_string();
                 }
             }
@@ -74,6 +93,7 @@ fn main() -> Result<(), slint::PlatformError> {
     }
 
     app.global::<Palette>().set_dark_mode(is_dark);
+    app.global::<Palette>().set_sepia_mode(is_sepia);
     app.set_theme_mode_status(theme_pref_desc.clone().into());
 
     // Restore persistent accent color palette if saved in SQLite
@@ -252,29 +272,39 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         };
 
+        let reload_table = |db: &DatabaseManager, app_weak_db: &slint::Weak<AppWindow>| {
+            if let Ok(records) = db.get_all() {
+                let items: Vec<TableRowData> = records
+                    .into_iter()
+                    .map(|r| TableRowData {
+                        id: r.id.to_string().into(),
+                        service: r.service.into(),
+                        runtime: r.runtime.into(),
+                        status: r.status.into(),
+                        latency: r.latency.into(),
+                        selected: false,
+                    })
+                    .collect();
+
+                let app_weak = app_weak_db.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(app) = app_weak.upgrade() {
+                        let len = items.len() as i32;
+                        let model = Rc::new(slint::VecModel::from(items));
+                        app.set_db_records(model.into());
+                        app.set_db_selected_count(0);
+                        if app.get_selected_record_idx() >= len {
+                            app.set_selected_record_idx(std::cmp::max(0, len - 1));
+                        }
+                    }
+                });
+            }
+        };
+
         while let Ok(cmd) = db_rx.recv() {
             match cmd {
                 DbCmd::LoadAll => {
-                    if let Ok(records) = db.get_all() {
-                        let items: Vec<TableRowData> = records
-                            .into_iter()
-                            .map(|r| TableRowData {
-                                id: r.id.to_string().into(),
-                                service: r.service.into(),
-                                runtime: r.runtime.into(),
-                                status: r.status.into(),
-                                latency: r.latency.into(),
-                            })
-                            .collect();
-
-                        let app_weak = app_weak_db.clone();
-                        let _ = slint::invoke_from_event_loop(move || {
-                            if let Some(app) = app_weak.upgrade() {
-                                let model = Rc::new(slint::VecModel::from(items));
-                                app.set_db_records(model.into());
-                            }
-                        });
-                    }
+                    reload_table(&db, &app_weak_db);
                 }
                 DbCmd::Insert {
                     service,
@@ -298,27 +328,7 @@ fn main() -> Result<(), slint::PlatformError> {
                         }
                     });
 
-                    // Reload table automatically after write
-                    if let Ok(records) = db.get_all() {
-                        let items: Vec<TableRowData> = records
-                            .into_iter()
-                            .map(|r| TableRowData {
-                                id: r.id.to_string().into(),
-                                service: r.service.into(),
-                                runtime: r.runtime.into(),
-                                status: r.status.into(),
-                                latency: r.latency.into(),
-                            })
-                            .collect();
-
-                        let app_weak = app_weak_db.clone();
-                        let _ = slint::invoke_from_event_loop(move || {
-                            if let Some(app) = app_weak.upgrade() {
-                                let model = Rc::new(slint::VecModel::from(items));
-                                app.set_db_records(model.into());
-                            }
-                        });
-                    }
+                    reload_table(&db, &app_weak_db);
                 }
                 DbCmd::Update {
                     id,
@@ -344,27 +354,38 @@ fn main() -> Result<(), slint::PlatformError> {
                         }
                     });
 
-                    // Reload table automatically after update
-                    if let Ok(records) = db.get_all() {
-                        let items: Vec<TableRowData> = records
-                            .into_iter()
-                            .map(|r| TableRowData {
-                                id: r.id.to_string().into(),
-                                service: r.service.into(),
-                                runtime: r.runtime.into(),
-                                status: r.status.into(),
-                                latency: r.latency.into(),
-                            })
-                            .collect();
+                    reload_table(&db, &app_weak_db);
+                }
+                DbCmd::UpdateMultiple {
+                    ids,
+                    service,
+                    runtime,
+                    status,
+                    latency,
+                } => {
+                    let update_res = db.update_multiple(
+                        &ids,
+                        service.as_deref(),
+                        runtime.as_deref(),
+                        status.as_deref(),
+                        latency.as_deref(),
+                    );
+                    let app_weak = app_weak_db.clone();
+                    let is_ok = update_res.is_ok();
+                    let msg = match update_res {
+                        Ok(n) => format!("Successfully batch-updated {} service records in SQLite.", n),
+                        Err(e) => format!("Failed to batch-update records: {e}"),
+                    };
 
-                        let app_weak = app_weak_db.clone();
-                        let _ = slint::invoke_from_event_loop(move || {
-                            if let Some(app) = app_weak.upgrade() {
-                                let model = Rc::new(slint::VecModel::from(items));
-                                app.set_db_records(model.into());
-                            }
-                        });
-                    }
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = app_weak.upgrade() {
+                            let toast_status = if is_ok { "success" } else { "danger" };
+                            let toast_title = if is_ok { "Batch Records Updated" } else { "Database Error" };
+                            app.invoke_trigger_sample_toast(toast_status.into(), toast_title.into(), msg.into());
+                        }
+                    });
+
+                    reload_table(&db, &app_weak_db);
                 }
                 DbCmd::Delete { id } => {
                     let delete_res = db.delete(id);
@@ -384,31 +405,26 @@ fn main() -> Result<(), slint::PlatformError> {
                         }
                     });
 
-                    // Reload table automatically after delete
-                    if let Ok(records) = db.get_all() {
-                        let items: Vec<TableRowData> = records
-                            .into_iter()
-                            .map(|r| TableRowData {
-                                id: r.id.to_string().into(),
-                                service: r.service.into(),
-                                runtime: r.runtime.into(),
-                                status: r.status.into(),
-                                latency: r.latency.into(),
-                            })
-                            .collect();
+                    reload_table(&db, &app_weak_db);
+                }
+                DbCmd::DeleteMultiple { ids } => {
+                    let delete_res = db.delete_multiple(&ids);
+                    let app_weak = app_weak_db.clone();
+                    let is_ok = delete_res.is_ok();
+                    let msg = match delete_res {
+                        Ok(n) => format!("Successfully deleted {} service records from SQLite.", n),
+                        Err(e) => format!("Failed to delete records: {e}"),
+                    };
 
-                        let app_weak = app_weak_db.clone();
-                        let _ = slint::invoke_from_event_loop(move || {
-                            if let Some(app) = app_weak.upgrade() {
-                                let len = items.len() as i32;
-                                let model = Rc::new(slint::VecModel::from(items));
-                                app.set_db_records(model.into());
-                                if app.get_selected_record_idx() >= len {
-                                    app.set_selected_record_idx(std::cmp::max(0, len - 1));
-                                }
-                            }
-                        });
-                    }
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Some(app) = app_weak.upgrade() {
+                            let toast_status = if is_ok { "success" } else { "danger" };
+                            let toast_title = if is_ok { "Batch Records Deleted" } else { "Database Error" };
+                            app.invoke_trigger_sample_toast(toast_status.into(), toast_title.into(), msg.into());
+                        }
+                    });
+
+                    reload_table(&db, &app_weak_db);
                 }
                 DbCmd::SetPreference { key, value } => {
                     let _ = db.set_preference(&key, &value);
@@ -459,6 +475,119 @@ fn main() -> Result<(), slint::PlatformError> {
         let _ = db_tx_refresh.send(DbCmd::LoadAll);
     });
 
+    // Batch Table Selection Callbacks
+    let app_weak_toggle = app.as_weak();
+    app.on_db_toggle_row_selected(move |idx| {
+        if let Some(app) = app_weak_toggle.upgrade() {
+            let records = app.get_db_records();
+            if let Some(mut row) = records.row_data(idx as usize) {
+                row.selected = !row.selected;
+                records.set_row_data(idx as usize, row);
+
+                let mut count = 0;
+                for i in 0..records.row_count() {
+                    if let Some(r) = records.row_data(i) {
+                        if r.selected {
+                            count += 1;
+                        }
+                    }
+                }
+                app.set_db_selected_count(count);
+            }
+        }
+    });
+
+    let app_weak_all = app.as_weak();
+    app.on_db_select_all(move |select_all| {
+        if let Some(app) = app_weak_all.upgrade() {
+            let records = app.get_db_records();
+            let total = records.row_count();
+            for i in 0..total {
+                if let Some(mut r) = records.row_data(i) {
+                    r.selected = select_all;
+                    records.set_row_data(i, r);
+                }
+            }
+            app.set_db_selected_count(if select_all { total as i32 } else { 0 });
+        }
+    });
+
+    let app_weak_bdel = app.as_weak();
+    let db_tx_bdel = db_tx.clone();
+    app.on_db_batch_delete(move || {
+        if let Some(app) = app_weak_bdel.upgrade() {
+            let records = app.get_db_records();
+            let mut ids = Vec::new();
+            for i in 0..records.row_count() {
+                if let Some(r) = records.row_data(i) {
+                    if r.selected {
+                        if let Ok(id) = r.id.parse::<i64>() {
+                            ids.push(id);
+                        }
+                    }
+                }
+            }
+            if !ids.is_empty() {
+                let _ = db_tx_bdel.send(DbCmd::DeleteMultiple { ids });
+            }
+        }
+    });
+
+    let app_weak_bstat = app.as_weak();
+    let db_tx_bstat = db_tx.clone();
+    app.on_db_batch_set_status(move |new_status_slint| {
+        let new_status = new_status_slint.to_string();
+        if let Some(app) = app_weak_bstat.upgrade() {
+            let records = app.get_db_records();
+            let mut ids = Vec::new();
+            for i in 0..records.row_count() {
+                if let Some(r) = records.row_data(i) {
+                    if r.selected {
+                        if let Ok(id) = r.id.parse::<i64>() {
+                            ids.push(id);
+                        }
+                    }
+                }
+            }
+            if !ids.is_empty() {
+                let _ = db_tx_bstat.send(DbCmd::UpdateMultiple {
+                    ids,
+                    service: None,
+                    runtime: None,
+                    status: Some(new_status),
+                    latency: None,
+                });
+            }
+        }
+    });
+
+    let app_weak_bupd = app.as_weak();
+    let db_tx_bupd = db_tx.clone();
+    app.on_db_batch_update(move |apply_run, run_slint, apply_st, st_slint, apply_lat, lat_slint| {
+        if let Some(app) = app_weak_bupd.upgrade() {
+            let records = app.get_db_records();
+            let mut ids = Vec::new();
+            for i in 0..records.row_count() {
+                if let Some(r) = records.row_data(i) {
+                    if r.selected {
+                        if let Ok(id) = r.id.parse::<i64>() {
+                            ids.push(id);
+                        }
+                    }
+                }
+            }
+            if !ids.is_empty() {
+                let _ = db_tx_bupd.send(DbCmd::UpdateMultiple {
+                    ids,
+                    service: None,
+                    runtime: if apply_run { Some(run_slint.to_string()) } else { None },
+                    status: if apply_st { Some(st_slint.to_string()) } else { None },
+                    latency: if apply_lat { Some(lat_slint.to_string()) } else { None },
+                });
+            }
+        }
+    });
+
     // 9. Initial Load from SQLite on Startup
     let _ = db_tx.send(DbCmd::LoadAll);
 
@@ -487,6 +616,7 @@ fn main() -> Result<(), slint::PlatformError> {
             value: if is_dark { "dark".into() } else { "light".into() },
         });
         if let Some(app) = app_weak_theme.upgrade() {
+            app.global::<Palette>().set_sepia_mode(false);
             app.set_theme_mode_status(
                 if is_dark {
                     "Saved: Slate Dark Theme (Persistent)".into()
@@ -494,6 +624,35 @@ fn main() -> Result<(), slint::PlatformError> {
                     "Saved: Clean Light Theme (Persistent)".into()
                 }
             );
+        }
+    });
+
+    let db_tx_mode = db_tx.clone();
+    let app_weak_mode = app.as_weak();
+    app.on_theme_set_mode(move |mode_slint| {
+        let mode = mode_slint.as_str();
+        let _ = db_tx_mode.send(DbCmd::SetPreference {
+            key: "theme_mode".into(),
+            value: mode.into(),
+        });
+        if let Some(app) = app_weak_mode.upgrade() {
+            match mode {
+                "dark" => {
+                    app.global::<Palette>().set_dark_mode(true);
+                    app.global::<Palette>().set_sepia_mode(false);
+                    app.set_theme_mode_status("Saved: Slate Dark Theme (Persistent)".into());
+                }
+                "sepia" => {
+                    app.global::<Palette>().set_dark_mode(false);
+                    app.global::<Palette>().set_sepia_mode(true);
+                    app.set_theme_mode_status("Saved: Vintage Sepia Theme (Persistent)".into());
+                }
+                _ => {
+                    app.global::<Palette>().set_dark_mode(false);
+                    app.global::<Palette>().set_sepia_mode(false);
+                    app.set_theme_mode_status("Saved: Clean Light Theme (Persistent)".into());
+                }
+            }
         }
     });
 
@@ -511,6 +670,7 @@ fn main() -> Result<(), slint::PlatformError> {
         });
         if let Some(app) = app_weak_reset.upgrade() {
             app.global::<Palette>().set_dark_mode(os_dark);
+            app.global::<Palette>().set_sepia_mode(false);
             app.set_theme_mode_status(
                 format!("Reset to OS Auto-detection ({})", if os_dark { "Dark" } else { "Light" }).into(),
             );
@@ -800,25 +960,69 @@ fn main() -> Result<(), slint::PlatformError> {
         if let Some(app) = app_weak_cmd.upgrade() {
             match action_id.as_str() {
                 "toggle-theme" => {
-                    let cur_dark = app.global::<Palette>().get_dark_mode();
-                    let new_dark = !cur_dark;
-                    app.global::<Palette>().set_dark_mode(new_dark);
+                    let is_sepia = app.global::<Palette>().get_sepia_mode();
+                    let is_dark = app.global::<Palette>().get_dark_mode();
+                    let (next_mode, next_desc) = if is_sepia {
+                        app.global::<Palette>().set_sepia_mode(false);
+                        app.global::<Palette>().set_dark_mode(false);
+                        ("light", "Clean Light")
+                    } else if is_dark {
+                        app.global::<Palette>().set_dark_mode(false);
+                        app.global::<Palette>().set_sepia_mode(true);
+                        ("sepia", "Vintage Sepia")
+                    } else {
+                        app.global::<Palette>().set_dark_mode(true);
+                        app.global::<Palette>().set_sepia_mode(false);
+                        ("dark", "Slate Dark")
+                    };
                     let _ = db_tx_cmd.send(DbCmd::SetPreference {
                         key: "theme_mode".into(),
-                        value: if new_dark { "dark".into() } else { "light".into() },
+                        value: next_mode.into(),
                     });
-                    app.set_theme_mode_status(
-                        if new_dark {
-                            "Saved: Slate Dark Theme (Persistent)".into()
-                        } else {
-                            "Saved: Clean Light Theme (Persistent)".into()
-                        },
-                    );
+                    app.set_theme_mode_status(format!("Saved: {} Theme (Persistent)", next_desc).into());
                     app.invoke_trigger_sample_toast(
                         "success".into(),
                         "Theme Mode Updated".into(),
-                        format!("Switched to {}", if new_dark { "Slate Dark" } else { "Clean Light" }).into(),
+                        format!("Switched to {}", next_desc).into(),
                     );
+                }
+                "set-theme-sepia" => {
+                    app.global::<Palette>().set_dark_mode(false);
+                    app.global::<Palette>().set_sepia_mode(true);
+                    let _ = db_tx_cmd.send(DbCmd::SetPreference {
+                        key: "theme_mode".into(),
+                        value: "sepia".into(),
+                    });
+                    app.set_theme_mode_status("Saved: Vintage Sepia Theme (Persistent)".into());
+                    app.invoke_trigger_sample_toast("success".into(), "Theme Mode Updated".into(), "Switched to Vintage Sepia Theme".into());
+                }
+                "set-theme-dark" => {
+                    app.global::<Palette>().set_dark_mode(true);
+                    app.global::<Palette>().set_sepia_mode(false);
+                    let _ = db_tx_cmd.send(DbCmd::SetPreference {
+                        key: "theme_mode".into(),
+                        value: "dark".into(),
+                    });
+                    app.set_theme_mode_status("Saved: Slate Dark Theme (Persistent)".into());
+                    app.invoke_trigger_sample_toast("success".into(), "Theme Mode Updated".into(), "Switched to Slate Dark Theme".into());
+                }
+                "set-theme-light" => {
+                    app.global::<Palette>().set_dark_mode(false);
+                    app.global::<Palette>().set_sepia_mode(false);
+                    let _ = db_tx_cmd.send(DbCmd::SetPreference {
+                        key: "theme_mode".into(),
+                        value: "light".into(),
+                    });
+                    app.set_theme_mode_status("Saved: Clean Light Theme (Persistent)".into());
+                    app.invoke_trigger_sample_toast("success".into(), "Theme Mode Updated".into(), "Switched to Clean Light Theme".into());
+                }
+                "table-select-all" => {
+                    app.invoke_db_select_all(true);
+                    app.invoke_trigger_sample_toast("info".into(), "Table Multi-Select".into(), "Selected all service rows in SQLite table.".into());
+                }
+                "table-deselect-all" => {
+                    app.invoke_db_select_all(false);
+                    app.invoke_trigger_sample_toast("info".into(), "Table Multi-Select".into(), "Cleared table row selection.".into());
                 }
                 "open-pos" => {
                     app.invoke_trigger_sample_toast(
@@ -885,7 +1089,12 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // 14. Connect Live Command Palette Search Filter
     let all_commands = vec![
-        CommandItem { id: "toggle-theme".into(), title: "Toggle Dark / Light Theme".into(), category: "Preferences".into(), shortcut: "Ctrl+T".into(), icon: "theme".into() },
+        CommandItem { id: "toggle-theme".into(), title: "Cycle Theme (Slate / Light / Sepia)".into(), category: "Preferences".into(), shortcut: "Ctrl+T".into(), icon: "theme".into() },
+        CommandItem { id: "set-theme-sepia".into(), title: "Switch to Vintage Sepia Theme".into(), category: "Preferences".into(), shortcut: "".into(), icon: "theme".into() },
+        CommandItem { id: "set-theme-dark".into(), title: "Switch to Slate Dark Theme".into(), category: "Preferences".into(), shortcut: "".into(), icon: "theme".into() },
+        CommandItem { id: "set-theme-light".into(), title: "Switch to Clean Light Theme".into(), category: "Preferences".into(), shortcut: "".into(), icon: "theme".into() },
+        CommandItem { id: "table-select-all".into(), title: "Batch Select All Services".into(), category: "Table".into(), shortcut: "".into(), icon: "system".into() },
+        CommandItem { id: "table-deselect-all".into(), title: "Deselect All Services".into(), category: "Table".into(), shortcut: "".into(), icon: "system".into() },
         CommandItem { id: "open-pos".into(), title: "Launch POS Retail Terminal".into(), category: "Examples".into(), shortcut: "F8".into(), icon: "pos".into() },
         CommandItem { id: "open-devforge".into(), title: "Launch DevForge Developer Studio".into(), category: "Examples".into(), shortcut: "F9".into(), icon: "devforge".into() },
         CommandItem { id: "open-treeview".into(), title: "Scan Local Workspace Filesystem".into(), category: "Explorer".into(), shortcut: "Ctrl+E".into(), icon: "explorer".into() },
