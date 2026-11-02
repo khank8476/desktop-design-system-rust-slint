@@ -464,10 +464,14 @@ export component AppWindow inherits Window {
                                     spacing: Spacing.space-lg;
                                     TextInputField {
                                         placeholder: "Search components or documentation...";
+                                        horizontal-stretch: 1;
+                                        min-width: 0px;
                                     }
                                     TextInputField {
                                         placeholder: "Enter secret credentials...";
                                         input-type: InputType.password;
+                                        horizontal-stretch: 1;
+                                        min-width: 0px;
                                     }
                                 }
                             }
@@ -1683,23 +1687,33 @@ export component AppWindow inherits Window {
                                 HorizontalLayout {
                                     alignment: space-between;
 
-                                    // Left: Status & Count
-                                    HorizontalLayout {
-                                        spacing: Spacing.space-sm;
+                                    // Left: Status & Count (Vertically Centered with Toolbar Buttons)
+                                    VerticalLayout {
                                         alignment: center;
 
-                                        Badge {
-                                            text: "SQLite WAL Mode";
-                                            variant: "success";
-                                            has-dot: true;
-                                        }
+                                        HorizontalLayout {
+                                            spacing: Spacing.space-sm;
+                                            alignment: center;
 
-                                        Text {
-                                            text: "• " + root.db-records.length + " Total Records";
-                                            font-family: Typography.font-family;
-                                            font-size: Typography.size-xs;
-                                            color: Palette.text-secondary;
-                                            vertical-alignment: center;
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Badge {
+                                                    text: "SQLite WAL Mode";
+                                                    variant: "success";
+                                                    has-dot: true;
+                                                }
+                                            }
+
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Text {
+                                                    text: "• " + root.db-records.length + " Total Records";
+                                                    font-family: Typography.font-family;
+                                                    font-size: Typography.size-xs;
+                                                    color: Palette.text-secondary;
+                                                    vertical-alignment: center;
+                                                }
+                                            }
                                         }
                                     }
 

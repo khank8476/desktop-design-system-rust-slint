@@ -255,12 +255,14 @@ export component CommandPalette {
                                 }
                             }
 
-                            // Right Controls: ESC Badge + Cancel (✕) Button
+                            // Right Controls: ESC Badge + Cancel (✕) Button (Compact, non-stretching)
                             HorizontalLayout {
+                                horizontal-stretch: 0;
                                 spacing: 6px;
 
                                 // Vertically Centered ESC Badge
                                 VerticalLayout {
+                                    horizontal-stretch: 0;
                                     alignment: center;
                                     Rectangle {
                                         height: 22px;
@@ -270,8 +272,8 @@ export component CommandPalette {
                                         border-color: Palette.border-subtle;
 
                                         HorizontalLayout {
-                                            padding-left: 6px;
-                                            padding-right: 6px;
+                                            padding-left: 8px;
+                                            padding-right: 8px;
                                             alignment: center;
 
                                             Text {
@@ -287,6 +289,7 @@ export component CommandPalette {
 
                                 // Vertically Centered Close (✕) Button
                                 VerticalLayout {
+                                    horizontal-stretch: 0;
                                     alignment: center;
                                     close-btn := Rectangle {
                                         width: 26px;

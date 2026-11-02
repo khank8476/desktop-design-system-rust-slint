@@ -27,125 +27,151 @@ export component StatusBar {
         }
 
         HorizontalLayout {
+            height: 100%;
             padding-left: Spacing.space-md;
             padding-right: Spacing.space-md;
             alignment: space-between;
 
-        // Left Section: Status & Git Branch
-        HorizontalLayout {
-            spacing: Spacing.space-md;
-            alignment: center;
-
-            // Status Indicator (Dot + Label)
-            Rectangle {
-                height: 20px;
-                background: status-touch.has-hover ? Palette.bg-header-item-hover : transparent;
-                border-radius: Spacing.radius-sm;
+            // Left Section: Status & Git Branch (Centered Vertically and Horizontally)
+            VerticalLayout {
+                alignment: center;
 
                 HorizontalLayout {
-                    padding-left: 6px;
-                    padding-right: 6px;
-                    spacing: 6px;
+                    spacing: Spacing.space-md;
                     alignment: center;
 
-                    // Centered Pulsing Dot
-                    VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: 7px;
-                            height: 7px;
-                            border-radius: 3.5px;
-                            background: root.status-level == "success" ? Palette.success :
-                                        root.status-level == "warning" ? #f59e0b :
-                                        root.status-level == "danger" ? Palette.danger :
-                                        Palette.accent;
+                    // Status Indicator (Dot + Label)
+                    Rectangle {
+                        height: 20px;
+                        background: status-touch.has-hover ? Palette.bg-header-item-hover : transparent;
+                        border-radius: Spacing.radius-sm;
+
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            spacing: 6px;
+                            alignment: center;
+
+                            // Centered Pulsing Dot
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: 7px;
+                                    height: 7px;
+                                    border-radius: 3.5px;
+                                    background: root.status-level == "success" ? Palette.success :
+                                                root.status-level == "warning" ? #f59e0b :
+                                                root.status-level == "danger" ? Palette.danger :
+                                                Palette.accent;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Text {
+                                    text: root.status-text;
+                                    font-family: Typography.font-family;
+                                    font-size: 11px;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        status-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => { root.status-clicked(); }
                         }
                     }
 
-                    Text {
-                        text: root.status-text;
-                        font-family: Typography.font-family;
-                        font-size: 11px;
-                        font-weight: Typography.weight-semibold;
-                        color: Palette.text-primary;
-                        vertical-alignment: center;
-                    }
-                }
+                    // Git Branch Pill
+                    Rectangle {
+                        height: 20px;
+                        background: branch-touch.has-hover ? Palette.bg-header-item-hover : transparent;
+                        border-radius: Spacing.radius-sm;
 
-                status-touch := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => { root.status-clicked(); }
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            spacing: 6px;
+                            alignment: center;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/git-branch.svg");
+                                    width: 12px;
+                                    height: 12px;
+                                    colorize: Palette.text-secondary;
+                                }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                Text {
+                                    text: root.branch-name;
+                                    font-family: "Consolas, monospace";
+                                    font-size: 11px;
+                                    color: Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        branch-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => { root.branch-clicked(); }
+                        }
+                    }
                 }
             }
 
-            // Git Branch Pill
-            Rectangle {
-                height: 20px;
-                background: branch-touch.has-hover ? Palette.bg-header-item-hover : transparent;
-                border-radius: Spacing.radius-sm;
+            // Right Section: Telemetry, Encoding, Engine (Centered Vertically)
+            VerticalLayout {
+                alignment: center;
 
                 HorizontalLayout {
-                    padding-left: 6px;
-                    padding-right: 6px;
-                    spacing: 6px;
+                    spacing: Spacing.space-md;
                     alignment: center;
 
-                    Image {
-                        source: @image-url("../../assets/icons/git-branch.svg");
-                        width: 12px;
-                        height: 12px;
-                        colorize: Palette.text-secondary;
-                        vertical-alignment: center;
+                    // Engine & 120 FPS
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: root.engine-info;
+                            font-family: "Consolas, monospace";
+                            font-size: 11px;
+                            color: Palette.success;
+                            vertical-alignment: center;
+                        }
                     }
 
-                    Text {
-                        text: root.branch-name;
-                        font-family: "Consolas, monospace";
-                        font-size: 11px;
-                        color: Palette.text-secondary;
-                        vertical-alignment: center;
+                    // Memory telemetry
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: root.memory-info;
+                            font-family: "Consolas, monospace";
+                            font-size: 11px;
+                            color: Palette.accent;
+                            vertical-alignment: center;
+                        }
                     }
-                }
 
-                branch-touch := TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => { root.branch-clicked(); }
+                    // Encoding
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: root.encoding;
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
                 }
             }
         }
-
-        // Right Section: Telemetry, Encoding, Engine
-        HorizontalLayout {
-            spacing: Spacing.space-md;
-            alignment: center;
-
-            // Engine & 120 FPS
-            Text {
-                text: root.engine-info;
-                font-family: "Consolas, monospace";
-                font-size: 11px;
-                color: Palette.success;
-                vertical-alignment: center;
-            }
-
-            // Memory telemetry
-            Text {
-                text: root.memory-info;
-                font-family: "Consolas, monospace";
-                font-size: 11px;
-                color: Palette.accent;
-                vertical-alignment: center;
-            }
-
-            // Encoding
-            Text {
-                text: root.encoding;
-                font-family: Typography.font-family;
-                font-size: 11px;
-                color: Palette.text-secondary;
-                vertical-alignment: center;
-            }
-        }
-    }
 }
 }

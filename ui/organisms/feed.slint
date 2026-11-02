@@ -24,33 +24,47 @@ export component LiveFeedView {
         HorizontalLayout {
             alignment: space-between;
 
-            HorizontalLayout {
-                spacing: Spacing.space-sm;
+            // Left: Status Dot & Count (All Vertically Centered with Action Buttons)
+            VerticalLayout {
                 alignment: center;
 
-                // Pulsing Green "LIVE" indicator
-                Rectangle {
-                    width: 10px;
-                    height: 10px;
-                    border-radius: 5px;
-                    background: root.is-paused ? #f59e0b : #10b981;
-                }
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: center;
 
-                Text {
-                    text: root.is-paused ? "PAUSED" : "LIVE STREAM";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-xs;
-                    font-weight: Typography.weight-bold;
-                    color: root.is-paused ? #f59e0b : #10b981;
-                    vertical-alignment: center;
-                }
+                    // Centered Status Dot
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 4px;
+                            background: root.is-paused ? #f59e0b : #10b981;
+                        }
+                    }
 
-                Text {
-                    text: "• " + root.items.length + " Events Recorded";
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-sm;
-                    color: Palette.text-secondary;
-                    vertical-alignment: center;
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: root.is-paused ? "PAUSED" : "LIVE STREAM";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-xs;
+                            font-weight: Typography.weight-bold;
+                            color: root.is-paused ? #f59e0b : #10b981;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        Text {
+                            text: "• " + root.items.length + " Events Recorded";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-sm;
+                            color: Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
                 }
             }
 

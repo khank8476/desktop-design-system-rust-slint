@@ -11,9 +11,11 @@ export component TextInputField {
     callback accepted();
 
     min-height: 40px;
+    min-width: 0px;
     horizontal-stretch: 1;
 
     Rectangle {
+        clip: true;
         border-radius: Spacing.radius-md;
         border-width: input.has-focus ? 2px : 1px;
         border-color: input.has-focus ? Palette.border-focus : Palette.border-subtle;
@@ -30,6 +32,8 @@ export component TextInputField {
 
             input := TextInput {
                 width: 100%;
+                min-width: 0px;
+                horizontal-stretch: 1;
                 enabled: root.enabled;
                 input-type: root.input-type;
                 font-family: Typography.font-family;
