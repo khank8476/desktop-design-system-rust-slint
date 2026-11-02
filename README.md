@@ -243,7 +243,7 @@ cargo install desktop-design-system
 Add to your project's `Cargo.toml`:
 ```toml
 [dependencies]
-desktop-design-system = "0.3.0"
+desktop-design-system = "0.3.1"
 slint = "1.9"
 ```
 
