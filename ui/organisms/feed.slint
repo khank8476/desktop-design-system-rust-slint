@@ -20,8 +20,10 @@ export component LiveFeedView {
     VerticalLayout {
         spacing: Spacing.space-md;
 
-        // 1. Live Feed Header & Control Bar
+        // 1. Live Feed Header & Control Bar (Strictly 38px, pinned vertically)
         HorizontalLayout {
+            height: 38px;
+            vertical-stretch: 0;
             alignment: space-between;
 
             // Left: Status Dot & Count (All Vertically Centered with Action Buttons)
@@ -68,23 +70,28 @@ export component LiveFeedView {
                 }
             }
 
-            // Feed Actions (Pause / Clear)
-            HorizontalLayout {
-                spacing: Spacing.space-sm;
+            // Right: Feed Actions (Pause / Clear - Vertically Centered)
+            VerticalLayout {
+                alignment: center;
 
-                Button {
-                    text: root.is-paused ? "▶ Resume Stream" : "⏸ Pause Stream";
-                    variant: "secondary";
-                    clicked => {
-                        root.toggle-pause();
+                HorizontalLayout {
+                    spacing: Spacing.space-sm;
+                    alignment: center;
+
+                    Button {
+                        text: root.is-paused ? "▶ Resume Stream" : "⏸ Pause Stream";
+                        variant: "secondary";
+                        clicked => {
+                            root.toggle-pause();
+                        }
                     }
-                }
 
-                Button {
-                    text: "Clear Feed";
-                    variant: "ghost";
-                    clicked => {
-                        root.clear-feed();
+                    Button {
+                        text: "Clear Feed";
+                        variant: "ghost";
+                        clicked => {
+                            root.clear-feed();
+                        }
                     }
                 }
             }
