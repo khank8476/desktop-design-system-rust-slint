@@ -303,7 +303,7 @@ export component AppWindow inherits Window {
                         Rectangle {
                             height: 36px;
                             border-radius: Spacing.radius-md;
-                            background: cmd-quick-touch.has-hover ? Palette.bg-surface-hover : (Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #0f172a : #f1f5f9));
+                            background: cmd-quick-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-subtle;
                             border-width: 1px;
                             border-color: Palette.border-subtle;
 
@@ -339,7 +339,7 @@ export component AppWindow inherits Window {
                                     Rectangle {
                                         height: 20px;
                                         border-radius: 4px;
-                                        background: Palette.sepia-mode ? #e2d2b4 : (Palette.dark-mode ? #1e293b : #e2e8f0);
+                                        background: Palette.bg-subtle-hover;
 
                                         HorizontalLayout {
                                             padding-left: 6px;
@@ -1546,7 +1546,7 @@ export component AppWindow inherits Window {
                                         border-radius: Spacing.radius-lg;
                                         border-width: 1px;
                                         border-color: Palette.border-subtle;
-                                        background: Palette.dark-mode ? #111827 : #ffffff;
+                                        background: Palette.bg-surface;
                                         clip: true;
 
                                         VerticalLayout {
@@ -1556,7 +1556,7 @@ export component AppWindow inherits Window {
 
                                                 Rectangle {
                                                     height: 38px;
-                                                    background: Palette.dark-mode ? #1f2937 : #f8fafc;
+                                                    background: Palette.bg-card-header;
 
                                                     HorizontalLayout {
                                                         padding-left: Spacing.space-md;
@@ -1722,7 +1722,7 @@ export component AppWindow inherits Window {
                                         }
 
                                         Button {
-                                            text: root.db-selected-count > 1 ? ("Batch Edit (" + root.db-selected-count + ")") : "Edit Selected";
+                                            text: root.db-selected-count > 1 ? ("Edit (" + root.db-selected-count + ")") : "Edit Selected";
                                             variant: "secondary";
                                             enabled: root.db-records.length > 0;
                                             clicked => {
@@ -1763,88 +1763,103 @@ export component AppWindow inherits Window {
                                     }
                                 }
 
-                                // Batch Selection Quick-Action Bar
+                                // Batch Selection Quick-Action Bar (Fully Vertically Centered & Compact)
                                 if root.db-selected-count > 0: Rectangle {
                                     height: 44px;
                                     border-radius: Spacing.radius-md;
                                     border-width: 1px;
-                                    border-color: Palette.accent;
-                                    background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #1e3a8a25 : #eff6ff);
+                                    border-color: Palette.border-highlight;
+                                    background: Palette.bg-highlight;
 
                                     HorizontalLayout {
                                         padding-left: Spacing.space-md;
                                         padding-right: Spacing.space-md;
                                         alignment: space-between;
 
-                                        // Left: Count and Quick Status Pills
+                                        // Left: Count and Quick Status Pills (All Vertically Centered)
                                         HorizontalLayout {
-                                            spacing: Spacing.space-md;
+                                            spacing: Spacing.space-sm;
                                             alignment: center;
 
-                                            Badge {
-                                                text: root.db-selected-count + " of " + root.db-records.length + " Selected";
-                                                variant: "primary";
-                                                has-dot: true;
-                                            }
-
-                                            Text {
-                                                text: "Set Status:";
-                                                font-family: Typography.font-family;
-                                                font-size: Typography.size-xs;
-                                                font-weight: Typography.weight-semibold;
-                                                color: Palette.text-secondary;
-                                                vertical-alignment: center;
-                                            }
-
-                                            for q_st in ["Active", "Standby", "Warning", "Offline"]: Rectangle {
-                                                height: 26px;
-                                                border-radius: Spacing.radius-sm;
-                                                border-width: 1px;
-                                                border-color: Palette.border-subtle;
-                                                background: qst-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
-
-                                                HorizontalLayout {
-                                                    padding-left: 8px;
-                                                    padding-right: 8px;
-                                                    Text {
-                                                        text: q_st;
-                                                        font-family: Typography.font-family;
-                                                        font-size: Typography.size-xs;
-                                                        font-weight: Typography.weight-medium;
-                                                        color: q_st == "Active" ? #10b981 :
-                                                               q_st == "Warning" ? #f59e0b :
-                                                               q_st == "Offline" ? #ef4444 : Palette.text-primary;
-                                                        vertical-alignment: center;
-                                                    }
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Badge {
+                                                    text: root.db-selected-count + " Selected";
+                                                    variant: "primary";
+                                                    has-dot: true;
                                                 }
+                                            }
 
-                                                qst-touch := TouchArea {
-                                                    mouse-cursor: pointer;
-                                                    clicked => {
-                                                        root.db-batch-set-status(q_st);
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Text {
+                                                    text: "Set Status:";
+                                                    font-family: Typography.font-family;
+                                                    font-size: Typography.size-xs;
+                                                    font-weight: Typography.weight-semibold;
+                                                    color: Palette.text-secondary;
+                                                    vertical-alignment: center;
+                                                }
+                                            }
+
+                                            for q_st in ["Active", "Standby", "Warning", "Offline"]: VerticalLayout {
+                                                alignment: center;
+                                                Rectangle {
+                                                    height: 26px;
+                                                    border-radius: Spacing.radius-sm;
+                                                    border-width: 1px;
+                                                    border-color: Palette.border-subtle;
+                                                    background: qst-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+
+                                                    HorizontalLayout {
+                                                        padding-left: 7px;
+                                                        padding-right: 7px;
+                                                        Text {
+                                                            text: q_st;
+                                                            font-family: Typography.font-family;
+                                                            font-size: Typography.size-xs;
+                                                            font-weight: Typography.weight-medium;
+                                                            color: q_st == "Active" ? #10b981 :
+                                                                   q_st == "Warning" ? #f59e0b :
+                                                                   q_st == "Offline" ? #ef4444 : Palette.text-primary;
+                                                            vertical-alignment: center;
+                                                        }
+                                                    }
+
+                                                    qst-touch := TouchArea {
+                                                        mouse-cursor: pointer;
+                                                        clicked => {
+                                                            root.db-batch-set-status(q_st);
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
 
-                                        // Right: Batch Edit & Deselect Triggers
+                                        // Right: Batch Edit & Deselect Triggers (All Vertically Centered)
                                         HorizontalLayout {
                                             spacing: Spacing.space-sm;
                                             alignment: center;
 
-                                            Button {
-                                                text: "Batch Edit (" + root.db-selected-count + ")";
-                                                variant: "secondary";
-                                                clicked => {
-                                                    root.show-batch-edit-modal = true;
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Button {
+                                                    text: "Batch Edit (" + root.db-selected-count + ")";
+                                                    variant: "secondary";
+                                                    clicked => {
+                                                        root.show-batch-edit-modal = true;
+                                                    }
                                                 }
                                             }
 
-                                            Button {
-                                                text: "Deselect All";
-                                                variant: "ghost";
-                                                clicked => {
-                                                    root.db-select-all(false);
+                                            VerticalLayout {
+                                                alignment: center;
+                                                Button {
+                                                    text: "Deselect";
+                                                    variant: "ghost";
+                                                    clicked => {
+                                                        root.db-select-all(false);
+                                                    }
                                                 }
                                             }
                                         }
@@ -2352,10 +2367,12 @@ export component AppWindow inherits Window {
                                 padding: Spacing.space-lg;
                                 alignment: space-between;
 
-                                // Left: Setting Info
+                                // Left: Setting Info (Constrained and stretchable)
                                 HorizontalLayout {
                                     spacing: Spacing.space-md;
                                     alignment: center;
+                                    horizontal-stretch: 1;
+                                    min-width: 0px;
 
                                     Image {
                                         source: @image-url("../assets/icons/tokens.svg");
@@ -2368,6 +2385,8 @@ export component AppWindow inherits Window {
                                     VerticalLayout {
                                         spacing: 2px;
                                         alignment: center;
+                                        horizontal-stretch: 1;
+                                        min-width: 0px;
 
                                         HorizontalLayout {
                                             spacing: Spacing.space-sm;
@@ -2395,6 +2414,7 @@ export component AppWindow inherits Window {
                                             font-family: Typography.font-family;
                                             font-size: Typography.size-sm;
                                             color: Palette.text-secondary;
+                                            wrap: word-wrap;
                                         }
                                     }
                                 }
@@ -2418,7 +2438,7 @@ export component AppWindow inherits Window {
                                         border-radius: Spacing.radius-md;
                                         border-width: 1px;
                                         border-color: Palette.border-subtle;
-                                        background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #0f172a : #f1f5f9);
+                                        background: Palette.bg-subtle;
 
                                         HorizontalLayout {
                                             padding: 2px;
@@ -2433,11 +2453,11 @@ export component AppWindow inherits Window {
                                                             light-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
                                                 HorizontalLayout {
-                                                    padding-left: 10px;
-                                                    padding-right: 10px;
+                                                    padding-left: 12px;
+                                                    padding-right: 12px;
                                                     alignment: center;
                                                     Text {
-                                                        text: "Clean Light";
+                                                        text: "Light";
                                                         font-family: Typography.font-family;
                                                         font-size: Typography.size-xs;
                                                         font-weight: Typography.weight-semibold;
@@ -2462,11 +2482,11 @@ export component AppWindow inherits Window {
                                                             dark-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
                                                 HorizontalLayout {
-                                                    padding-left: 10px;
-                                                    padding-right: 10px;
+                                                    padding-left: 12px;
+                                                    padding-right: 12px;
                                                     alignment: center;
                                                     Text {
-                                                        text: "Slate Dark";
+                                                        text: "Dark";
                                                         font-family: Typography.font-family;
                                                         font-size: Typography.size-xs;
                                                         font-weight: Typography.weight-semibold;
@@ -2491,11 +2511,11 @@ export component AppWindow inherits Window {
                                                             sepia-touch.has-hover ? Palette.bg-surface-hover : transparent;
 
                                                 HorizontalLayout {
-                                                    padding-left: 10px;
-                                                    padding-right: 10px;
+                                                    padding-left: 12px;
+                                                    padding-right: 12px;
                                                     alignment: center;
                                                     Text {
-                                                        text: "Vintage Sepia";
+                                                        text: "Sepia";
                                                         font-family: Typography.font-family;
                                                         font-size: Typography.size-xs;
                                                         font-weight: Typography.weight-semibold;
@@ -3075,8 +3095,10 @@ export component AppWindow inherits Window {
         }
     }
 
-    // Batch Edit Modal
+    // Batch Edit Modal (Full application overlay, centered and opaque)
     BatchEditModal {
+        width: 100%;
+        height: 100%;
         is-open <=> root.show-batch-edit-modal;
         selected-count: root.db-selected-count;
         saved(apply_run, run, apply_st, st, apply_lat, lat) => {

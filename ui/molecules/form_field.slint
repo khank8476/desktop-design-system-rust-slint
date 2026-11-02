@@ -70,8 +70,8 @@ export component FormField {
                          root.is-valid ? Palette.success :
                          input.has-focus ? Palette.border-focus :
                          Palette.border-subtle;
-            background: !root.enabled ? (Palette.dark-mode ? #111827 : #f1f5f9) :
-                        input.has-focus ? (Palette.dark-mode ? #1e293b : #ffffff) :
+            background: !root.enabled ? Palette.bg-subtle :
+                        input.has-focus ? Palette.bg-input :
                         Palette.bg-surface;
 
             animate border-color { duration: 120ms; easing: ease-out; }

@@ -44,7 +44,7 @@ export component DataTable {
             Rectangle {
                 height: 38px;
                 vertical-stretch: 0;
-                background: Palette.sepia-mode ? #ebdcc4 : (Palette.dark-mode ? #090d16 : #f1f5f9);
+                background: Palette.bg-table-header;
 
                 HorizontalLayout {
                     padding-left: Spacing.space-md;
@@ -140,11 +140,10 @@ export component DataTable {
                     vertical-stretch: 0;
 
                     // Row background with zebra striping and multi-selection highlights across themes
-                    background: row.selected ? 
-                                (Palette.sepia-mode ? #eddac1 : (Palette.dark-mode ? #1e3a8a33 : #eff6ff)) :
-                                (root.selected-row == idx ? (Palette.sepia-mode ? #f1e4d0 : (Palette.dark-mode ? #1e293b : #eff6ff)) :
-                                row-touch.has-hover ? (Palette.sepia-mode ? #f4e8d3 : (Palette.dark-mode ? #1e293b88 : #f8fafc)) :
-                                (Math.mod(idx, 2) == 1) ? (Palette.sepia-mode ? #f7efe2 : (Palette.dark-mode ? #121927 : #fbfcfe)) :
+                    background: row.selected ? Palette.bg-table-selected :
+                                (root.selected-row == idx ? Palette.bg-surface-hover :
+                                row-touch.has-hover ? Palette.bg-table-hover :
+                                (Math.mod(idx, 2) == 1) ? Palette.bg-table-zebra :
                                 Palette.bg-surface);
 
                     // Left accent indicator for selected row or multi-selected rows
@@ -179,6 +178,7 @@ export component DataTable {
                         HorizontalLayout {
                             horizontal-stretch: 35;
                             alignment: start;
+                            min-width: 0px;
                             Text {
                                 text: row.service;
                                 font-family: Typography.font-family;
@@ -186,6 +186,7 @@ export component DataTable {
                                 font-weight: Typography.weight-medium;
                                 color: (row.selected || root.selected-row == idx) ? Palette.accent : Palette.text-primary;
                                 vertical-alignment: center;
+                                overflow: elide;
                             }
                         }
 
@@ -193,12 +194,14 @@ export component DataTable {
                         HorizontalLayout {
                             horizontal-stretch: 30;
                             alignment: start;
+                            min-width: 0px;
                             Text {
                                 text: row.runtime;
                                 font-family: Typography.font-family;
                                 font-size: Typography.size-xs;
                                 color: Palette.text-secondary;
                                 vertical-alignment: center;
+                                overflow: elide;
                             }
                         }
 

@@ -14,7 +14,7 @@ export component SegmentedTabs {
         border-radius: Spacing.radius-md;
         border-width: 1px;
         border-color: Palette.border-subtle;
-        background: Palette.dark-mode ? #0f172a : #e2e8f0; // Subtle track background
+        background: Palette.bg-subtle; // Subtle track background
 
         HorizontalLayout {
             padding: 3px;
@@ -22,8 +22,8 @@ export component SegmentedTabs {
 
             for tab[index] in root.tabs: tab-button := Rectangle {
                 border-radius: Spacing.radius-sm;
-                background: index == root.active-tab ? (Palette.dark-mode ? #1e293b : #ffffff) :
-                            tab-touch.has-hover ? (Palette.dark-mode ? #1e293b88 : #ffffff99) :
+                background: index == root.active-tab ? Palette.bg-surface :
+                            tab-touch.has-hover ? Palette.bg-surface-hover :
                             transparent;
 
                 // Subtle shadow for the active segmented tab

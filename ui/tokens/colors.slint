@@ -2,11 +2,12 @@ export global Palette {
     in-out property <bool> dark-mode: false;
     in-out property <bool> sepia-mode: false;
 
-    // Window & Surfaces
+    // Window & Canvas
     out property <color> bg-canvas: 
         sepia-mode ? #f4ecd8 :
         dark-mode ? #0f172a : #f8fafc;
 
+    // Standard Surfaces (Cards, Modals, Content Panels)
     out property <color> bg-surface: 
         sepia-mode ? #fbf7ee :
         dark-mode ? #1e293b : #ffffff;
@@ -18,6 +19,64 @@ export global Palette {
     out property <color> bg-surface-active: 
         sepia-mode ? #dfd0b5 :
         dark-mode ? #475569 : #e2e8f0;
+
+    // Header & Navigation Rails (Sidebar, Topbars, Statusbar)
+    out property <color> bg-header: 
+        sepia-mode ? #ece1cb :
+        dark-mode ? #090d16 : #f1f5f9;
+
+    out property <color> bg-header-item-hover: 
+        sepia-mode ? #e2d2b4 :
+        dark-mode ? #1e293b88 : #e2e8f0;
+
+    // Card & Accordion Shaded Headers
+    out property <color> bg-card-header: 
+        sepia-mode ? #f4ecd8 :
+        dark-mode ? #162032 : #f1f5f9;
+
+    out property <color> bg-card-header-hover: 
+        sepia-mode ? #ebe0cc :
+        dark-mode ? #223048 : #e2e8f0;
+
+    // Table Specific Surfaces (Zebra striping, selected rows, hover)
+    out property <color> bg-table-header: 
+        sepia-mode ? #ebdcc4 :
+        dark-mode ? #090d16 : #f1f5f9;
+
+    out property <color> bg-table-zebra: 
+        sepia-mode ? #f7efe2 :
+        dark-mode ? #121927 : #fbfcfe;
+
+    out property <color> bg-table-selected: 
+        sepia-mode ? #eddac1 :
+        dark-mode ? #1e3a8a33 : #eff6ff;
+
+    out property <color> bg-table-hover: 
+        sepia-mode ? #f4e8d3 :
+        dark-mode ? #1e293b88 : #f8fafc;
+
+    // Subtle Controls & Pill Badges (Keycaps, Quick Actions, Swatches)
+    out property <color> bg-subtle: 
+        sepia-mode ? #e2d2b4 :
+        dark-mode ? #1e293b : #e2e8f0;
+
+    out property <color> bg-subtle-hover: 
+        sepia-mode ? #d8c4a0 :
+        dark-mode ? #334155 : #cbd5e1;
+
+    // Highlight & Selection Banners (Batch selection bar, spotlight)
+    out property <color> bg-highlight: 
+        sepia-mode ? #ebdcc4 :
+        dark-mode ? #1e3a8a25 : #eff6ff;
+
+    out property <color> border-highlight: 
+        sepia-mode ? #c4ab82 :
+        dark-mode ? #3b82f6 : #93c5fd;
+
+    // Inputs & Search Fields
+    out property <color> bg-input: 
+        sepia-mode ? #f4ecd8 :
+        dark-mode ? #1e293b : #f8fafc;
 
     // Borders & Dividers
     out property <color> border-subtle: 

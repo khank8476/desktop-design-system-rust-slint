@@ -12,15 +12,16 @@ export component AccordionItem {
         border-width: 1px;
         border-color: Palette.border-subtle;
         background: Palette.bg-surface;
+        clip: true;
 
         VerticalLayout {
-            // 1. Header (Clickable Trigger)
+            // 1. Shaded Header (Distinct shaded background from body)
             header := Rectangle {
                 height: 48px;
-                background: touch.has-hover ? Palette.bg-surface-hover : transparent;
-                border-radius: Spacing.radius-md;
+                background: touch.has-hover ? Palette.bg-card-header-hover : Palette.bg-card-header;
+                border-radius: root.expanded ? 0px : Spacing.radius-md;
 
-                animate background { duration: 100ms; }
+                animate background { duration: 120ms; }
 
                 HorizontalLayout {
                     padding-left: Spacing.space-md;
@@ -44,7 +45,7 @@ export component AccordionItem {
                             source: root.expanded ? @image-url("../../assets/icons/chevron-up.svg") : @image-url("../../assets/icons/chevron-down.svg");
                             width: 14px;
                             height: 14px;
-                            colorize: Palette.text-secondary;
+                            colorize: root.expanded ? Palette.accent : Palette.text-secondary;
                         }
                     }
                 }
@@ -55,6 +56,12 @@ export component AccordionItem {
                         root.expanded = !root.expanded;
                     }
                 }
+            }
+
+            // Crisp 1px section divider when expanded
+            if root.expanded: Rectangle {
+                height: 1px;
+                background: Palette.border-subtle;
             }
 
             // 2. Expandable Content Body
