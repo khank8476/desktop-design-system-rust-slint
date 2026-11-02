@@ -61,7 +61,9 @@ ui/
 │   ├── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
 │   ├── chip.slint         # Interactive tag pills with variants, selected states & remove triggers
 │   ├── pagination.slint   # High-density data pagination with first/prev/next/last & count summary
-│   └── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
+│   ├── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
+│   ├── credit_badge.slint # Real-time credit counter pill with usage gauge & top-up trigger
+│   └── pricing_card.slint # High-density plan card with highlight ribbons & feature checkmarks
 ├── organisms/
 │   ├── modal.slint        # Centered dialog card with dimmed backdrop
 │   ├── crud_modal.slint   # Interactive modal form for SQLite record creation
@@ -71,7 +73,9 @@ ui/
 │   ├── toast.slint        # Floating auto-dismissing toast notification
 │   ├── table.slint        # High-density desktop data grid with badges & selection
 │   ├── statusbar.slint    # Window footer with VCS branch, 120 FPS Direct3D & memory telemetry
-│   └── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
+│   ├── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
+│   ├── plan_selector.slint # Segmented monthly/annual/credits switcher & 3-tier matrix
+│   └── checkout_modal.slint # Multi-rail checkout dialog (PCI-DSS Card, UPI QR, Zero-Leak Crypto)
 └── app.slint              # Interactive component showcase window
 ```
 
@@ -227,6 +231,18 @@ To demonstrate real-world integration in diverse business domains without bloati
   - **⏱️ Unix Epoch & ISO-8601 Studio:** Real-time live epoch ticker with bi-directional human ISO-8601 UTC and local datetime conversions.
   ```powershell
   cargo run --example dev_forge
+  ```
+
+- **Available Demo 4: DevBilling Studio & Payment Gateway Hub (PCI-DSS Card, India UPI QR, Zero-Leak Crypto) 💳**
+  An offline-first, high-performance desktop monetization and subscription management studio featuring multi-rail payments, credit meters, and SQLite WAL licensing:
+  - **💳 Multi-Rail Native Checkout:** 
+    - **PCI-DSS Credit/Debit Card:** Frictionless hosted browser redirect without capturing cardholder PAN/CVVs in the desktop binary.
+    - **India Dynamic UPI QR:** Real-time 15-minute countdown timer, UPI deep-link VPA address with 1-click clipboard copy, and simulated webhook completion.
+    - **Zero-Leak Non-Custodial Cryptocurrency:** BIP32/BIP44 `xPub` public address derivation guaranteeing zero private key exposure on client machines. Includes network selection (USDT Polygon, Solana, Tron, Ethereum), mempool transaction watcher, and real-time 4-step block confirmation progression (`0/12` ➔ `4/12` ➔ `8/12` ➔ `12/12 Confirmations`).
+  - **⚡ Usage-Based Compute Credit Engine:** Real-time balance badge (`CreditBadge`) with visual gauge, simulated 100-credit compute task consumption, low-balance warnings, and instant top-up checkout triggers.
+  - **💾 Bundled SQLite WAL Audit Ledger:** Persistent transactional ledger storing license keys, payment rails, amounts, and transaction IDs with zero UI stutter.
+  ```powershell
+  cargo run --example billing_hub
   ```
 
 ---

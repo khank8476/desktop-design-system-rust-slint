@@ -39,6 +39,10 @@ import { Pagination } from "molecules/pagination.slint";
 import { ColorPicker, ColorSwatchItem } from "molecules/color_picker.slint";
 import { StatusBar } from "organisms/statusbar.slint";
 import { CommandPalette, CommandItem } from "organisms/command_palette.slint";
+import { CreditBadge } from "molecules/credit_badge.slint";
+import { PricingCard } from "molecules/pricing_card.slint";
+import { PlanSelector } from "organisms/plan_selector.slint";
+import { CheckoutModal } from "organisms/checkout_modal.slint";
 
 export { Palette, FeedItem, TableRowData, TreeNodeData, CommandItem, ColorSwatchItem }
 
@@ -61,6 +65,29 @@ export component AppWindow inherits Window {
     callback theme-toggle-dark-mode(bool);
     callback theme-set-mode(string);
     callback theme-reset-os();
+
+    // Checkout & Monetization State
+    in-out property <bool> checkout-modal-open: false;
+    in-out property <string> checkout-plan-title: "Pro Developer License";
+    in-out property <string> checkout-plan-price: "$180";
+    in-out property <string> checkout-billing-cycle: "yearly";
+    in-out property <string> checkout-active-plan: "free";
+    in-out property <int> checkout-payment-tab: 0;
+    in-out property <int> checkout-crypto-step: 0;
+    in-out property <int> checkout-crypto-blocks: 0;
+    in-out property <string> checkout-feedback: "";
+    in-out property <string> checkout-timer-text: "14:59";
+    callback checkout-open(string, string, string);
+
+    checkout-open(title, cycle, price) => {
+        root.checkout-plan-title = title;
+        root.checkout-billing-cycle = cycle;
+        root.checkout-plan-price = price;
+        root.checkout-crypto-step = 0;
+        root.checkout-crypto-blocks = 0;
+        root.checkout-feedback = "";
+        root.checkout-modal-open = true;
+    }
 
     // Tier 1 Interactive Demo Properties
     in-out property <float> demo-slider-val: 72.0;
@@ -1421,6 +1448,56 @@ export component AppWindow inherits Window {
                                     }
                                 }
                             }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 8. Monetization: Credit Badges & Pricing Cards (Tier 2 Molecules)
+                            VerticalLayout {
+                                spacing: Spacing.space-sm;
+                                Text {
+                                    text: "Pricing Cards & Usage Badges (Tier 2 Molecules)";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-lg;
+                                    font-weight: Typography.weight-semibold;
+                                    color: Palette.text-primary;
+                                }
+                                Text {
+                                    text: "Desktop billing primitives: High-density credit balance pill with progress bar and highlighted plan cards.";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                }
+
+                                HorizontalLayout {
+                                    spacing: Spacing.space-lg;
+                                    alignment: start;
+
+                                    CreditBadge {
+                                        credits: 3450;
+                                        max-credits: 5000;
+                                        tier-name: "PRO ACTIVE";
+                                        top-up-clicked => {
+                                            root.checkout-open("Micro Compute Pack", "credits", "$10");
+                                        }
+                                        tier-clicked => {
+                                            root.checkout-open("Pro Developer License", "yearly", "$180");
+                                        }
+                                    }
+
+                                    CreditBadge {
+                                        credits: 120;
+                                        max-credits: 1000;
+                                        tier-name: "FREE TIER";
+                                        is-active: false;
+                                        top-up-clicked => {
+                                            root.checkout-open("Micro Compute Pack", "credits", "$10");
+                                        }
+                                        tier-clicked => {
+                                            root.checkout-open("Pro Developer License", "monthly", "$19");
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // ----------------------------------------------------
@@ -2115,6 +2192,23 @@ export component AppWindow inherits Window {
                                         clicked => {
                                             root.command-palette-action("toggle-theme");
                                         }
+                                    }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                            // 6. Licensing & Checkout Engine (Tier 3 Organisms)
+                            VerticalLayout {
+                                spacing: Spacing.space-md;
+
+                                PlanSelector {
+                                    active-plan-id: root.checkout-active-plan;
+                                    plan-chosen(id, cycle, price) => {
+                                        root.checkout-open(id == "pro" ? "Pro Developer License" : id == "enterprise" ? "Enterprise Studio License" : "Community Starter", cycle, price);
+                                    }
+                                    buy-credits-pack(credits, price) => {
+                                        root.checkout-open(credits + " Compute Units Pack", "credits", price);
                                     }
                                 }
                             }
@@ -3129,6 +3223,55 @@ export component AppWindow inherits Window {
         confirm-variant: "danger";
         confirmed => {
             root.db-batch-delete();
+        }
+    }
+
+    // Checkout Modal (Desktop Payment, UPI QR & Crypto Overlay)
+    CheckoutModal {
+        width: 100%;
+        height: 100%;
+        is-open <=> root.checkout-modal-open;
+        plan-title: root.checkout-plan-title;
+        plan-price: root.checkout-plan-price;
+        billing-cycle: root.checkout-billing-cycle;
+        crypto-address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+        upi-vpa: "desktop.system@okhdfcbank";
+        upi-amount-inr: root.checkout-plan-price == "$180" ? "₹14,999.00" :
+                        root.checkout-plan-price == "$19" ? "₹1,599.00" :
+                        root.checkout-plan-price == "$828" ? "₹68,999.00" : "₹899.00";
+        active-payment-tab <=> root.checkout-payment-tab;
+        crypto-step: root.checkout-crypto-step;
+        crypto-blocks: root.checkout-crypto-blocks;
+        status-feedback: root.checkout-feedback;
+        timer-text: root.checkout-timer-text;
+
+        launch-card-checkout => {
+            root.trigger-sample-toast("info", "Browser Checkout Redirect", "Opened https://checkout.stripe.com/pay/... in default system browser.");
+        }
+        copy-text(text) => {
+            root.trigger-sample-toast("success", "Copied to Clipboard", text);
+        }
+        simulate-upi-payment => {
+            root.checkout-feedback = "UPI Webhook Received: ₹ Verified via HDFC Bank!";
+            root.checkout-active-plan = "pro";
+            root.trigger-sample-toast("success", "Payment Confirmed", "UPI transaction finalized. License key issued.");
+        }
+        simulate-crypto-payment => {
+            root.checkout-crypto-step = 3;
+            root.checkout-crypto-blocks = 12;
+            root.checkout-feedback = "12/12 Blocks Finalized on Polygon. Transaction Confirmed!";
+            root.checkout-active-plan = "pro";
+            root.trigger-sample-toast("success", "Blockchain Confirmed", "USDT transaction verified on-chain. License activated.");
+        }
+        complete-activation => {
+            root.checkout-modal-open = false;
+            root.trigger-sample-toast("success", "License Activated", "Ed25519 signature verified offline. Stored in SQLite WAL.");
+        }
+        closed => {
+            root.checkout-modal-open = false;
+            root.checkout-crypto-step = 0;
+            root.checkout-crypto-blocks = 0;
+            root.checkout-feedback = "";
         }
     }
 }

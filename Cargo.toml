@@ -29,6 +29,10 @@ path = "examples/pos_terminal.rs"
 name = "dev_forge"
 path = "examples/dev_forge.rs"
 
+[[example]]
+name = "billing_hub"
+path = "examples/billing_hub.rs"
+
 [dependencies]
 slint = "1.9"
 dark-light = "1.1"

@@ -1,0 +1,705 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+
+export component CheckoutModal {
+    in property <bool> is-open: false;
+    in property <string> plan-title: "Pro Developer License";
+    in property <string> plan-price: "$180";
+    in property <string> billing-cycle: "yearly";
+    in property <string> crypto-address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+    in property <string> upi-vpa: "desktop.system@okhdfcbank";
+    in property <string> upi-amount-inr: "₹14,999.00";
+    in-out property <int> active-payment-tab: 0; // 0: Card, 1: UPI, 2: Crypto, 3: Credits
+    in-out property <int> crypto-network: 0; // 0: USDT (Polygon), 1: USDC (Solana), 2: USDT (Tron), 3: ETH
+    in property <int> crypto-step: 0; // 0: Awaiting, 1: Mempool, 2: Confirming, 3: Confirmed
+    in property <int> crypto-blocks: 0; // e.g. 0 to 12
+    in property <string> timer-text: "14:59";
+    in property <bool> is-processing: false;
+    in property <string> status-feedback: "";
+
+    callback closed();
+    callback launch-card-checkout();
+    callback copy-text(string /* text */);
+    callback simulate-upi-payment();
+    callback simulate-crypto-payment();
+    callback complete-activation();
+
+    if root.is-open: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #000000a6; // High contrast solid backdrop
+
+        // Click outside card to dismiss
+        backdrop-touch := TouchArea {
+            clicked => {
+                root.closed();
+            }
+        }
+
+        // Center Checkout Card
+        checkout-card := Rectangle {
+            width: 680px;
+            height: 600px;
+            border-radius: Spacing.radius-lg;
+            border-width: 1.5px;
+            border-color: Palette.accent;
+            background: Palette.bg-surface;
+            drop-shadow-blur: 32px;
+            drop-shadow-color: #000000cc;
+            drop-shadow-offset-y: 8px;
+
+            // Centered exactly in window
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+
+            card-touch := TouchArea {
+                // Prevent click bubbling
+            }
+
+            VerticalLayout {
+                padding-left: 24px;
+                padding-right: 24px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                spacing: 16px;
+
+                // 1. Header Row: Title & Close Button
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: 10px;
+                        alignment: center;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                source: @image-url("../../assets/icons/shield.svg");
+                                width: 22px;
+                                height: 22px;
+                                colorize: Palette.accent;
+                            }
+                        }
+
+                        VerticalLayout {
+                            spacing: 2px;
+                            Text {
+                                text: "Enterprise Checkout & Offline License Activation";
+                                font-family: Typography.font-family;
+                                font-size: Typography.size-lg;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                            }
+                            Text {
+                                text: "PCI-DSS Compliant • Non-Custodial Crypto • Zero Key Exposure";
+                                font-family: Typography.font-family;
+                                font-size: 11px;
+                                color: Palette.text-secondary;
+                            }
+                        }
+                    }
+
+                    // Close (✕) Button
+                    close-btn := Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: Spacing.radius-sm;
+                        background: close-touch.has-hover ? Palette.bg-surface-hover : transparent;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                source: @image-url("../../assets/icons/close.svg");
+                                width: 16px;
+                                height: 16px;
+                                colorize: Palette.text-secondary;
+                            }
+                        }
+
+                        close-touch := TouchArea {
+                            clicked => { root.closed(); }
+                        }
+                    }
+                }
+
+                // 2. Selected Order Summary Pill
+                Rectangle {
+                    height: 52px;
+                    border-radius: Spacing.radius-md;
+                    background: Palette.bg-subtle;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: center;
+
+                            Text {
+                                text: "Selected:";
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: root.plan-title;
+                                font-size: Typography.size-sm;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                            Rectangle {
+                                height: 20px;
+                                border-radius: 4px;
+                                background: Palette.accent.with-alpha(0.18);
+                                HorizontalLayout {
+                                    padding-left: 6px;
+                                    padding-right: 6px;
+                                    alignment: center;
+                                    Text {
+                                        text: root.billing-cycle;
+                                        font-size: 10px;
+                                        font-weight: Typography.weight-bold;
+                                        color: Palette.accent;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 4px;
+                            alignment: center;
+                            Text {
+                                text: "Total Due:";
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: root.plan-price;
+                                font-size: 20px;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.accent;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // 3. Payment Method Switcher Tabs
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    // Tab 0: Card
+                    method-card := Rectangle {
+                        height: 38px;
+                        horizontal-stretch: 1;
+                        border-radius: Spacing.radius-md;
+                        background: root.active-payment-tab == 0 ? Palette.accent : Palette.bg-subtle;
+                        border-width: 1px;
+                        border-color: root.active-payment-tab == 0 ? Palette.accent : Palette.border-subtle;
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 8px;
+                            alignment: center;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/credit-card.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: root.active-payment-tab == 0 ? #ffffff : Palette.text-secondary;
+                                }
+                            }
+                            Text {
+                                text: "Credit Card";
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: root.active-payment-tab == 0 ? #ffffff : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        TouchArea { clicked => { root.active-payment-tab = 0; } }
+                    }
+
+                    // Tab 1: India UPI
+                    method-upi := Rectangle {
+                        height: 38px;
+                        horizontal-stretch: 1;
+                        border-radius: Spacing.radius-md;
+                        background: root.active-payment-tab == 1 ? Palette.accent : Palette.bg-subtle;
+                        border-width: 1px;
+                        border-color: root.active-payment-tab == 1 ? Palette.accent : Palette.border-subtle;
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 8px;
+                            alignment: center;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/qr-code.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: root.active-payment-tab == 1 ? #ffffff : Palette.text-secondary;
+                                }
+                            }
+                            Text {
+                                text: "India UPI (QR)";
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: root.active-payment-tab == 1 ? #ffffff : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        TouchArea { clicked => { root.active-payment-tab = 1; } }
+                    }
+
+                    // Tab 2: Crypto
+                    method-crypto := Rectangle {
+                        height: 38px;
+                        horizontal-stretch: 1;
+                        border-radius: Spacing.radius-md;
+                        background: root.active-payment-tab == 2 ? Palette.accent : Palette.bg-subtle;
+                        border-width: 1px;
+                        border-color: root.active-payment-tab == 2 ? Palette.accent : Palette.border-subtle;
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 8px;
+                            alignment: center;
+
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../../assets/icons/wallet.svg");
+                                    width: 16px;
+                                    height: 16px;
+                                    colorize: root.active-payment-tab == 2 ? #ffffff : Palette.text-secondary;
+                                }
+                            }
+                            Text {
+                                text: "Crypto (Zero-Leak)";
+                                font-size: Typography.size-xs;
+                                font-weight: Typography.weight-semibold;
+                                color: root.active-payment-tab == 2 ? #ffffff : Palette.text-primary;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        TouchArea { clicked => { root.active-payment-tab = 2; } }
+                    }
+                }
+
+                // 4. Content Area Based on Active Payment Tab
+                // ========================================================
+                // TAB 0: CREDIT / DEBIT CARD (PCI-DSS COMPLIANT HOSTED)
+                // ========================================================
+                if root.active-payment-tab == 0: Rectangle {
+                    border-radius: Spacing.radius-md;
+                    background: Palette.bg-surface;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 16px;
+                        alignment: center;
+
+                        VerticalLayout {
+                            spacing: 6px;
+                            alignment: center;
+                            Text {
+                                text: "PCI-DSS Safe Desktop Checkout";
+                                font-size: Typography.size-base;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                                horizontal-alignment: center;
+                            }
+                            Text {
+                                text: "To guarantee zero credit card exposure, native desktop apps never process raw card numbers directly. Checkout initiates in your default secure browser via Stripe / Lemon Squeezy.";
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                                horizontal-alignment: center;
+                                wrap: word-wrap;
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 12px;
+                            alignment: center;
+
+                            Button {
+                                text: "Open Secure Web Checkout ↗";
+                                variant: "primary";
+                                clicked => { root.launch-card-checkout(); }
+                            }
+
+                            Button {
+                                text: "Simulate Webhook Success";
+                                variant: "secondary";
+                                clicked => { root.complete-activation(); }
+                            }
+                        }
+                    }
+                }
+
+                // ========================================================
+                // TAB 1: INDIA UPI (DYNAMIC QR CODE)
+                // ========================================================
+                if root.active-payment-tab == 1: Rectangle {
+                    border-radius: Spacing.radius-md;
+                    background: Palette.bg-surface;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+                    vertical-stretch: 1;
+
+                    HorizontalLayout {
+                        padding: 16px;
+                        spacing: 20px;
+
+                        // Procedural QR Code Canvas
+                        Rectangle {
+                            width: 170px;
+                            height: 170px;
+                            border-radius: 8px;
+                            background: #ffffff; // High contrast white for QR scanning
+                            border-width: 1px;
+                            border-color: #cbd5e1;
+
+                            // Authentic QR Code Matrix Representation
+                            VerticalLayout {
+                                padding: 12px;
+                                spacing: 4px;
+                                alignment: center;
+
+                                // Top row with two finder patterns
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    alignment: space-between;
+
+                                    // Top-Left Finder
+                                    Rectangle { width: 36px; height: 36px; background: #000000; border-radius: 2px;
+                                        Rectangle { width: 20px; height: 20px; background: #ffffff;
+                                            Rectangle { width: 10px; height: 10px; background: #000000; }
+                                        }
+                                    }
+                                    // Simulated QR bits
+                                    Rectangle { width: 40px; height: 24px; background: #00000022; }
+                                    // Top-Right Finder
+                                    Rectangle { width: 36px; height: 36px; background: #000000; border-radius: 2px;
+                                        Rectangle { width: 20px; height: 20px; background: #ffffff;
+                                            Rectangle { width: 10px; height: 10px; background: #000000; }
+                                        }
+                                    }
+                                }
+
+                                // Middle data lines
+                                HorizontalLayout {
+                                    spacing: 6px;
+                                    alignment: center;
+                                    Rectangle { width: 130px; height: 40px; background: #00000015; }
+                                }
+
+                                // Bottom row with bottom-left finder
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    alignment: space-between;
+
+                                    // Bottom-Left Finder
+                                    Rectangle { width: 36px; height: 36px; background: #000000; border-radius: 2px;
+                                        Rectangle { width: 20px; height: 20px; background: #ffffff;
+                                            Rectangle { width: 10px; height: 10px; background: #000000; }
+                                        }
+                                    }
+                                    // Simulated QR data blocks
+                                    Rectangle { width: 80px; height: 36px; background: #00000018; }
+                                }
+                            }
+                        }
+
+                        // Right: UPI Metadata & Scan Guide
+                        VerticalLayout {
+                            spacing: 10px;
+                            vertical-stretch: 1;
+                            alignment: center;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+                                Text {
+                                    text: "Dynamic UPI QR";
+                                    font-size: Typography.size-base;
+                                    font-weight: Typography.weight-bold;
+                                    color: Palette.text-primary;
+                                }
+                                Rectangle {
+                                    height: 22px;
+                                    border-radius: 4px;
+                                    background: Palette.warning.with-alpha(0.18);
+                                    HorizontalLayout {
+                                        padding-left: 8px;
+                                        padding-right: 8px;
+                                        alignment: center;
+                                        Text {
+                                            text: "Expires: " + root.timer-text;
+                                            font-size: 11px;
+                                            font-weight: Typography.weight-bold;
+                                            color: Palette.warning;
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "Scan using Google Pay, PhonePe, Paytm, or BHIM. Amount: " + root.upi-amount-inr;
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                                wrap: word-wrap;
+                            }
+
+                            // VPA Box with 1-Click Copy
+                            Rectangle {
+                                height: 36px;
+                                border-radius: Spacing.radius-md;
+                                background: Palette.bg-subtle;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 6px;
+                                    alignment: space-between;
+
+                                    Text {
+                                        text: root.upi-vpa;
+                                        font-family: "Consolas, monospace";
+                                        font-size: 12px;
+                                        color: Palette.accent;
+                                        vertical-alignment: center;
+                                    }
+
+                                    Button {
+                                        text: "Copy VPA";
+                                        variant: "ghost";
+                                        clicked => { root.copy-text(root.upi-vpa); }
+                                    }
+                                }
+                            }
+
+                            Button {
+                                text: "Simulate UPI Webhook Confirmation";
+                                variant: "primary";
+                                clicked => { root.simulate-upi-payment(); }
+                            }
+                        }
+                    }
+                }
+
+                // ========================================================
+                // TAB 2: CRYPTOCURRENCY (ZERO-LEAK XPUB NON-CUSTODIAL)
+                // ========================================================
+                if root.active-payment-tab == 2: Rectangle {
+                    border-radius: Spacing.radius-md;
+                    background: Palette.bg-surface;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 12px;
+
+                        // Network Selector Pills
+                        HorizontalLayout {
+                            spacing: 6px;
+                            alignment: start;
+
+                            Text {
+                                text: "Network:";
+                                font-size: 11px;
+                                color: Palette.text-secondary;
+                                vertical-alignment: center;
+                            }
+
+                            Rectangle {
+                                height: 24px;
+                                border-radius: 12px;
+                                background: root.crypto-network == 0 ? Palette.accent : Palette.bg-subtle;
+                                HorizontalLayout {
+                                    padding-left: 8px; padding-right: 8px; alignment: center;
+                                    Text { text: "USDT (Polygon)"; font-size: 10px; font-weight: Typography.weight-semibold;
+                                           color: root.crypto-network == 0 ? #ffffff : Palette.text-secondary; vertical-alignment: center; }
+                                }
+                                TouchArea { clicked => { root.crypto-network = 0; } }
+                            }
+
+                            Rectangle {
+                                height: 24px;
+                                border-radius: 12px;
+                                background: root.crypto-network == 1 ? Palette.accent : Palette.bg-subtle;
+                                HorizontalLayout {
+                                    padding-left: 8px; padding-right: 8px; alignment: center;
+                                    Text { text: "USDC (Solana)"; font-size: 10px; font-weight: Typography.weight-semibold;
+                                           color: root.crypto-network == 1 ? #ffffff : Palette.text-secondary; vertical-alignment: center; }
+                                }
+                                TouchArea { clicked => { root.crypto-network = 1; } }
+                            }
+
+                            Rectangle {
+                                height: 24px;
+                                border-radius: 12px;
+                                background: root.crypto-network == 2 ? Palette.accent : Palette.bg-subtle;
+                                HorizontalLayout {
+                                    padding-left: 8px; padding-right: 8px; alignment: center;
+                                    Text { text: "USDT (Tron TRC20)"; font-size: 10px; font-weight: Typography.weight-semibold;
+                                           color: root.crypto-network == 2 ? #ffffff : Palette.text-secondary; vertical-alignment: center; }
+                                }
+                                TouchArea { clicked => { root.crypto-network = 2; } }
+                            }
+                        }
+
+                        // Receiving Address with 1-Click Copy
+                        Rectangle {
+                            height: 38px;
+                            border-radius: Spacing.radius-md;
+                            background: Palette.bg-subtle;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+
+                            HorizontalLayout {
+                                padding-left: 12px;
+                                padding-right: 6px;
+                                alignment: space-between;
+
+                                Text {
+                                    text: root.crypto-address;
+                                    font-family: "Consolas, monospace";
+                                    font-size: 11px;
+                                    color: Palette.accent;
+                                    vertical-alignment: center;
+                                }
+
+                                Button {
+                                    text: "Copy Address";
+                                    variant: "ghost";
+                                    clicked => { root.copy-text(root.crypto-address); }
+                                }
+                            }
+                        }
+
+                        // 4-Step Blockchain Confirmation Status Tracker
+                        Rectangle {
+                            height: 72px;
+                            border-radius: Spacing.radius-md;
+                            background: Palette.bg-subtle;
+
+                            HorizontalLayout {
+                                padding-left: 16px;
+                                padding-right: 16px;
+                                alignment: space-between;
+
+                                // Step 1: Broadcast
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    Rectangle {
+                                        width: 10px; height: 10px; border-radius: 5px;
+                                        background: root.crypto-step >= 0 ? Palette.accent : Palette.text-secondary;
+                                    }
+                                    Text { text: "1. Broadcast"; font-size: 10px; color: root.crypto-step >= 0 ? Palette.text-primary : Palette.text-secondary; }
+                                }
+
+                                // Step 2: Mempool
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    Rectangle {
+                                        width: 10px; height: 10px; border-radius: 5px;
+                                        background: root.crypto-step >= 1 ? Palette.accent : Palette.text-secondary;
+                                    }
+                                    Text { text: "2. Mempool"; font-size: 10px; color: root.crypto-step >= 1 ? Palette.text-primary : Palette.text-secondary; }
+                                }
+
+                                // Step 3: Confirming Blocks
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    Rectangle {
+                                        width: 10px; height: 10px; border-radius: 5px;
+                                        background: root.crypto-step >= 2 ? Palette.warning : Palette.text-secondary;
+                                    }
+                                    Text { text: "3. Blocks (" + root.crypto-blocks + "/12)"; font-size: 10px; color: root.crypto-step >= 2 ? Palette.warning : Palette.text-secondary; }
+                                }
+
+                                // Step 4: Finalized
+                                VerticalLayout {
+                                    alignment: center;
+                                    spacing: 4px;
+                                    Rectangle {
+                                        width: 10px; height: 10px; border-radius: 5px;
+                                        background: root.crypto-step >= 3 ? Palette.success : Palette.text-secondary;
+                                    }
+                                    Text { text: "4. Confirmed"; font-size: 10px; color: root.crypto-step >= 3 ? Palette.success : Palette.text-secondary; }
+                                }
+                            }
+                        }
+
+                        // Simulation button
+                        Button {
+                            text: "Simulate On-Chain Block Confirmations";
+                            variant: "primary";
+                            clicked => { root.simulate-crypto-payment(); }
+                        }
+                    }
+                }
+
+                // 5. Footer Row: Status Feedback, Cancel, and Finalize
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    Text {
+                        text: root.status-feedback;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        font-weight: Typography.weight-semibold;
+                        color: Palette.accent;
+                        vertical-alignment: center;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 10px;
+
+                        Button {
+                            text: "Cancel";
+                            variant: "ghost";
+                            clicked => { root.closed(); }
+                        }
+
+                        Button {
+                            text: "Activate License";
+                            variant: "primary";
+                            clicked => { root.complete-activation(); }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

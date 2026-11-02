@@ -1,0 +1,169 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { Button } from "../atoms/button.slint";
+
+export component PricingCard {
+    in property <string> plan-id: "pro";
+    in property <string> title: "Pro Developer";
+    in property <string> subtitle: "For engineering teams requiring full native performance & unlimited scale.";
+    in property <string> price: "$29";
+    in property <string> period: "/month";
+    in property <string> badge-text: "MOST POPULAR";
+    in property <bool> is-highlighted: false;
+    in property <bool> is-current-plan: false;
+    in property <string> button-text: "Upgrade to Pro";
+    in property <[string]> features: [
+        "120 FPS Direct3D & Metal Hardware Pipeline",
+        "Unlimited SQLite WAL In-Process Tables",
+        "Full Commercial Royalty-Free Distribution",
+        "Zero Electron, Sub-10 MB Native Binaries",
+        "Priority Security & Feature Channel"
+    ];
+    callback selected();
+
+    min-width: 220px;
+    horizontal-stretch: 1;
+    min-height: 420px;
+
+    card := Rectangle {
+        border-radius: Spacing.radius-lg;
+        background: root.is-highlighted ? Palette.bg-surface : Palette.bg-surface;
+        border-width: root.is-highlighted ? 2px : 1px;
+        border-color: root.is-highlighted ? Palette.accent :
+                     card-touch.has-hover ? Palette.border-focus :
+                     Palette.border-subtle;
+        drop-shadow-blur: root.is-highlighted ? 24px : card-touch.has-hover ? 16px : 6px;
+        drop-shadow-color: root.is-highlighted ? (Palette.accent.with-alpha(0.25)) : #00000018;
+        drop-shadow-offset-y: root.is-highlighted ? 6px : 3px;
+
+        animate border-color { duration: 150ms; }
+        animate drop-shadow-blur { duration: 150ms; }
+
+        VerticalLayout {
+            padding-left: Spacing.space-lg;
+            padding-right: Spacing.space-lg;
+            padding-top: Spacing.space-lg;
+            padding-bottom: Spacing.space-lg;
+            spacing: Spacing.space-md;
+
+            // Header Row: Plan Title & Optional Highlight Ribbon Pill
+            HorizontalLayout {
+                alignment: space-between;
+                spacing: 8px;
+
+                Text {
+                    text: root.title;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-lg;
+                    font-weight: Typography.weight-bold;
+                    color: Palette.text-primary;
+                    vertical-alignment: center;
+                    wrap: word-wrap;
+                }
+
+                if root.badge-text != "": Rectangle {
+                    height: 22px;
+                    border-radius: Spacing.radius-sm;
+                    background: root.is-highlighted ? Palette.accent : Palette.accent.with-alpha(0.18);
+
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        alignment: center;
+                        Text {
+                            text: root.badge-text;
+                            font-family: Typography.font-family;
+                            font-size: 10px;
+                            font-weight: Typography.weight-bold;
+                            color: root.is-highlighted ? #ffffff : Palette.accent;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Subtitle Description
+            Text {
+                text: root.subtitle;
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                color: Palette.text-secondary;
+                wrap: word-wrap;
+            }
+
+            // Price Section
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+
+                Text {
+                    text: root.price;
+                    font-family: Typography.font-family;
+                    font-size: 32px;
+                    font-weight: Typography.weight-bold;
+                    color: Palette.text-primary;
+                    vertical-alignment: bottom;
+                }
+
+                Text {
+                    text: root.period;
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    color: Palette.text-secondary;
+                    vertical-alignment: bottom;
+                }
+            }
+
+            // Section Divider
+            Rectangle {
+                height: 1px;
+                background: Palette.border-subtle;
+            }
+
+            // Features Checklist
+            VerticalLayout {
+                spacing: 10px;
+                vertical-stretch: 1;
+
+                for feature[index] in root.features: HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Image {
+                            source: @image-url("../../assets/icons/check.svg");
+                            width: 14px;
+                            height: 14px;
+                            colorize: root.is-highlighted ? Palette.accent : Palette.success;
+                        }
+                    }
+
+                    Text {
+                        text: feature;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-xs;
+                        color: Palette.text-primary;
+                        wrap: word-wrap;
+                        vertical-alignment: center;
+                        horizontal-stretch: 1;
+                    }
+                }
+            }
+
+            // Action / Upgrade Button
+            Button {
+                text: root.is-current-plan ? "Current Active Plan" : root.button-text;
+                variant: root.is-highlighted ? "primary" : "secondary";
+                enabled: !root.is-current-plan;
+                clicked => { root.selected(); }
+            }
+        }
+
+        card-touch := TouchArea {
+            // Background hover effect
+        }
+    }
+}
+

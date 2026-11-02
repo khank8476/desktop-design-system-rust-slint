@@ -1,0 +1,128 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+
+export component CreditBadge {
+    in property <int> credits: 2450;
+    in property <int> max-credits: 5000;
+    in property <string> tier-name: "PRO";
+    in property <bool> is-active: true;
+    in property <bool> show-progress: true;
+    in property <bool> interactive: true;
+    callback top-up-clicked();
+    callback tier-clicked();
+
+    height: 34px;
+    horizontal-stretch: 0;
+
+    Rectangle {
+        border-radius: Spacing.radius-full;
+        background: Palette.bg-surface;
+        border-width: 1px;
+        border-color: badge-touch.has-hover && root.interactive ? Palette.accent : Palette.border-subtle;
+        drop-shadow-blur: 4px;
+        drop-shadow-color: #00000015;
+
+        animate border-color { duration: 120ms; }
+
+        HorizontalLayout {
+            padding-left: 10px;
+            padding-right: 6px;
+            spacing: 8px;
+            alignment: center;
+
+            // Zap / Token Icon
+            VerticalLayout {
+                alignment: center;
+                Image {
+                    source: @image-url("../../assets/icons/zap.svg");
+                    width: 14px;
+                    height: 14px;
+                    colorize: Palette.warning;
+                }
+            }
+
+            // Numeric Balance
+            Text {
+                text: root.credits + (root.max-credits > 0 ? " / " + root.max-credits : "") + " Credits";
+                font-family: Typography.font-family;
+                font-size: Typography.size-xs;
+                font-weight: Typography.weight-semibold;
+                color: Palette.text-primary;
+                vertical-alignment: center;
+            }
+
+            // Mini Gauge Progress Bar
+            if root.show-progress && root.max-credits > 0: Rectangle {
+                width: 36px;
+                height: 5px;
+                border-radius: 2.5px;
+                background: Palette.bg-subtle;
+                clip: true;
+
+                Rectangle {
+                    x: 0px;
+                    width: max(2px, min(parent.width, parent.width * (root.credits / max(1, root.max-credits))));
+                    height: 100%;
+                    border-radius: 2.5px;
+                    background: root.credits < (root.max-credits * 15 / 100) ? Palette.danger :
+                                root.credits < (root.max-credits * 35 / 100) ? Palette.warning :
+                                Palette.accent;
+                }
+            }
+
+            // Tier Status Pill
+            tier-box := Rectangle {
+                height: 20px;
+                border-radius: Spacing.radius-sm;
+                background: root.is-active ? Palette.accent.with-alpha(0.18) : Palette.bg-subtle;
+                border-width: 1px;
+                border-color: root.is-active ? Palette.accent.with-alpha(0.4) : Palette.border-subtle;
+
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    alignment: center;
+                    Text {
+                        text: root.tier-name;
+                        font-family: Typography.font-family;
+                        font-size: 10px;
+                        font-weight: Typography.weight-bold;
+                        color: root.is-active ? Palette.accent : Palette.text-secondary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Top-Up Action Button
+            if root.interactive: topup-btn := Rectangle {
+                width: 22px;
+                height: 22px;
+                border-radius: Spacing.radius-full;
+                background: topup-touch.has-hover ? Palette.accent : Palette.bg-subtle;
+
+                animate background { duration: 100ms; }
+
+                VerticalLayout {
+                    alignment: center;
+                    Image {
+                        source: @image-url("../../assets/icons/plus.svg");
+                        width: 12px;
+                        height: 12px;
+                        colorize: topup-touch.has-hover ? #ffffff : Palette.text-primary;
+                    }
+                }
+
+                topup-touch := TouchArea {
+                    clicked => { root.top-up-clicked(); }
+                }
+            }
+        }
+
+        badge-touch := TouchArea {
+            enabled: root.interactive;
+            clicked => { root.tier-clicked(); }
+        }
+    }
+}
+

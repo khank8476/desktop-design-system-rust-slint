@@ -71,7 +71,9 @@ c/
 │   │   ├── receipt_preview.slint # Industrial 80mm thermal receipt & document layout canvas
 │   │   ├── chip.slint         # Interactive tag pills with variants, active states & remove triggers
 │   │   ├── pagination.slint   # High-density data table pagination with first/prev/next/last & count
-│   │   └── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
+│   │   ├── color_picker.slint # Curated palette swatch grid with hex preview & active checkmark
+│   │   ├── credit_badge.slint # Real-time credit counter pill with usage gauge & top-up trigger
+│   │   └── pricing_card.slint # High-density plan card with highlight ribbons & feature checkmarks
 │   └── organisms/             # High-level desktop modules
 │       ├── modal.slint        # Centered backdrop dialog
 │       ├── crud_modal.slint   # Data entry & edit modal form for SQLite records
@@ -81,7 +83,9 @@ c/
 │       ├── toast.slint        # Floating auto-dismiss corner notifications
 │       ├── table.slint        # High-density desktop data table with row selection
 │       ├── statusbar.slint    # Window footer with VCS branch, 120 FPS Direct3D & memory telemetry
-│       └── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
+│       ├── command_palette.slint # Floating Ctrl+K spotlight launcher with search & action dispatch
+│       ├── plan_selector.slint # Segmented monthly/annual/credits switcher & 3-tier matrix
+│       └── checkout_modal.slint # Multi-rail checkout dialog (PCI-DSS Card, UPI QR, Zero-Leak Crypto)
 │
 └── examples/                  # Isolated Domain Showcase Applications (Zero Bloat)
     ├── crypto_tracker.rs      # High-speed live Crypto Price Tracker binary
@@ -89,7 +93,9 @@ c/
     ├── pos_terminal.rs        # Enterprise Retail & Point-of-Sale Terminal binary with SQLite WAL
     ├── pos_terminal.slint     # High-speed touch & barcode POS UI with checkout and receipt preview
     ├── dev_forge.rs           # DevForge Native Developer Utility Studio binary (8.09 MB)
-    └── dev_forge.slint        # DevForge multi-module developer workspace UI
+    ├── dev_forge.slint        # DevForge multi-module developer workspace UI
+    ├── billing_hub.rs         # DevBilling Studio Desktop Commerce & Licensing Engine binary
+    └── billing_hub.slint      # DevBilling multi-rail payment & entitlement matrix UI
 ```
 
 ---
@@ -150,6 +156,9 @@ cargo run --example pos_terminal
 
 # Run the DevForge Native Developer Studio (Sub-10 MB, 120 FPS Direct3D)
 cargo run --example dev_forge
+
+# Run the DevBilling Studio & Payment Gateway Hub (PCI-DSS Card, India UPI QR, Zero-Leak Crypto)
+cargo run --example billing_hub
 ```
 
 ### Compiling Optimized Production Binary (< 10 MB)
@@ -190,12 +199,14 @@ cargo clean
   - ✅ **FormField, ContextMenu & ReceiptCanvas Molecules:** Production form validation wrapper with required asterisks and error states, floating action popover with accelerator shortcuts, and industrial thermal document renderer.
   - ✅ **Demo 2 (Enterprise POS Terminal):** High-speed 120 FPS retail counter terminal with catalog search, ticket stepper, context menu discounts, cash/card/QR checkout modal with real-time change calculation, receipt canvas, and transactional SQLite WAL ledger (`examples/pos_terminal.rs`).
   - ✅ **Demo 3 (DevForge Developer Utility Studio):** High-speed **8.09 MB** Swiss Army Knife for software engineers (`examples/dev_forge.rs`). Features Text & Multi-Case telemetry, Cryptographic Multi-Hash (SHA-256, SHA-512, SHA-1, MD5, CRC32) with live checksum verification, Base64 & URL percent encode/decode with 1-click swap, UUID v4 & ULID batch generator, JSON 2-space/4-space formatter & minifier with AST syntax linter, and live Unix Epoch <-> ISO-8601 UTC converter.
-  - ✅ **Exhaustive Component Expansion:** Added 7 new components: `Avatar` & `Skeleton` (Atoms), `Chip`, `Pagination`, & `ColorPicker` (Molecules), `StatusBar` & `CommandPalette` (Organisms), bringing the total to an unrivaled 36 production-grade native desktop components.
+  - ✅ **Exhaustive Component Expansion:** Expanded with `CreditBadge` & `PricingCard` (Molecules), `PlanSelector` & `CheckoutModal` (Organisms), bringing the total to an unrivaled **40 production-grade native desktop components**.
+  - ✅ **Desktop Monetization & Payment Suite (Tier 2 & 3):** Full native desktop billing primitives: `CreditBadge` with real-time balance counter and usage gauge, `PricingCard` with highlight ribbons and feature checkmarks, `PlanSelector` with dynamic monthly/annual/credits switcher, and `CheckoutModal` multi-rail overlay.
+  - ✅ **Demo 4 (DevBilling Studio & Entitlements Engine):** High-speed 120 FPS desktop payment and licensing studio (`examples/billing_hub.rs`). Features multi-rail checkout: PCI-DSS compliant browser redirect, India dynamic UPI QR code with countdown timer and webhook simulator, Zero-Leak non-custodial cryptocurrency checkout with xPub public address derivation, mempool watcher, and live 4-step block confirmations (0/12 -> 12/12), plus live compute credit deduction and atomic SQLite WAL audit ledger!
   - ✅ **Vintage Sepia Display Mode:** Warm parchment (`#F4ECD8`), antique alabaster surfaces (`#FBF7EE`), espresso ink typography (`#382818`), and roasted chestnut secondary accents (`#7D654A`), integrated with persistent SQLite preference storage and 3-way segmented theme switcher (`Clean Light`, `Slate Dark`, `Vintage Sepia`).
   - ✅ **Enterprise Multi-Row Table Operations:** Interactive DataTable multi-row selection with master header checkbox, row-level checkboxes, batch quick-action floating toolbar (instant batch status update: Active, Warning, Standby, Offline), full `BatchEditModal` with selective attribute overrides, and atomic multi-row deletion (`DELETE FROM services WHERE id IN (...)` in SQLite WAL mode).
   - ✅ **Crates.io Publication:** `v0.3.1` live and indexed on Crates.io. Includes full DRY theme tokens, responsive layout bounds across sidebar transitions, vertical centering across status bar/toolbars/feed ticker, non-stretching inputs, and pinned 38px Live Feed header with zero vertical button distortion.
 - **Next Planned Deliverables:**
-  - 🔜 **Demo 4:** Native Local Audio/Media Player or Markdown Document Studio.
+  - 🔜 **Demo 5:** Native Local Audio/Media Player or Markdown Document Studio.
 
 ---
 

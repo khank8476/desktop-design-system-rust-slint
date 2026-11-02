@@ -1,0 +1,302 @@
+import { Palette } from "../tokens/colors.slint";
+import { Typography } from "../tokens/typography.slint";
+import { Spacing } from "../tokens/spacing.slint";
+import { PricingCard } from "../molecules/pricing_card.slint";
+import { Button } from "../atoms/button.slint";
+
+export component PlanSelector {
+    in-out property <int> billing-cycle: 1; // 0: Monthly, 1: Yearly (Default Save 20%), 2: Credits
+    in property <string> active-plan-id: "free";
+    callback plan-chosen(string /* id */, string /* cycle */, string /* price */);
+    callback buy-credits-pack(int /* credits */, string /* price */);
+
+    VerticalLayout {
+        spacing: Spacing.space-xl;
+
+        // 1. Header & Billing Interval Switcher
+        VerticalLayout {
+            spacing: Spacing.space-md;
+            alignment: center;
+
+            VerticalLayout {
+                spacing: 4px;
+                alignment: center;
+                Text {
+                    text: "Flexible Desktop Licensing & Entitlements";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-xl;
+                    font-weight: Typography.weight-bold;
+                    color: Palette.text-primary;
+                    horizontal-alignment: center;
+                }
+                Text {
+                    text: "Zero cloud vendor lock-in. 100% offline license key verification via Ed25519 cryptography.";
+                    font-family: Typography.font-family;
+                    font-size: Typography.size-sm;
+                    color: Palette.text-secondary;
+                    horizontal-alignment: center;
+                }
+            }
+
+            // Segmented Billing Switcher (Monthly / Yearly / Credit Packs)
+            HorizontalLayout {
+                alignment: center;
+                Rectangle {
+                    height: 42px;
+                    border-radius: Spacing.radius-full;
+                    background: Palette.bg-surface;
+                    border-width: 1px;
+                    border-color: Palette.border-subtle;
+
+                    HorizontalLayout {
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        spacing: 4px;
+
+                        // Tab 0: Monthly
+                        btn-monthly := Rectangle {
+                            border-radius: Spacing.radius-full;
+                            background: root.billing-cycle == 0 ? Palette.accent :
+                                        touch-monthly.has-hover ? Palette.bg-subtle : transparent;
+
+                            HorizontalLayout {
+                                padding-left: 14px;
+                                padding-right: 14px;
+                                alignment: center;
+                                Text {
+                                    text: "Monthly Billing";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    font-weight: Typography.weight-semibold;
+                                    color: root.billing-cycle == 0 ? #ffffff : Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            touch-monthly := TouchArea {
+                                clicked => { root.billing-cycle = 0; }
+                            }
+                        }
+
+                        // Tab 1: Yearly (Highlighted with Savings Pill)
+                        btn-yearly := Rectangle {
+                            border-radius: Spacing.radius-full;
+                            background: root.billing-cycle == 1 ? Palette.accent :
+                                        touch-yearly.has-hover ? Palette.bg-subtle : transparent;
+
+                            HorizontalLayout {
+                                padding-left: 14px;
+                                padding-right: 14px;
+                                spacing: 6px;
+                                alignment: center;
+                                Text {
+                                    text: "Annual Billing";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    font-weight: Typography.weight-semibold;
+                                    color: root.billing-cycle == 1 ? #ffffff : Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                                Rectangle {
+                                    height: 18px;
+                                    border-radius: 9px;
+                                    background: root.billing-cycle == 1 ? #ffffff25 : Palette.success.with-alpha(0.2);
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        padding-right: 6px;
+                                        alignment: center;
+                                        Text {
+                                            text: "SAVE 20%";
+                                            font-family: Typography.font-family;
+                                            font-size: 9px;
+                                            font-weight: Typography.weight-bold;
+                                            color: root.billing-cycle == 1 ? #ffffff : Palette.success;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            touch-yearly := TouchArea {
+                                clicked => { root.billing-cycle = 1; }
+                            }
+                        }
+
+                        // Tab 2: Prepaid Credits
+                        btn-credits := Rectangle {
+                            border-radius: Spacing.radius-full;
+                            background: root.billing-cycle == 2 ? Palette.accent :
+                                        touch-credits.has-hover ? Palette.bg-subtle : transparent;
+
+                            HorizontalLayout {
+                                padding-left: 14px;
+                                padding-right: 14px;
+                                alignment: center;
+                                Text {
+                                    text: "⚡ Compute Credits";
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-xs;
+                                    font-weight: Typography.weight-semibold;
+                                    color: root.billing-cycle == 2 ? #ffffff : Palette.text-secondary;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            touch-credits := TouchArea {
+                                clicked => { root.billing-cycle = 2; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. View 1 & 2: Subscriptions (Monthly or Yearly Matrix)
+        if root.billing-cycle != 2: HorizontalLayout {
+            spacing: Spacing.space-lg;
+
+            // Plan 1: Free Starter
+            PricingCard {
+                plan-id: "free";
+                title: "Starter Community";
+                subtitle: "Essential design primitives and local SQLite templates for non-commercial builders.";
+                price: "$0";
+                period: "/forever";
+                badge-text: "";
+                is-highlighted: false;
+                is-current-plan: root.active-plan-id == "free";
+                button-text: "Free Forever";
+                features: [
+                    "36 Core Desktop UI Components",
+                    "Local In-Memory SQLite CRUD Actor",
+                    "Direct3D 12 Hardware Viewport",
+                    "Community Discord Support"
+                ];
+                selected => {
+                    root.plan-chosen("free", "free", "$0");
+                }
+            }
+
+            // Plan 2: Pro Developer (Most Popular)
+            PricingCard {
+                plan-id: "pro";
+                title: "Pro Developer";
+                subtitle: "Full commercial deployment rights, thermal receipt engine, and direct system registry telemetry.";
+                price: root.billing-cycle == 1 ? "$15" : "$19";
+                period: root.billing-cycle == 1 ? "/mo ($180/yr)" : "/month";
+                badge-text: "MOST POPULAR";
+                is-highlighted: true;
+                is-current-plan: root.active-plan-id == "pro";
+                button-text: "Upgrade to Pro";
+                features: [
+                    "Everything in Community +",
+                    "Royalty-Free Commercial Distribution",
+                    "Industrial ESC/POS Thermal Printing",
+                    "Native Desktop Shortcut Generator (.lnk)",
+                    "Sub-1ms Hardware Registry Diagnostics",
+                    "Priority Bugfixes & Security Patches"
+                ];
+                selected => {
+                    root.plan-chosen("pro", root.billing-cycle == 1 ? "yearly" : "monthly", root.billing-cycle == 1 ? "$180" : "$19");
+                }
+            }
+
+            // Plan 3: Enterprise Scale
+            PricingCard {
+                plan-id: "enterprise";
+                title: "Enterprise Studio";
+                subtitle: "For high-throughput organizations needing multi-workstation seats and custom driver integration.";
+                price: root.billing-cycle == 1 ? "$69" : "$89";
+                period: root.billing-cycle == 1 ? "/mo ($828/yr)" : "/month";
+                badge-text: "ENTERPRISE";
+                is-highlighted: false;
+                is-current-plan: root.active-plan-id == "enterprise";
+                button-text: "Contact & License";
+                features: [
+                    "Everything in Pro Developer +",
+                    "Unlimited Dedicated Desktop Seats",
+                    "Air-Gapped Ed25519 Offline Key Signing",
+                    "Custom DirectX & Metal Shader Support",
+                    "SLA Guaranteed 24/7 Core Team Support",
+                    "Source Code Audit & Vulnerability Reviews"
+                ];
+                selected => {
+                    root.plan-chosen("enterprise", root.billing-cycle == 1 ? "yearly" : "monthly", root.billing-cycle == 1 ? "$828" : "$89");
+                }
+            }
+        }
+
+        // 3. View 3: Pay-Per-Use Credit Bundles
+        if root.billing-cycle == 2: HorizontalLayout {
+            spacing: Spacing.space-lg;
+
+            // Pack 1: 1,000 Credits
+            PricingCard {
+                plan-id: "pack_1000";
+                title: "Micro Compute Pack";
+                subtitle: "1,000 on-demand task units for quick document scans and hash benchmarks.";
+                price: "$10";
+                period: " (10,000 ops)";
+                badge-text: "";
+                is-highlighted: false;
+                button-text: "Buy 1,000 Credits";
+                features: [
+                    "1,000 Direct GPU Compute Credits",
+                    "Never Expires (100% Perpetual)",
+                    "Instant In-Process Activation",
+                    "Usable Across All Workspaces"
+                ];
+                selected => {
+                    root.buy-credits-pack(1000, "$10");
+                }
+            }
+
+            // Pack 2: 5,000 Credits (Value Pack)
+            PricingCard {
+                plan-id: "pack_5000";
+                title: "Pro Compute Pack";
+                subtitle: "5,000 credits with 20% bonus capacity for AI tasks and continuous batch processing.";
+                price: "$39";
+                period: " (Save 20%)";
+                badge-text: "BEST VALUE";
+                is-highlighted: true;
+                button-text: "Buy 5,000 Credits";
+                features: [
+                    "5,000 Compute Units + 500 Bonus",
+                    "Never Expires (100% Perpetual)",
+                    "Sub-10ms Fast Token Allocation",
+                    "Priority Queue Execution",
+                    "Full SQLite WAL Transaction Safety"
+                ];
+                selected => {
+                    root.buy-credits-pack(5000, "$39");
+                }
+            }
+
+            // Pack 3: 25,000 Credits
+            PricingCard {
+                plan-id: "pack_25000";
+                title: "Studio Mega Pack";
+                subtitle: "25,000 credits with 40% volume discount for intensive daily production workloads.";
+                price: "$149";
+                period: " (Save 40%)";
+                badge-text: "MAX VOLUME";
+                is-highlighted: false;
+                button-text: "Buy 25,000 Credits";
+                features: [
+                    "25,000 High-Capacity Compute Units",
+                    "Never Expires (100% Perpetual)",
+                    "Multi-Threaded Parallel Execution",
+                    "Exportable Receipt & Tax Invoicing",
+                    "Dedicated High-Speed Endpoint"
+                ];
+                selected => {
+                    root.buy-credits-pack(25000, "$149");
+                }
+            }
+        }
+    }
+}
+

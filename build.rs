@@ -3,6 +3,7 @@ fn main() {
     println!("cargo:rerun-if-changed=examples/crypto_tracker.slint");
     println!("cargo:rerun-if-changed=examples/pos_terminal.slint");
     println!("cargo:rerun-if-changed=examples/dev_forge.slint");
+    println!("cargo:rerun-if-changed=examples/billing_hub.slint");
 
     slint_build::compile("ui/app.slint").expect("Failed to compile Slint UI files");
 
@@ -28,6 +29,13 @@ fn main() {
             out_dir.join("dev_forge.rs"),
             slint_build::CompilerConfiguration::new(),
         ).expect("Failed to compile examples/dev_forge.slint");
+    }
+    if std::path::Path::new("examples/billing_hub.slint").exists() {
+        slint_build::compile_with_output_path(
+            "examples/billing_hub.slint",
+            out_dir.join("billing_hub.rs"),
+            slint_build::CompilerConfiguration::new(),
+        ).expect("Failed to compile examples/billing_hub.slint");
     }
 
     #[cfg(windows)]

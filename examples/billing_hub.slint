@@ -1,0 +1,648 @@
+import { Palette } from "../ui/tokens/colors.slint";
+import { Typography } from "../ui/tokens/typography.slint";
+import { Spacing } from "../ui/tokens/spacing.slint";
+import { Button } from "../ui/atoms/button.slint";
+import { Badge } from "../ui/atoms/badge.slint";
+import { ProgressBar } from "../ui/atoms/progressbar.slint";
+import { CreditBadge } from "../ui/molecules/credit_badge.slint";
+import { PricingCard } from "../ui/molecules/pricing_card.slint";
+import { PlanSelector } from "../ui/organisms/plan_selector.slint";
+import { CheckoutModal } from "../ui/organisms/checkout_modal.slint";
+import { ToastNotification } from "../ui/organisms/toast.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export struct LedgerEntry {
+    id: int,
+    timestamp: string,
+    action: string,
+    amount: string,
+    status: string,
+}
+
+export component BillingHubWindow inherits Window {
+    title: "DevBilling Studio — Enterprise Licensing, UPI QR & Crypto Payment Engine";
+    icon: @image-url("../assets/app-icon.png");
+    min-width: 1040px;
+    min-height: 720px;
+    preferred-width: 1140px;
+    preferred-height: 800px;
+    background: Palette.bg-canvas;
+
+    // Billing & License State
+    in-out property <string> active-plan: "pro";
+    in-out property <string> active-plan-name: "Pro Developer";
+    in-out property <string> license-key: "LIC-ED25519-9482-7718-PRO";
+    in-out property <string> license-expires: "2027-11-02 (365 Days)";
+    in-out property <int> available-credits: 3400;
+    in-out property <int> max-credits: 5000;
+    in-out property <int> selected-tab: 0; // 0: Pricing Plans, 1: Entitlements & Ledger, 2: Gateway Security
+    in-out property <[LedgerEntry]> ledger-entries: [];
+
+    // Checkout Modal State
+    in-out property <bool> checkout-open: false;
+    in-out property <string> checkout-plan-title: "Pro Developer License";
+    in-out property <string> checkout-plan-price: "$180";
+    in-out property <string> checkout-billing-cycle: "yearly";
+    in-out property <int> checkout-payment-tab: 0;
+    in-out property <int> checkout-crypto-step: 0;
+    in-out property <int> checkout-crypto-blocks: 0;
+    in-out property <string> checkout-feedback: "";
+    in-out property <string> checkout-timer-text: "14:59";
+
+    // Toast State
+    in-out property <bool> toast-open: false;
+    in-out property <string> toast-title: "";
+    in-out property <string> toast-message: "";
+    in-out property <string> toast-status: "info";
+
+    // Callbacks to Rust Backend
+    callback consume-credits(int /* amount */);
+    callback open-checkout(string /* plan */, string /* cycle */, string /* price */);
+    callback simulate-upi();
+    callback simulate-crypto();
+    callback complete-activation();
+    callback copy-clipboard(string /* text */);
+    callback toggle-theme();
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // ========================================================
+        // 1. TOP HEADER & TELEMETRY BAR
+        // ========================================================
+        Rectangle {
+            height: 64px;
+            background: Palette.bg-header;
+            Rectangle { y: parent.height - 1px; height: 1px; background: Palette.border-subtle; }
+
+            HorizontalLayout {
+                padding-left: 24px;
+                padding-right: 24px;
+                alignment: space-between;
+
+                // Left: Logo & Brand
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 34px;
+                            height: 34px;
+                            border-radius: Spacing.radius-md;
+                            background: Palette.accent;
+                            VerticalLayout {
+                                alignment: center;
+                                Image {
+                                    source: @image-url("../assets/icons/shield.svg");
+                                    width: 18px;
+                                    height: 18px;
+                                    colorize: #ffffff;
+                                }
+                            }
+                        }
+                    }
+
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 1px;
+                        Text {
+                            text: "DevBilling Studio";
+                            font-family: Typography.font-family;
+                            font-size: Typography.size-base;
+                            font-weight: Typography.weight-bold;
+                            color: Palette.text-primary;
+                        }
+                        Text {
+                            text: "Native Desktop Commerce • Zero-Leak Crypto • Offline Ed25519";
+                            font-family: Typography.font-family;
+                            font-size: 11px;
+                            color: Palette.text-secondary;
+                        }
+                    }
+                }
+
+                // Right: Credit Counter Pill, Consume Action & Theme Toggle
+                HorizontalLayout {
+                    spacing: 12px;
+                    alignment: center;
+
+                    // Live Credit Badge
+                    CreditBadge {
+                        credits: root.available-credits;
+                        max-credits: root.max-credits;
+                        tier-name: root.active-plan == "pro" ? "PRO ACTIVE" : root.active-plan == "enterprise" ? "ENTERPRISE" : "STARTER";
+                        is-active: root.active-plan != "free";
+                        top-up-clicked => {
+                            root.open-checkout("Micro Compute Pack", "credits", "$10");
+                        }
+                        tier-clicked => {
+                            root.selected-tab = 1;
+                        }
+                    }
+
+                    // Simulate AI/Compute Task Trigger
+                    Button {
+                        text: "⚡ Run Task (-100 Credits)";
+                        variant: "primary";
+                        clicked => {
+                            root.consume-credits(100);
+                        }
+                    }
+
+                    // Theme Switcher Button
+                    theme-btn := Rectangle {
+                        width: 34px;
+                        height: 34px;
+                        border-radius: Spacing.radius-md;
+                        background: theme-touch.has-hover ? Palette.bg-surface-hover : Palette.bg-surface;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+
+                        VerticalLayout {
+                            alignment: center;
+                            Image {
+                                source: @image-url("../assets/icons/sun-moon.svg");
+                                width: 16px;
+                                height: 16px;
+                                colorize: Palette.text-primary;
+                            }
+                        }
+
+                        theme-touch := TouchArea {
+                            clicked => { root.toggle-theme(); }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ========================================================
+        // 2. PRIMARY NAVIGATION SUB-TABS
+        // ========================================================
+        Rectangle {
+            height: 48px;
+            background: Palette.bg-surface;
+            Rectangle { y: parent.height - 1px; height: 1px; background: Palette.border-subtle; }
+
+            HorizontalLayout {
+                padding-left: 24px;
+                padding-right: 24px;
+                spacing: 16px;
+                alignment: start;
+
+                // Tab 0: Plans & Pricing Matrix
+                tab0 := Rectangle {
+                    HorizontalLayout {
+                        padding-left: 12px; padding-right: 12px; alignment: center;
+                        Text {
+                            text: "Pricing Matrix & Plans";
+                            font-size: Typography.size-sm;
+                            font-weight: root.selected-tab == 0 ? Typography.weight-bold : Typography.weight-medium;
+                            color: root.selected-tab == 0 ? Palette.accent : Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                    if root.selected-tab == 0: Rectangle {
+                        y: parent.height - 2px;
+                        height: 2px;
+                        background: Palette.accent;
+                    }
+                    TouchArea { clicked => { root.selected-tab = 0; } }
+                }
+
+                // Tab 1: Active Entitlements & SQLite Ledger
+                tab1 := Rectangle {
+                    HorizontalLayout {
+                        padding-left: 12px; padding-right: 12px; alignment: center;
+                        Text {
+                            text: "Active Entitlements & SQLite Ledger";
+                            font-size: Typography.size-sm;
+                            font-weight: root.selected-tab == 1 ? Typography.weight-bold : Typography.weight-medium;
+                            color: root.selected-tab == 1 ? Palette.accent : Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                    if root.selected-tab == 1: Rectangle {
+                        y: parent.height - 2px;
+                        height: 2px;
+                        background: Palette.accent;
+                    }
+                    TouchArea { clicked => { root.selected-tab = 1; } }
+                }
+
+                // Tab 2: Security & Payment Gateway Architecture
+                tab2 := Rectangle {
+                    HorizontalLayout {
+                        padding-left: 12px; padding-right: 12px; alignment: center;
+                        Text {
+                            text: "Payment Security Architecture (PCI-DSS / UPI / Crypto)";
+                            font-size: Typography.size-sm;
+                            font-weight: root.selected-tab == 2 ? Typography.weight-bold : Typography.weight-medium;
+                            color: root.selected-tab == 2 ? Palette.accent : Palette.text-secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                    if root.selected-tab == 2: Rectangle {
+                        y: parent.height - 2px;
+                        height: 2px;
+                        background: Palette.accent;
+                    }
+                    TouchArea { clicked => { root.selected-tab = 2; } }
+                }
+            }
+        }
+
+        // ========================================================
+        // 3. MAIN WORKSPACE VIEWPORT (SCROLLABLE)
+        // ========================================================
+        ScrollView {
+            VerticalLayout {
+                padding-left: 28px;
+                padding-right: 28px;
+                padding-top: 24px;
+                padding-bottom: 32px;
+                spacing: 24px;
+
+                // ------------------------------------------------
+                // TAB 0: PRICING MATRIX & PLAN SELECTOR
+                // ------------------------------------------------
+                if root.selected-tab == 0: VerticalLayout {
+                    spacing: 24px;
+
+                    PlanSelector {
+                        active-plan-id: root.active-plan;
+                        plan-chosen(id, cycle, price) => {
+                            root.open-checkout(
+                                id == "pro" ? "Pro Developer License" : id == "enterprise" ? "Enterprise Studio License" : "Community Starter",
+                                cycle,
+                                price
+                            );
+                        }
+                        buy-credits-pack(credits, price) => {
+                            root.open-checkout(credits + " Compute Units Pack", "credits", price);
+                        }
+                    }
+                }
+
+                // ------------------------------------------------
+                // TAB 1: ACTIVE ENTITLEMENTS & SQLITE LEDGER
+                // ------------------------------------------------
+                if root.selected-tab == 1: VerticalLayout {
+                    spacing: 20px;
+
+                    // Active License Banner Card
+                    Rectangle {
+                        border-radius: Spacing.radius-lg;
+                        background: Palette.bg-surface;
+                        border-width: 1px;
+                        border-color: Palette.border-subtle;
+                        drop-shadow-blur: 8px;
+                        drop-shadow-color: #00000010;
+
+                        VerticalLayout {
+                            padding: 24px;
+                            spacing: 16px;
+
+                            HorizontalLayout {
+                                alignment: space-between;
+
+                                HorizontalLayout {
+                                    spacing: 12px;
+                                    alignment: center;
+
+                                    Rectangle {
+                                        width: 12px; height: 12px; border-radius: 6px;
+                                        background: Palette.success;
+                                    }
+
+                                    VerticalLayout {
+                                        spacing: 2px;
+                                        Text {
+                                            text: "Current Active License: " + root.active-plan-name;
+                                            font-size: Typography.size-lg;
+                                            font-weight: Typography.weight-bold;
+                                            color: Palette.text-primary;
+                                        }
+                                        Text {
+                                            text: "Cryptographic Entitlement: Ed25519 Verified • Expires: " + root.license-expires;
+                                            font-size: Typography.size-xs;
+                                            color: Palette.text-secondary;
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    height: 28px;
+                                    border-radius: Spacing.radius-sm;
+                                    background: Palette.success.with-alpha(0.18);
+                                    HorizontalLayout {
+                                        padding-left: 10px; padding-right: 10px; alignment: center;
+                                        Text {
+                                            text: "100% OFFLINE VALID";
+                                            font-size: 11px;
+                                            font-weight: Typography.weight-bold;
+                                            color: Palette.success;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // License Token Key Box
+                            Rectangle {
+                                height: 42px;
+                                border-radius: Spacing.radius-md;
+                                background: Palette.bg-subtle;
+                                border-width: 1px;
+                                border-color: Palette.border-subtle;
+
+                                HorizontalLayout {
+                                    padding-left: 14px;
+                                    padding-right: 8px;
+                                    alignment: space-between;
+
+                                    Text {
+                                        text: "Signed License Token: " + root.license-key;
+                                        font-family: "Consolas, monospace";
+                                        font-size: 12px;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.accent;
+                                        vertical-alignment: center;
+                                    }
+
+                                    Button {
+                                        text: "Copy Key";
+                                        variant: "ghost";
+                                        clicked => {
+                                            root.copy-clipboard(root.license-key);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Compute Usage Meter
+                            VerticalLayout {
+                                spacing: 8px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text {
+                                        text: "Compute Units Remaining:";
+                                        font-size: Typography.size-xs;
+                                        font-weight: Typography.weight-semibold;
+                                        color: Palette.text-primary;
+                                    }
+                                    Text {
+                                        text: root.available-credits + " / " + root.max-credits + " Units Available";
+                                        font-size: Typography.size-xs;
+                                        color: Palette.text-secondary;
+                                    }
+                                }
+
+                                ProgressBar {
+                                    progress: (root.available-credits * 100) / max(1, root.max-credits);
+                                }
+                            }
+                        }
+                    }
+
+                    // Audit Ledger Table Header
+                    VerticalLayout {
+                        spacing: 8px;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text {
+                                text: "Persistent SQLite WAL Transaction & Compute Audit Ledger";
+                                font-size: Typography.size-base;
+                                font-weight: Typography.weight-bold;
+                                color: Palette.text-primary;
+                            }
+                            Text {
+                                text: "Atomic In-Process rusqlite Ledger • Sub-ms Writes";
+                                font-size: Typography.size-xs;
+                                color: Palette.text-secondary;
+                            }
+                        }
+
+                        // Ledger Table Card
+                        Rectangle {
+                            border-radius: Spacing.radius-md;
+                            background: Palette.bg-surface;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+
+                            VerticalLayout {
+                                padding: 12px;
+                                spacing: 8px;
+
+                                // Table Header
+                                HorizontalLayout {
+                                    padding-left: 12px; padding-right: 12px;
+                                    Text { width: 60px; text: "# ID"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                    Text { width: 160px; text: "Timestamp"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                    Text { horizontal-stretch: 1; text: "Operation / Entitlement Action"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                    Text { width: 120px; text: "Delta / Amount"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                    Text { width: 100px; text: "Status"; font-size: 11px; font-weight: Typography.weight-bold; color: Palette.text-secondary; }
+                                }
+
+                                Rectangle { height: 1px; background: Palette.border-subtle; }
+
+                                // Ledger Rows
+                                for entry in root.ledger-entries: HorizontalLayout {
+                                    padding-left: 12px; padding-right: 12px;
+                                    height: 32px;
+                                    Text { width: 60px; text: "#" + entry.id; font-size: 11px; color: Palette.text-secondary; vertical-alignment: center; }
+                                    Text { width: 160px; text: entry.timestamp; font-size: 11px; color: Palette.text-primary; vertical-alignment: center; }
+                                    Text { horizontal-stretch: 1; text: entry.action; font-size: 11px; font-weight: Typography.weight-medium; color: Palette.text-primary; vertical-alignment: center; }
+                                    Text { width: 120px; text: entry.amount; font-size: 11px; font-weight: Typography.weight-semibold; color: Palette.accent; vertical-alignment: center; }
+                                    Text { width: 100px; text: entry.status; font-size: 11px; color: Palette.success; vertical-alignment: center; }
+                                }
+
+                                if root.ledger-entries.length == 0: Text {
+                                    text: "No transactions recorded yet. Click 'Run Task' or Upgrade Plan to test SQLite logging.";
+                                    font-size: 11px;
+                                    color: Palette.text-secondary;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ------------------------------------------------
+                // TAB 2: PAYMENT SECURITY ARCHITECTURE
+                // ------------------------------------------------
+                if root.selected-tab == 2: VerticalLayout {
+                    spacing: 20px;
+
+                    Text {
+                        text: "Desktop Monetization & Payment Architecture Guide";
+                        font-size: Typography.size-lg;
+                        font-weight: Typography.weight-bold;
+                        color: Palette.text-primary;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 16px;
+
+                        // Architecture Card 1: PCI-DSS
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: Spacing.radius-lg;
+                            background: Palette.bg-surface;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            VerticalLayout {
+                                padding: 20px;
+                                spacing: 10px;
+                                Text { text: "1. Credit Card Safety (PCI-DSS)"; font-size: Typography.size-base; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                                Text {
+                                    text: "Desktop binaries must NEVER capture raw card numbers or CVVs. Doing so invites malware keyloggers and Level 1 audit liabilities. Instead, trigger a hosted browser session (Stripe / Lemon Squeezy) and receive webhook confirmation via an ephemeral loopback or custom URI scheme.";
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+
+                        // Architecture Card 2: India UPI
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: Spacing.radius-lg;
+                            background: Palette.bg-surface;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            VerticalLayout {
+                                padding: 20px;
+                                spacing: 10px;
+                                Text { text: "2. India Dynamic UPI QR"; font-size: Typography.size-base; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                                Text {
+                                    text: "Renders an authentic, dynamic high-contrast QR code directly on the desktop monitor. The user scans with Google Pay, PhonePe, or Paytm. The desktop app maintains a lightweight SSE / webhook listener, activating the license in sub-second time without typing card numbers.";
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+
+                        // Architecture Card 3: Zero-Leak Crypto
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: Spacing.radius-lg;
+                            background: Palette.bg-surface;
+                            border-width: 1px;
+                            border-color: Palette.border-subtle;
+                            VerticalLayout {
+                                padding: 20px;
+                                spacing: 10px;
+                                Text { text: "3. Non-Custodial Crypto (xPub)"; font-size: Typography.size-base; font-weight: Typography.weight-bold; color: Palette.text-primary; }
+                                Text {
+                                    text: "NEVER store merchant private keys or seeds in client desktop binaries. Instead, mathematically derive public payment addresses on the fly using BIP32/BIP44 Extended Public Keys (xPub). Attackers can decompile the app and find ZERO funds or private keys to steal.";
+                                    font-size: Typography.size-xs;
+                                    color: Palette.text-secondary;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ========================================================
+        // 4. FOOTER STATUS BAR
+        // ========================================================
+        Rectangle {
+            height: 32px;
+            background: Palette.bg-header;
+            Rectangle { y: 0px; height: 1px; background: Palette.border-subtle; }
+
+            HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: center;
+                    Rectangle { width: 8px; height: 8px; border-radius: 4px; background: Palette.success; }
+                    Text { text: "All Billing Pipelines Operational • SQLite WAL Active"; font-size: 11px; color: Palette.text-secondary; vertical-alignment: center; }
+                }
+
+                HorizontalLayout {
+                    spacing: 16px;
+                    alignment: center;
+                    Text { text: "120 FPS Direct3D 12 Native"; font-size: 11px; color: Palette.text-secondary; vertical-alignment: center; }
+                    Text { text: "Sub-10 MB Zero-Bloat Binary"; font-size: 11px; color: Palette.accent; vertical-alignment: center; }
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // 5. CHECKOUT MODAL OVERLAY
+    // ============================================================
+    CheckoutModal {
+        width: 100%;
+        height: 100%;
+        is-open <=> root.checkout-open;
+        plan-title: root.checkout-plan-title;
+        plan-price: root.checkout-plan-price;
+        billing-cycle: root.checkout-billing-cycle;
+        crypto-address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+        upi-vpa: "devbilling.payments@okhdfcbank";
+        upi-amount-inr: root.checkout-plan-price == "$180" ? "₹14,999.00" :
+                        root.checkout-plan-price == "$19" ? "₹1,599.00" :
+                        root.checkout-plan-price == "$828" ? "₹68,999.00" : "₹849.00";
+        active-payment-tab <=> root.checkout-payment-tab;
+        crypto-step: root.checkout-crypto-step;
+        crypto-blocks: root.checkout-crypto-blocks;
+        status-feedback: root.checkout-feedback;
+        timer-text: root.checkout-timer-text;
+
+        launch-card-checkout => {
+            root.toast-title = "Browser Checkout Opened";
+            root.toast-message = "Launched secure checkout session in default OS browser via Stripe/Paddle.";
+            root.toast-status = "info";
+            root.toast-open = true;
+        }
+
+        copy-text(text) => {
+            root.copy-clipboard(text);
+        }
+
+        simulate-upi-payment => {
+            root.simulate-upi();
+        }
+
+        simulate-crypto-payment => {
+            root.simulate-crypto();
+        }
+
+        complete-activation => {
+            root.complete-activation();
+        }
+
+        closed => {
+            root.checkout-open = false;
+            root.checkout-crypto-step = 0;
+            root.checkout-crypto-blocks = 0;
+            root.checkout-feedback = "";
+        }
+    }
+
+    // ============================================================
+    // 6. FLOATING TOAST NOTIFICATION
+    // ============================================================
+    ToastNotification {
+        x: root.width - self.width - 24px;
+        y: root.height - self.height - 40px;
+        is-open <=> root.toast-open;
+        title: root.toast-title;
+        message: root.toast-message;
+        status: root.toast-status;
+    }
+}
