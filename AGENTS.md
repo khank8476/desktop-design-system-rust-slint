@@ -7,7 +7,7 @@
 ## 1. Project Identity & Architecture
 
 - **Crate Name:** `desktop-design-system`
-- **Current Version:** `0.2.1` (Published on [crates.io/crates/desktop-design-system](https://crates.io/crates/desktop-design-system))
+- **Current Version:** `0.3.0` (Published on [crates.io/crates/desktop-design-system](https://crates.io/crates/desktop-design-system))
 - **Repository:** `https://github.com/khank8476/desktop-design-system-rust-slint`
 - **Core Tech Stack:**
   - **Language:** Pure Native Rust (Edition 2021)
@@ -193,7 +193,7 @@ cargo clean
   - ✅ **Exhaustive Component Expansion:** Added 7 new components: `Avatar` & `Skeleton` (Atoms), `Chip`, `Pagination`, & `ColorPicker` (Molecules), `StatusBar` & `CommandPalette` (Organisms), bringing the total to an unrivaled 36 production-grade native desktop components.
   - ✅ **Vintage Sepia Display Mode:** Warm parchment (`#F4ECD8`), antique alabaster surfaces (`#FBF7EE`), espresso ink typography (`#382818`), and roasted chestnut secondary accents (`#7D654A`), integrated with persistent SQLite preference storage and 3-way segmented theme switcher (`Clean Light`, `Slate Dark`, `Vintage Sepia`).
   - ✅ **Enterprise Multi-Row Table Operations:** Interactive DataTable multi-row selection with master header checkbox, row-level checkboxes, batch quick-action floating toolbar (instant batch status update: Active, Warning, Standby, Offline), full `BatchEditModal` with selective attribute overrides, and atomic multi-row deletion (`DELETE FROM services WHERE id IN (...)` in SQLite WAL mode).
-  - ✅ **Crates.io Publication:** `v0.2.1` live and indexed.
+  - ✅ **Crates.io Publication:** `v0.3.0` live and indexed on Crates.io. Includes full DRY theme tokens, responsive layout bounds across sidebar transitions, vertical centering across status bar/toolbars/feed ticker, and non-stretching inputs.
 - **Next Planned Deliverables:**
   - 🔜 **Demo 4:** Native Local Audio/Media Player or Markdown Document Studio.
 
