@@ -218,40 +218,59 @@ export component CommandPalette {
                                 }
                             }
 
-                            // Middle: Wide Search Text Input
-                            search-input := TextInput {
+                            // Middle: Wide Search Text Input in a clipped viewport
+                            Rectangle {
+                                clip: true;
                                 horizontal-stretch: 1;
-                                text <=> root.search-query;
-                                font-family: Typography.font-family;
-                                font-size: Typography.size-base;
-                                color: Palette.text-primary;
-                                vertical-alignment: center;
+                                height: 100%;
 
-                                edited => {
-                                    root.search-changed(self.text);
-                                }
+                                search-input := TextInput {
+                                    property <length> computed-x: 0px;
 
-                                key-pressed(event) => {
-                                    if event.text == Key.Escape {
-                                        root.is-open = false;
-                                        root.closed();
-                                        return accept;
+                                    x: min(0px, max(parent.width - self.width - self.text-cursor-width, self.computed-x));
+                                    width: max(parent.width - self.text-cursor-width, self.preferred-width);
+                                    height: 100%;
+                                    vertical-alignment: center;
+                                    single-line: true;
+                                    text <=> root.search-query;
+                                    font-family: Typography.font-family;
+                                    font-size: Typography.size-base;
+                                    color: Palette.text-primary;
+
+                                    cursor-position-changed(cursor-position) => {
+                                        if cursor-position.x + self.computed-x < 0px {
+                                            self.computed-x = - cursor-position.x;
+                                        } else if cursor-position.x + self.computed-x > parent.width - self.text-cursor-width {
+                                            self.computed-x = parent.width - cursor-position.x - self.text-cursor-width;
+                                        }
                                     }
-                                    if event.modifiers.control && (event.text == "t" || event.text == "T") {
-                                        root.command-selected("toggle-theme");
-                                        root.is-open = false;
-                                        root.closed();
-                                        return accept;
+
+                                    edited => {
+                                        root.search-changed(self.text);
                                     }
-                                    if event.text == Key.Return {
-                                        if root.commands.length > 0 {
-                                            root.command-selected(root.commands[0].id);
+
+                                    key-pressed(event) => {
+                                        if event.text == Key.Escape {
                                             root.is-open = false;
                                             root.closed();
                                             return accept;
                                         }
+                                        if event.modifiers.control && (event.text == "t" || event.text == "T") {
+                                            root.command-selected("toggle-theme");
+                                            root.is-open = false;
+                                            root.closed();
+                                            return accept;
+                                        }
+                                        if event.text == Key.Return {
+                                            if root.commands.length > 0 {
+                                                root.command-selected(root.commands[0].id);
+                                                root.is-open = false;
+                                                root.closed();
+                                                return accept;
+                                            }
+                                        }
+                                        return reject;
                                     }
-                                    return reject;
                                 }
                             }
 

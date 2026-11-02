@@ -25,6 +25,10 @@ export component FormField {
     callback accepted();
 
     horizontal-stretch: 1;
+    min-width: 0px;
+    preferred-width: 200px;
+    vertical-stretch: 0;
+    forward-focus: input;
 
     VerticalLayout {
         spacing: Spacing.space-xs;
@@ -85,6 +89,7 @@ export component FormField {
 
                 // Optional leading prefix (e.g. "$", "#", "SKU-")
                 if root.prefix-text != "": Text {
+                    horizontal-stretch: 0;
                     text: root.prefix-text;
                     font-family: Typography.font-family;
                     font-size: Typography.size-base;
@@ -93,22 +98,54 @@ export component FormField {
                     vertical-alignment: center;
                 }
 
-                // Core Native Input
-                input := TextInput {
+                // Core Native Input in a clipped viewport
+                text-viewport := Rectangle {
+                    clip: true;
                     horizontal-stretch: 1;
-                    enabled: root.enabled && !root.read-only;
-                    input-type: root.input-type;
-                    font-family: Typography.font-family;
-                    font-size: Typography.size-base;
-                    color: root.has-error ? Palette.danger : Palette.text-primary;
-                    vertical-alignment: center;
+                    height: 100%;
 
-                    edited => { root.edited(self.text); }
-                    accepted => { root.accepted(); }
+                    // In-frame Placeholder text
+                    if input.text == "" && !input.has-focus: Text {
+                        width: 100%;
+                        height: 100%;
+                        text: root.placeholder;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        color: Palette.text-placeholder;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+
+                    input := TextInput {
+                        property <length> computed-x: 0px;
+
+                        x: min(0px, max(parent.width - self.width - self.text-cursor-width, self.computed-x));
+                        width: max(parent.width - self.text-cursor-width, self.preferred-width);
+                        height: 100%;
+                        vertical-alignment: center;
+                        single-line: true;
+                        enabled: root.enabled && !root.read-only;
+                        input-type: root.input-type;
+                        font-family: Typography.font-family;
+                        font-size: Typography.size-base;
+                        color: root.has-error ? Palette.danger : Palette.text-primary;
+
+                        cursor-position-changed(cursor-position) => {
+                            if cursor-position.x + self.computed-x < 0px {
+                                self.computed-x = - cursor-position.x;
+                            } else if cursor-position.x + self.computed-x > parent.width - self.text-cursor-width {
+                                self.computed-x = parent.width - cursor-position.x - self.text-cursor-width;
+                            }
+                        }
+
+                        edited => { root.edited(self.text); }
+                        accepted => { root.accepted(); }
+                    }
                 }
 
                 // Status Indicator Icons (Alert for error, Check for valid)
                 if root.has-error: VerticalLayout {
+                    horizontal-stretch: 0;
                     alignment: center;
                     Image {
                         source: @image-url("../../assets/icons/alert.svg");
@@ -119,6 +156,7 @@ export component FormField {
                 }
 
                 if !root.has-error && root.is-valid: VerticalLayout {
+                    horizontal-stretch: 0;
                     alignment: center;
                     Image {
                         source: @image-url("../../assets/icons/check.svg");
@@ -127,16 +165,6 @@ export component FormField {
                         colorize: Palette.success;
                     }
                 }
-            }
-
-            // In-frame Placeholder text
-            if input.text == "" && !input.has-focus: Text {
-                x: root.prefix-text != "" ? (Spacing.space-md + 16px) : Spacing.space-md;
-                text: root.placeholder;
-                font-family: Typography.font-family;
-                font-size: Typography.size-base;
-                color: Palette.text-placeholder;
-                vertical-alignment: center;
             }
         }
 
